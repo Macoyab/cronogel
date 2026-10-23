@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronograma Anual Colaborativo</title>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col font-sans overflow-hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-sm">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center w-10 h-10">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg text-slate-900 leading-tight">Cronograma Anual</h1>
+                <p class="text-xs text-slate-500">Planificador y Línea de Tiempo Colaborativa</p>
+            </div>
+        </div>
+
+        <!-- Year Selector & View Tabs -->
+        <div class="flex items-center space-x-2 sm:space-x-4">
+            <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+                <button onclick="changeYear(-1)" class="px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-white rounded shadow-sm transition"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="currentYearLabel" class="px-3 font-semibold text-sm text-slate-800">2026</span>
+                <button onclick="changeYear(1)" class="px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-white rounded shadow-sm transition"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+
+            <div class="hidden md:flex bg-slate-100 rounded-lg p-1 border border-slate-200 text-sm font-medium">
+                <button onclick="switchTab('calendar')" id="tabBtn-calendar" class="px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-sm transition">Calendario</button>
+                <button onclick="switchTab('timeline')" id="tabBtn-timeline" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Línea de Tiempo</button>
+                <button onclick="switchTab('milestones')" id="tabBtn-milestones" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Hitos y Comentarios</button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-2">
+                <button onclick="openConfigModal()" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1.5" title="Integración Telegram Privada">
+                    <i class="fa-brands fa-telegram text-lg"></i>
+                    <span class="hidden lg:inline">Ajustes Telegram</span>
+                </button>
+                <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">Nuevo Evento</span>
+                </button>
+                <button onclick="openMilestoneModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
+                    <i class="fa-solid fa-flag"></i>
+                    <span class="hidden sm:inline">Nuevo Hito</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Tabs -->
+    <div class="md:hidden flex bg-white border-b border-slate-200 px-4 py-2 text-xs font-medium justify-around shrink-0">
+        <button onclick="switchTab('calendar')" id="mobTabBtn-calendar" class="text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600">Calendario</button>
+        <button onclick="switchTab('timeline')" id="mobTabBtn-timeline" class="text-slate-500 pb-1">Línea de Tiempo</button>
+        <button onclick="switchTab('milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1">Hitos</button>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-hidden relative flex flex-col">
+
+        <!-- TAB 1: CALENDAR VIEW -->
+        <div id="tab-calendar" class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <!-- Filters / Legend -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 mb-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                <div class="flex items-center space-x-4 text-xs font-medium text-slate-600 flex-wrap gap-2">
+                    <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-100 border border-red-300 inline-block mr-1.5"></span> Festivo Nacional</span>
+                    <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-amber-100 border border-amber-300 inline-block mr-1.5"></span> Fin de semana</span>
+                    <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-indigo-500 inline-block mr-1.5"></span> Evento activo</span>
+                    <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block mr-1.5"></span> Hito / Comentario</span>
+                </div>
+                <div class="flex items-center space-x-2 text-xs">
+                    <button onclick="sendMonthToTelegram()" class="inline-flex items-center px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 font-medium transition cursor-pointer">
+                        <i class="fa-brands fa-telegram text-sky-600 mr-1.5"></i> Publicar Resumen en Telegram
+                    </button>
+                    <button onclick="shareMonthWhatsApp()" class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-medium transition cursor-pointer">
+                        <i class="fa-brands fa-whatsapp text-emerald-600 mr-1.5"></i> Compartir WhatsApp
+                    </button>
+                    <button id="syncStatusBtn" onclick="toggleStorageMode()" class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium cursor-pointer hover:bg-amber-100 transition" title="Haz clic para cambiar entre Modo Local / Firebase">
+                        <i class="fa-solid fa-circle-notch fa-spin mr-1.5 text-xs"></i> Conectando...
+                    </button>
+                </div>
+            </div>
+
+            <!-- 12 Months Grid -->
+            <div id="monthsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-12">
+                <!-- Dynamically injected months -->
+            </div>
+        </div>
+
+        <!-- TAB 2: TIMELINE / GANTT VIEW -->
+        <div id="tab-timeline" class="flex-1 overflow-y-auto p-6 custom-scrollbar hidden">
+            <div class="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Línea de Tiempo de Eventos y Proyectos</h2>
+                        <p class="text-xs text-slate-500">Visualización cronológica de duraciones e hitos para el año <span class="timeline-year-label">2026</span></p>
+                    </div>
+                    <button onclick="openEventModal()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Añadir Evento
+                    </button>
+                </div>
+
+                <div id="timelineContainer" class="space-y-4">
+                    <!-- Dynamic timeline rows -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: MILESTONES & COMMENTS VIEW -->
+        <div id="tab-milestones" class="flex-1 overflow-y-auto p-6 custom-scrollbar hidden">
+            <div class="max-w-4xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Hitos y Comentarios Registrados</h2>
+                        <p class="text-xs text-slate-500">Notas puntuales asignadas a días específicos del año</p>
+                    </div>
+                    <button onclick="openMilestoneModal()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                        <i class="fa-solid fa-flag mr-1"></i> Añadir Hito
+                    </button>
+                </div>
+
+                <div id="milestonesListContainer" class="space-y-3">
+                    <!-- Dynamic milestones list -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: CONFIG BOT TELEGRAM -->
+    <div id="configModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-100 transform transition-all">
+            <div class="px-6 py-4 bg-sky-600 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-brands fa-telegram text-xl"></i>
+                    <h3 class="font-bold text-base">Configuración de Grupo Privado en Telegram</h3>
+                </div>
+                <button onclick="closeConfigModal()" class="text-sky-100 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 text-xs text-slate-600 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                
+                <!-- Security Banner -->
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start space-x-3 text-amber-800">
+                <i class="fa-solid fa-shield-halved text-amber-600 text-base mt-0.5"></i>
+                <div>
+                    <p class="font-bold mb-0.5 text-xs">¿Por qué no abre en el navegador o en Telegram?</p>
+                    <p class="text-[11px] leading-relaxed">
+                        • Telegram exige enlace <strong>HTTPS</strong> público (las direcciones <code>file://</code> o <code>http://localhost</code> no abren dentro del cliente Telegram).<br>
+                        • Para abrirlo en cualquier navegador o en Telegram, despliega esta app gratis en <strong>GitHub Pages, Netlify o Vercel</strong>, o usa un túnel seguro con <strong>ngrok</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">URL de esta App (Web App Link)</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="tgWebAppUrl" readonly class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 bg-slate-100 text-slate-600 focus:outline-none" placeholder="Cargando enlace...">
+                            <button type="button" onclick="copyWebAppUrl()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-xs flex items-center shrink-0 transition" title="Copiar URL">
+                                <i class="fa-solid fa-copy mr-1.5"></i> Copiar
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Telegram Bot Token</label>
+                        <input type="text" id="tgBotToken" placeholder="Ej: 123456789:ABCdefGhIJKlmNoP..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Chat ID del Grupo Privado</label>
+                        <input type="text" id="tgChatId" placeholder="Ej: -100123456789" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                </div>
+
+                <!-- Step by step setup -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <p class="font-bold text-slate-800 text-xs flex items-center">
+                        <i class="fa-solid fa-list-check text-sky-600 mr-2"></i> Pasos para Integrar en tu Grupo Privado:
+                    </p>
+                    <ol class="list-decimal list-inside space-y-1.5 text-slate-600 text-[11px] leading-relaxed">
+                        <li>Crea un **Grupo de Telegram** e invita a los miembros autorizados.</li>
+                        <li>Ve a <code class="bg-slate-200 px-1 rounded text-slate-800">BotFather</code> en Telegram, crea un Bot con <code class="bg-slate-200 px-1 rounded text-slate-800">/newbot</code> y copia el **Token**.</li>
+                        <li>Añade el bot a tu grupo y dale **Permisos de Administrador** para publicar.</li>
+                        <li>Usa <code class="bg-slate-200 px-1 rounded text-slate-800">/setmenubutton</code> en BotFather con la URL de esta aplicación para abrirla directamente como **Mini App dentro de Telegram**.</li>
+                        <li>En los ajustes del grupo, activa **Proteger contenido** para evitar que reenvíen datos fuera del chat.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <button type="button" onclick="testTelegramBot()" class="px-3.5 py-1.5 text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 rounded-lg transition"><i class="fa-solid fa-paper-plane mr-1"></i> Probar Envío</button>
+                <button type="button" onclick="saveTelegramConfig()" class="px-4 py-1.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition">Guardar Configuración</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EVENT FORM -->
+    <div id="eventModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <h3 id="eventModalTitle" class="font-bold text-slate-900 text-base">Crear Nuevo Evento / Periodo</h3>
+                <button onclick="closeEventModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="eventForm" onsubmit="handleEventSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="eventId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Evento</label>
+                    <input type="text" id="eventTitle" required placeholder="Ej: Lanzamiento de Producto, Sprint 1..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha de Inicio</label>
+                        <input type="date" id="eventStart" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha de Fin</label>
+                        <input type="date" id="eventEnd" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Color del Evento</label>
+                        <select id="eventColor" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="indigo">Índigo (Principal)</option>
+                            <option value="blue">Azul</option>
+                            <option value="emerald">Esmeralda / Verde</option>
+                            <option value="amber">Ámbar / Naranja</option>
+                            <option value="rose">Rosa / Rojo</option>
+                            <option value="purple">Púrpura</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Categoría</label>
+                        <input type="text" id="eventCategory" placeholder="Ej: Proyecto, Vacaciones, Hito" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Descripción / Notas</label>
+                    <textarea id="eventDesc" rows="3" placeholder="Detalles adicionales del evento..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Guardar Evento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: MILESTONE / COMMENT FORM -->
+    <div id="milestoneModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <h3 id="milestoneModalTitle" class="font-bold text-slate-900 text-base">Añadir Hito o Comentario en Día Puntual</h3>
+                <button onclick="closeMilestoneModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="milestoneForm" onsubmit="handleMilestoneSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="milestoneId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Hito</label>
+                    <input type="text" id="milestoneTitle" required placeholder="Ej: Cierre de presupuestos, Reunión anual..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha Específica</label>
+                    <input type="date" id="milestoneDate" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Comentario / Nota Detallada</label>
+                    <textarea id="milestoneComment" rows="3" required placeholder="Comentario o descripción para este día..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeMilestoneModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition">Guardar Hito</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: DAY DETAILS & QUICK ACTIONS -->
+    <div id="dayDetailsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-100">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 id="dayModalDateTitle" class="font-bold text-slate-900 text-base">Detalle del Día</h3>
+                    <p id="dayModalSub" class="text-xs text-slate-500">Eventos e hitos en esta fecha</p>
+                </div>
+                <button onclick="closeDayModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar" id="dayModalContent">
+                <!-- Injected items -->
+            </div>
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
+                <button onclick="quickAddEventOnDate()" class="text-indigo-600 hover:text-indigo-800 font-semibold"><i class="fa-solid fa-plus mr-1"></i> Añadir evento aquí</button>
+                <button onclick="quickAddMilestoneOnDate()" class="text-emerald-600 hover:text-emerald-800 font-semibold"><i class="fa-solid fa-flag mr-1"></i> Añadir hito aquí</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM TOAST NOTIFICATION -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- FIREBASE AND APP SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global State
+        window.currentYear = new Date().getFullYear();
+        window.currentTab = 'calendar';
+        window.eventsList = [];
+        window.milestonesList = [];
+        window.selectedDateForModal = null;
+
+        // National Holidays Spain (MM-DD)
+        window.fixedHolidays = {
+            "01-01": "Año Nuevo",
+            "01-06": "Reyes Magos",
+            "05-01": "Día del Trabajador",
+            "08-15": "Asunción de la Virgen",
+            "10-12": "Fiesta Nacional de España",
+            "11-01": "Todos los Santos",
+            "12-06": "Día de la Constitución",
+            "12-08": "Inmaculada Concepción",
+            "12-25": "Navidad"
+        };
+
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const dayNamesMin = ["L", "M", "X", "J", "V", "S", "D"];
+
+        let db, auth, userId = null;
+        let forceLocalMode = localStorage.getItem('force_local_mode') === 'true';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'annual-calendar-collab-v1';
+
+        // Navigation Tabs & Year Controls
+        window.changeYear = function(delta) {
+            window.currentYear += delta;
+            renderAll();
+        }
+
+        window.switchTab = function(tabName) {
+            window.currentTab = tabName;
+            ['calendar', 'timeline', 'milestones'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`tabBtn-${t}`);
+                const mobBtn = document.getElementById(`mobTabBtn-${t}`);
+                if (el) el.classList.toggle('hidden', t !== tabName);
+                if (btn) {
+                    btn.className = t === tabName 
+                        ? 'px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-sm transition' 
+                        : 'px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition';
+                }
+                if (mobBtn) {
+                    mobBtn.className = t === tabName
+                        ? 'text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600'
+                        : 'text-slate-500 pb-1';
+                }
+            });
+        }
+
+        // WhatsApp & Telegram Sharing
+        window.shareEventWhatsApp = function(title, start, end, cat) {
+            const text = encodeURIComponent(`📅 Evento: ${title}\n🗓 Desde: ${formatDisplayDate(start)} hasta: ${formatDisplayDate(end)}\n📂 Categoría: ${cat || 'General'}`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        window.shareMilestoneWhatsApp = function(title, date, comment) {
+            const text = encodeURIComponent(`🚩 Hito: ${title}\n🗓 Fecha: ${formatDisplayDate(date)}\n💬 Nota: ${comment}`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        window.shareMonthWhatsApp = function() {
+            const text = encodeURIComponent(`📅 Cronograma Anual ${window.currentYear}\nConsulta los eventos e hitos programados en el calendario colaborativo.`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        window.saveTelegramConfig = function() {
+            const botToken = document.getElementById('tgBotToken').value.trim();
+            const chatId = document.getElementById('tgChatId').value.trim();
+            localStorage.setItem('tg_bot_token', botToken);
+            localStorage.setItem('tg_chat_id', chatId);
+            showToast('Configuración de Telegram guardada', 'success');
+            closeConfigModal();
+        }
+
+        window.sendTelegramNotification = async function(message) {
+            const botToken = localStorage.getItem('tg_bot_token');
+            const chatId = localStorage.getItem('tg_chat_id');
+            if (!botToken || !chatId) return;
+            try {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
+                });
+            } catch(e) {
+                console.error("Error al enviar notificación a Telegram:", e);
+            }
+        }
+
+        window.testTelegramBot = async function() {
+            const botToken = document.getElementById('tgBotToken').value.trim();
+            const chatId = document.getElementById('tgChatId').value.trim();
+            if (!botToken || !chatId) {
+                showToast('Introduce Token y Chat ID primero', 'info');
+                return;
+            }
+            try {
+                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: '🚀 *¡Prueba Exitosa!* Tu bot de Telegram está correctamente conectado con el Cronograma Anual.', parse_mode: 'Markdown' })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Mensaje de prueba enviado con éxito', 'success');
+                } else {
+                    showToast(`Error de Telegram: ${data.description || 'Verifica los datos'}`, 'info');
+                }
+            } catch(e) {
+                showToast('Error al conectar con la API de Telegram', 'info');
+            }
+        }
+
+        window.sendMonthToTelegram = function() {
+            const eventsCount = window.eventsList.length;
+            const milestonesCount = window.milestonesList.length;
+            const text = `📊 *RESUMEN DEL CRONOGRAMA ANUAL (${window.currentYear})*\n\n📅 *Eventos totales:* ${eventsCount}\n🚩 *Hitos registrados:* ${milestonesCount}\n\nAccede al calendario para consultar el detalle completo.`;
+            sendTelegramNotification(text);
+            showToast('Resumen enviado al canal/grupo de Telegram', 'success');
+        }
+
+        async function initFirebase() {
+            // Cargar datos locales inmediatamente para que siempre se renderice el contenido
+            loadLocalData();
+
+            if (forceLocalMode) {
+                setLocalModeUI();
+                return;
+            }
+
+            try {
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    userId = auth.currentUser?.uid || crypto.randomUUID();
+                    updateSyncUI('cloud', 'Sincronizado en vivo');
+                    setupListeners();
+                } else {
+                    setLocalModeUI();
+                }
+            } catch (err) {
+                console.warn("Firebase no disponible, usando Modo Local:", err);
+                setLocalModeUI();
+            }
+        }
+
+        window.toggleStorageMode = function() {
+            forceLocalMode = !forceLocalMode;
+            localStorage.setItem('force_local_mode', forceLocalMode);
+            showToast(forceLocalMode ? 'Modo Local activado (datos en navegador)' : 'Intentando conectar a Nube/Firebase...', 'info');
+            setTimeout(() => location.reload(), 500);
+        }
+
+        function setLocalModeUI() {
+            db = null;
+            updateSyncUI('local', 'Modo Local (Haz clic para conectar)');
+        }
+
+        function updateSyncUI(mode, label) {
+            const btn = document.getElementById('syncStatusBtn');
+            if (!btn) return;
+            if (mode === 'cloud') {
+                btn.innerHTML = `<i class="fa-solid fa-circle text-emerald-500 mr-1.5 text-[8px]"></i> ${label}`;
+                btn.className = "inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium cursor-pointer hover:bg-emerald-100 transition";
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-hard-drive text-amber-500 mr-1.5 text-xs"></i> ${label}`;
+                btn.className = "inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium cursor-pointer hover:bg-amber-100 transition";
+            }
+        }
+
+        function setupListeners() {
+            if (!db) return;
+            try {
+                const eventsCol = collection(db, 'artifacts', appId, 'public', 'data', 'events');
+                onSnapshot(eventsCol, (snapshot) => {
+                    window.eventsList = [];
+                    snapshot.forEach(docSnap => {
+                        window.eventsList.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+                    renderAll();
+                }, (error) => {
+                    console.error("Error eventos Firebase:", error);
+                    setLocalModeUI();
+                    loadLocalData();
+                });
+
+                const milestonesCol = collection(db, 'artifacts', appId, 'public', 'data', 'milestones');
+                onSnapshot(milestonesCol, (snapshot) => {
+                    window.milestonesList = [];
+                    snapshot.forEach(docSnap => {
+                        window.milestonesList.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+                    renderAll();
+                }, (error) => {
+                    console.error("Error hitos Firebase:", error);
+                });
+            } catch (e) {
+                setLocalModeUI();
+                loadLocalData();
+            }
+        }
+
+        function loadLocalData() {
+            window.eventsList = JSON.parse(localStorage.getItem('local_events') || '[]');
+            window.milestonesList = JSON.parse(localStorage.getItem('local_milestones') || '[]');
+            renderAll();
+        }
+
+        window.renderAll = function() {
+            document.getElementById('currentYearLabel').textContent = window.currentYear;
+            document.querySelectorAll('.timeline-year-label').forEach(el => el.textContent = window.currentYear);
+            
+            renderCalendarGrid();
+            renderTimelineView();
+            renderMilestonesView();
+
+            // Load TG config inputs
+            const botToken = localStorage.getItem('tg_bot_token') || '';
+            const chatId = localStorage.getItem('tg_chat_id') || '';
+            if (document.getElementById('tgBotToken')) document.getElementById('tgBotToken').value = botToken;
+            if (document.getElementById('tgChatId')) document.getElementById('tgChatId').value = chatId;
+            if (document.getElementById('tgWebAppUrl')) document.getElementById('tgWebAppUrl').value = window.location.href;
+        }
+
+        window.copyWebAppUrl = function() {
+            const input = document.getElementById('tgWebAppUrl');
+            if (input && input.value) {
+                input.select();
+                document.execCommand('copy');
+                showToast('URL copiada al portapapeles', 'success');
+            }
+        }
+
+        // --- CALENDAR GRID RENDERER ---
+        function renderCalendarGrid() {
+            const grid = document.getElementById('monthsGrid');
+            grid.innerHTML = '';
+
+            for (let month = 0; month < 12; month++) {
+                const monthCard = document.createElement('div');
+                monthCard.className = 'bg-white rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-md transition flex flex-col justify-between';
+
+                let monthHeader = `<div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-indigo-600 mr-2"></span>${monthNames[month]}
+                    </h3>
+                    <span class="text-[10px] text-slate-400 font-semibold">${window.currentYear}</span>
+                </div>`;
+
+                let daysGrid = `<div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-1">`;
+                dayNamesMin.forEach(d => daysGrid += `<div>${d}</div>`);
+                daysGrid += `</div><div class="grid grid-cols-7 gap-1 text-center text-xs">`;
+
+                const firstDay = new Date(window.currentYear, month, 1);
+                let startingDay = firstDay.getDay() - 1; // Mon = 0
+                if (startingDay === -1) startingDay = 6; 
+
+                const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
+
+                // Empty padding days
+                for (let i = 0; i < startingDay; i++) {
+                    daysGrid += `<div class="h-8"></div>`;
+                }
+
+                // Month days
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateObj = new Date(window.currentYear, month, day);
+                    const dateStr = formatDateISO(dateObj);
+                    const dayOfWeek = dateObj.getDay();
+                    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+                    const mmdd = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const isHoliday = window.fixedHolidays[mmdd];
+
+                    // Check active events and milestones
+                    const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
+                    const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
+
+                    let bgClass = 'hover:bg-slate-100 text-slate-700';
+                    if (isWeekend) bgClass = 'bg-amber-50/60 text-amber-900 hover:bg-amber-100/60 font-medium';
+                    if (isHoliday) bgClass = 'bg-red-50 text-red-700 font-bold border border-red-200';
+
+                    let indicators = '';
+                    if (activeEvents.length > 0) {
+                        const topColor = getColorClass(activeEvents[0].color);
+                        bgClass = `${topColor} hover:opacity-90 font-bold shadow-xs`;
+                    }
+
+                    if (dayMilestones.length > 0) {
+                        indicators += `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 border border-white inline-block absolute top-0.5 right-0.5"></span>`;
+                    }
+
+                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-8 rounded-lg flex flex-col items-center justify-center relative cursor-pointer transition ${bgClass}">
+                        <span>${day}</span>
+                        ${indicators}
+                    </button>`;
+                }
+
+                daysGrid += `</div>`;
+                monthCard.innerHTML = monthHeader + daysGrid;
+                grid.appendChild(monthCard);
+            }
+        }
+
+        // --- TIMELINE / GANTT RENDERER ---
+        function renderTimelineView() {
+            const container = document.getElementById('timelineContainer');
+            if (window.eventsList.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay eventos registrados para este año. ¡Crea el primero!</div>`;
+                return;
+            }
+
+            let html = '';
+            const yearStart = new Date(window.currentYear, 0, 1);
+            const yearEnd = new Date(window.currentYear, 11, 31);
+            const totalDays = (yearEnd - yearStart) / (1000 * 60 * 60 * 24) + 1;
+
+            window.eventsList.forEach(evt => {
+                const start = new Date(evt.eventStart);
+                const end = new Date(evt.eventEnd);
+                
+                const dayOffset = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
+                const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24) + 1);
+                
+                const leftPercent = Math.min(100, Math.max(0, (dayOffset / totalDays) * 100));
+                const widthPercent = Math.min(100 - leftPercent, Math.max(1, (duration / totalDays) * 100));
+
+                const colorBg = getBadgeColorClass(evt.color);
+
+                html += `<div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${colorBg} mb-1">${evt.category || 'General'}</span>
+                            <h4 class="font-bold text-slate-800 text-sm">${evt.eventTitle}</h4>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+                            <span><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</span>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="shareEventWhatsApp('${evt.eventTitle}', '${evt.eventStart}', '${evt.eventEnd}', '${evt.category}')" class="p-1.5 text-emerald-600 hover:text-emerald-800 transition" title="Compartir en WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i></button>
+                                <button onclick="editEvent('${evt.id}')" class="p-1.5 text-slate-400 hover:text-indigo-600 transition"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteEventStore('${evt.id}')" class="p-1.5 text-slate-400 hover:text-red-600 transition"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    ${evt.eventDesc ? `<p class="text-xs text-slate-600">${evt.eventDesc}</p>` : ''}
+                    <div class="relative h-3 bg-slate-200 rounded-full w-full overflow-hidden">
+                        <div class="absolute h-full rounded-full ${getBarColorClass(evt.color)}" style="left: ${leftPercent}%; width: ${widthPercent}%;"></div>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // --- MILESTONES RENDERER ---
+        function renderMilestonesView() {
+            const container = document.getElementById('milestonesListContainer');
+            if (window.milestonesList.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos o comentarios registrados. Añade notas puntuales en los días que desees.</div>`;
+                return;
+            }
+
+            const sorted = [...window.milestonesList].sort((a, b) => a.milestoneDate.localeCompare(b.milestoneDate));
+            let html = '';
+
+            sorted.forEach(ms => {
+                html += `<div class="flex items-start justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-emerald-300 transition">
+                    <div class="flex items-start space-x-3">
+                        <div class="bg-emerald-100 text-emerald-700 p-2.5 rounded-xl shrink-0 mt-0.5">
+                            <i class="fa-solid fa-flag"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(ms.milestoneDate)}</span>
+                                <h4 class="font-bold text-slate-900 text-sm">${ms.milestoneTitle}</h4>
+                            </div>
+                            <p class="text-xs text-slate-600 leading-relaxed">${ms.milestoneComment}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1 shrink-0 ml-4">
+                        <button onclick="shareMilestoneWhatsApp('${ms.milestoneTitle}', '${ms.milestoneDate}', '${ms.milestoneComment}')" class="p-1.5 text-emerald-600 hover:text-emerald-800 transition" title="Compartir en WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i></button>
+                        <button onclick="editMilestone('${ms.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <button onclick="deleteMilestoneStore('${ms.id}')" class="p-1.5 text-slate-400 hover:text-red-600 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // --- DATA MODIFIERS ---
+        window.saveEventToStore = async function(eventData) {
+            try {
+                if (db) {
+                    const eventsCol = collection(db, 'artifacts', appId, 'public', 'data', 'events');
+                    if (eventData.id) {
+                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'events', eventData.id);
+                        await updateDoc(docRef, eventData);
+                    } else {
+                        delete eventData.id;
+                        await addDoc(eventsCol, eventData);
+                    }
+                } else {
+                    saveEventLocal(eventData);
+                }
+            } catch (err) {
+                console.warn("Fallo en guardar online, guardando localmente:", err);
+                saveEventLocal(eventData);
+            }
+            
+            sendTelegramNotification(`📅 *NUEVO EVENTO EN CRONOGRAMA*\n\n📌 *${eventData.eventTitle}*\n🗓 *Fechas:* ${formatDisplayDate(eventData.eventStart)} al ${formatDisplayDate(eventData.eventEnd)}\n📂 *Categoría:* ${eventData.category || 'General'}\n📝 *Notas:* ${eventData.description || 'Sin descripción'}`);
+            showToast('Evento guardado correctamente', 'success');
+        }
+
+        function saveEventLocal(eventData) {
+            if (!eventData.id) {
+                eventData.id = 'evt_' + Date.now();
+                window.eventsList.push(eventData);
+            } else {
+                const idx = window.eventsList.findIndex(e => e.id === eventData.id);
+                if (idx !== -1) window.eventsList[idx] = eventData;
+            }
+            localStorage.setItem('local_events', JSON.stringify(window.eventsList));
+            renderAll();
+        }
+
+        window.deleteEventStore = async function(id) {
+            try {
+                if (db) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
+                } else {
+                    deleteEventLocal(id);
+                }
+            } catch (err) {
+                deleteEventLocal(id);
+            }
+            showToast('Evento eliminado', 'info');
+        }
+
+        function deleteEventLocal(id) {
+            window.eventsList = window.eventsList.filter(e => e.id !== id);
+            localStorage.setItem('local_events', JSON.stringify(window.eventsList));
+            renderAll();
+        }
+
+        window.saveMilestoneStore = async function(milestoneData) {
+            try {
+                if (db) {
+                    const msCol = collection(db, 'artifacts', appId, 'public', 'data', 'milestones');
+                    if (milestoneData.id) {
+                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'milestones', milestoneData.id);
+                        await updateDoc(docRef, milestoneData);
+                    } else {
+                        delete milestoneData.id;
+                        await addDoc(msCol, milestoneData);
+                    }
+                } else {
+                    saveMilestoneLocal(milestoneData);
+                }
+            } catch (err) {
+                saveMilestoneLocal(milestoneData);
+            }
+
+            sendTelegramNotification(`🚩 *NUEVO HITO EN CRONOGRAMA*\n\n📌 *${milestoneData.milestoneTitle}*\n🗓 *Fecha:* ${formatDisplayDate(milestoneData.milestoneDate)}\n💬 *Comentario:* ${milestoneData.milestoneComment}`);
+            showToast('Hito guardado correctamente', 'success');
+        }
+
+        function saveMilestoneLocal(milestoneData) {
+            if (!milestoneData.id) {
+                milestoneData.id = 'ms_' + Date.now();
+                window.milestonesList.push(milestoneData);
+            } else {
+                const idx = window.milestonesList.findIndex(m => m.id === milestoneData.id);
+                if (idx !== -1) window.milestonesList[idx] = milestoneData;
+            }
+            localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
+            renderAll();
+        }
+
+        window.deleteMilestoneStore = async function(id) {
+            try {
+                if (db) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milestones', id));
+                } else {
+                    deleteMilestoneLocal(id);
+                }
+            } catch (err) {
+                deleteMilestoneLocal(id);
+            }
+            showToast('Hito eliminado', 'info');
+        }
+
+        function deleteMilestoneLocal(id) {
+            window.milestonesList = window.milestonesList.filter(m => m.id !== id);
+            localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
+            renderAll();
+        }
+
+        // --- MODALS CONTROLS ---
+        window.openConfigModal = function() {
+            document.getElementById('configModal').classList.remove('hidden');
+        }
+        window.closeConfigModal = function() {
+            document.getElementById('configModal').classList.add('hidden');
+        }
+
+        window.openEventModal = function(presetDate = null) {
+            document.getElementById('eventId').value = '';
+            document.getElementById('eventTitle').value = '';
+            document.getElementById('eventStart').value = presetDate || `${window.currentYear}-01-01`;
+            document.getElementById('eventEnd').value = presetDate || `${window.currentYear}-01-07`;
+            document.getElementById('eventColor').value = 'indigo';
+            document.getElementById('eventCategory').value = '';
+            document.getElementById('eventDesc').value = '';
+            document.getElementById('eventModalTitle').textContent = 'Crear Nuevo Evento / Periodo';
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+        window.closeEventModal = function() {
+            document.getElementById('eventModal').classList.add('hidden');
+        }
+
+        window.editEvent = function(id) {
+            const evt = window.eventsList.find(e => e.id === id);
+            if (!evt) return;
+            document.getElementById('eventId').value = evt.id;
+            document.getElementById('eventTitle').value = evt.eventTitle;
+            document.getElementById('eventStart').value = evt.eventStart;
+            document.getElementById('eventEnd').value = evt.eventEnd;
+            document.getElementById('eventColor').value = evt.color || 'indigo';
+            document.getElementById('eventCategory').value = evt.category || '';
+            document.getElementById('eventDesc').value = evt.description || evt.eventDesc || '';
+            document.getElementById('eventModalTitle').textContent = 'Editar Evento';
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+
+        window.handleEventSubmit = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('eventId').value;
+            const eventData = {
+                id: id || undefined,
+                eventTitle: document.getElementById('eventTitle').value,
+                eventStart: document.getElementById('eventStart').value,
+                eventEnd: document.getElementById('eventEnd').value,
+                color: document.getElementById('eventColor').value,
+                category: document.getElementById('eventCategory').value,
+                description: document.getElementById('eventDesc').value
+            };
+            saveEventToStore(eventData);
+            closeEventModal();
+        }
+
+        window.openMilestoneModal = function(presetDate = null) {
+            document.getElementById('milestoneId').value = '';
+            document.getElementById('milestoneTitle').value = '';
+            document.getElementById('milestoneDate').value = presetDate || `${window.currentYear}-01-01`;
+            document.getElementById('milestoneComment').value = '';
+            document.getElementById('milestoneModalTitle').textContent = 'Añadir Hito o Comentario';
+            document.getElementById('milestoneModal').classList.remove('hidden');
+        }
+        window.closeMilestoneModal = function() {
+            document.getElementById('milestoneModal').classList.add('hidden');
+        }
+
+        window.editMilestone = function(id) {
+            const ms = window.milestonesList.find(m => m.id === id);
+            if (!ms) return;
+            document.getElementById('milestoneId').value = ms.id;
+            document.getElementById('milestoneTitle').value = ms.milestoneTitle;
+            document.getElementById('milestoneDate').value = ms.milestoneDate;
+            document.getElementById('milestoneComment').value = ms.milestoneComment;
+            document.getElementById('milestoneModalTitle').textContent = 'Editar Hito';
+            document.getElementById('milestoneModal').classList.remove('hidden');
+        }
+
+        window.handleMilestoneSubmit = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('milestoneId').value;
+            const milestoneData = {
+                id: id || undefined,
+                milestoneTitle: document.getElementById('milestoneTitle').value,
+                milestoneDate: document.getElementById('milestoneDate').value,
+                milestoneComment: document.getElementById('milestoneComment').value
+            };
+            saveMilestoneStore(milestoneData);
+            closeMilestoneModal();
+        }
+
+        window.openDayDetails = function(dateStr) {
+            window.selectedDateForModal = dateStr;
+            const parts = dateStr.split('-');
+            const mmdd = `${parts[1]}-${parts[2]}`;
+            const holiday = window.fixedHolidays[mmdd];
+
+            document.getElementById('dayModalDateTitle').textContent = `Día ${formatDisplayDate(dateStr)}`;
+            let subText = holiday ? `Festivo: ${holiday}` : 'Día laborable / ordinario';
+            document.getElementById('dayModalSub').textContent = subText;
+
+            const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
+            const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
+
+            let contentHtml = '';
+
+            if (holiday) {
+                contentHtml += `<div class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-center space-x-2">
+                    <i class="fa-solid fa-gift"></i><span>Festivo Nacional: ${holiday}</span>
+                </div>`;
+            }
+
+            if (activeEvents.length > 0) {
+                contentHtml += `<h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Eventos Activos</h4>`;
+                activeEvents.forEach(evt => {
+                    contentHtml += `<div class="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1 mb-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-900 text-sm">${evt.eventTitle}</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="shareEventWhatsApp('${evt.eventTitle}', '${evt.eventStart}', '${evt.eventEnd}', '${evt.category}')" class="text-emerald-600 hover:text-emerald-800 text-xs"><i class="fa-brands fa-whatsapp"></i></button>
+                                <span class="text-[10px] px-2 py-0.5 rounded ${getBadgeColorClass(evt.color)}">${evt.category || 'Evento'}</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
+                    </div>`;
+                });
+            }
+
+            if (dayMilestones.length > 0) {
+                contentHtml += `<h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 mt-4">Hitos y Comentarios</h4>`;
+                dayMilestones.forEach(ms => {
+                    contentHtml += `<div class="p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-1 mb-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-emerald-900 text-sm"><i class="fa-solid fa-flag mr-1 text-emerald-600"></i> ${ms.milestoneTitle}</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="shareMilestoneWhatsApp('${ms.milestoneTitle}', '${ms.milestoneDate}', '${ms.milestoneComment}')" class="text-emerald-600 hover:text-emerald-800 text-xs"><i class="fa-brands fa-whatsapp"></i></button>
+                                <button onclick="deleteMilestoneStore('${ms.id}'); closeDayModal();" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-600">${ms.milestoneComment}</p>
+                    </div>`;
+                });
+            }
+
+            if (activeEvents.length === 0 && dayMilestones.length === 0 && !holiday) {
+                contentHtml += `<p class="text-xs text-slate-400 text-center py-6">No hay eventos ni hitos registrados en este día.</p>`;
+            }
+
+            document.getElementById('dayModalContent').innerHTML = contentHtml;
+            document.getElementById('dayDetailsModal').classList.remove('hidden');
+        }
+
+        window.closeDayModal = function() {
+            document.getElementById('dayDetailsModal').classList.add('hidden');
+        }
+
+        window.quickAddEventOnDate = function() {
+            closeDayModal();
+            openEventModal(window.selectedDateForModal);
+        }
+
+        window.quickAddMilestoneOnDate = function() {
+            closeDayModal();
+            openMilestoneModal(window.selectedDateForModal);
+        }
+
+        // --- UTILS ---
+        function formatDateISO(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function getColorClass(color) {
+            switch(color) {
+                case 'blue': return 'bg-blue-600 text-white';
+                case 'emerald': return 'bg-emerald-600 text-white';
+                case 'amber': return 'bg-amber-600 text-white';
+                case 'rose': return 'bg-rose-600 text-white';
+                case 'purple': return 'bg-purple-600 text-white';
+                default: return 'bg-indigo-600 text-white';
+            }
+        }
+
+        function getBarColorClass(color) {
+            switch(color) {
+                case 'blue': return 'bg-blue-500';
+                case 'emerald': return 'bg-emerald-500';
+                case 'amber': return 'bg-amber-500';
+                case 'rose': return 'bg-rose-500';
+                case 'purple': return 'bg-purple-500';
+                default: return 'bg-indigo-500';
+            }
+        }
+
+        function getBadgeColorClass(color) {
+            switch(color) {
+                case 'blue': return 'bg-blue-100 text-blue-700';
+                case 'emerald': return 'bg-emerald-100 text-emerald-700';
+                case 'amber': return 'bg-amber-100 text-amber-700';
+                case 'rose': return 'bg-rose-100 text-rose-700';
+                case 'purple': return 'bg-purple-100 text-purple-700';
+                default: return 'bg-indigo-100 text-indigo-700';
+            }
+        }
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-slate-900 text-white' : 'bg-indigo-600 text-white';
+            toast.className = `${bg} px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center space-x-2 transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize on DOM Ready
+        window.addEventListener('DOMContentLoaded', () => {
+            // Telegram WebApp Integration Check
+            if (window.Telegram && window.Telegram.WebApp) {
+                try {
+                    window.Telegram.WebApp.ready();
+                    window.Telegram.WebApp.expand();
+                } catch(e) {
+                    console.log("No iniciado dentro de contexto Telegram nativo.");
+                }
+            }
+
+            // Renderizado inicial inmediato
+            renderAll();
+            initFirebase();
+        });
+    </script>
+</body>
+</html>
