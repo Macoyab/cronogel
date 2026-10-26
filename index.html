@@ -11,7 +11,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -28,7 +28,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Ensure Date Inputs display clearly across all browsers & Telegram WebApp */
+        /* Clear display for native date pickers */
         input[type="date"] {
             color-scheme: light;
             color: #0f172a !important;
@@ -41,6 +41,22 @@
         }
         input[type="date"]::-webkit-calendar-picker-indicator:hover {
             opacity: 1;
+        }
+
+        /* Color Palette Hex Reference Variables */
+        :root {
+            --color-indigo: #4f46e5;
+            --color-blue: #2563eb;
+            --color-sky: #0284c7;
+            --color-teal: #0d9488;
+            --color-emerald: #059669;
+            --color-amber: #d97706;
+            --color-orange: #ea580c;
+            --color-rose: #e11d48;
+            --color-pink: #db2777;
+            --color-purple: #9333ea;
+            --color-violet: #7c3aed;
+            --color-slate: #475569;
         }
     </style>
 </head>
@@ -108,12 +124,13 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-xs">
                     <div class="flex items-center space-x-4 flex-wrap gap-y-1">
                         <span class="font-bold text-slate-800">Leyenda:</span>
-                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-indigo-600 inline-block mr-1.5"></span> Evento Planificado</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-indigo-600 inline-block mr-1.5"></span> Evento Unico</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-gradient-to-r from-indigo-500 via-rose-500 to-amber-500 inline-block mr-1.5"></span> Múltiples Eventos</span>
                         <span class="flex items-center"><span class="w-3 h-3 rounded bg-emerald-500 inline-block mr-1.5"></span> Hito Destacado</span>
                         <span class="flex items-center"><span class="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block mr-1.5"></span> Festivo Nacional</span>
                         <span class="flex items-center"><span class="w-3 h-3 rounded bg-amber-50 border border-amber-200 inline-block mr-1.5"></span> Fin de semana</span>
                     </div>
-                    <span class="text-[11px] text-slate-400 font-medium">Haz clic en cualquier día para gestionar eventos e hitos</span>
+                    <span class="text-[11px] text-slate-400 font-medium">Haz clic en cualquier día para ver o añadir actividades</span>
                 </div>
 
                 <!-- 12 Month Grid -->
@@ -123,13 +140,13 @@
             </div>
         </div>
 
-        <!-- TAB 2: TIMELINE / GANTT VIEW (ANUAL COMPACTA DE UN VISTAZO) -->
+        <!-- TAB 2: TIMELINE / GANTT VIEW (LÍNEA GENERAL INTEGRADA Y DESGLOSE INDIVIDUAL) -->
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
-            <div class="max-w-7xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
+            <div class="max-w-7xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900">Línea de Tiempo Anual Integradora</h2>
-                        <p class="text-xs text-slate-500">Panorama completo del año <span class="timeline-year-label">2026</span> con eventos continuos e hitos puntuales en una misma vista.</p>
+                        <h2 class="text-lg font-bold text-slate-900">Línea de Tiempo Anual Unificada</h2>
+                        <p class="text-xs text-slate-500">Vista general consolidada del año <span class="timeline-year-label">2026</span> seguida del desglose individual detallado.</p>
                     </div>
                     <div class="flex items-center space-x-2">
                         <button onclick="openMilestoneModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
@@ -141,30 +158,50 @@
                     </div>
                 </div>
 
-                <!-- Contenedor Matriz Anual con Desplazamiento Horizontal en Pantallas Pequeñas -->
+                <!-- Contenedor Matriz Anual -->
                 <div class="overflow-x-auto custom-scrollbar">
-                    <div class="min-w-[850px]">
+                    <div class="min-w-[850px] space-y-6">
                         <!-- Cabecera Meses del Año -->
-                        <div class="grid grid-cols-12 gap-1 bg-slate-100 p-2 rounded-xl border border-slate-200 mb-4 text-center text-xs font-bold text-slate-700 shadow-xs">
+                        <div class="grid grid-cols-12 gap-1 bg-slate-100 p-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-700 shadow-xs">
                             <div>Ene</div><div>Feb</div><div>Mar</div><div>Abr</div>
                             <div>May</div><div>Jun</div><div>Jul</div><div>Ago</div>
                             <div>Sep</div><div>Oct</div><div>Nov</div><div>Dic</div>
                         </div>
 
-                        <!-- Sección de Eventos Anuales -->
-                        <div class="mb-6 space-y-2">
+                        <!-- 1. VISTA MAESTRA INTEGRADA GENERAL (Línea de tiempo única) -->
+                        <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-md space-y-3">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center">
+                                    <i class="fa-solid fa-chart-line mr-2"></i> Vista General Unificada del Año (Eventos e Hitos)
+                                </h3>
+                                <span class="text-[10px] text-slate-400">Proyección global de 365 días</span>
+                            </div>
+
+                            <!-- Barra Contenedora Maestra -->
+                            <div class="relative h-12 bg-slate-800/90 rounded-xl overflow-hidden border border-slate-700 flex items-center">
+                                <div id="masterTimelineBar" class="relative w-full h-full">
+                                    <!-- Dynamic overlay of all events and milestones -->
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 px-1">
+                                <span>01 Ene</span><span>30 Jun</span><span>31 Dic</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. DESGLOSE INDIVIDUAL DE EVENTOS -->
+                        <div class="space-y-2">
                             <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center">
-                                <i class="fa-solid fa-bars-staggered text-indigo-600 mr-2"></i> Eventos y Periodos Continuos
+                                <i class="fa-solid fa-bars-staggered text-indigo-600 mr-2"></i> Desglose Individual de Eventos
                             </h3>
                             <div id="timelineEventsContainer" class="space-y-2">
                                 <!-- Inyectado dinámicamente -->
                             </div>
                         </div>
 
-                        <!-- Sección de Hitos Destacados en la Línea de Tiempo -->
+                        <!-- 3. DESGLOSE INDIVIDUAL DE HITOS -->
                         <div class="pt-4 border-t border-slate-200 space-y-2">
                             <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center">
-                                <i class="fa-solid fa-flag text-emerald-600 mr-2"></i> Hitos Puntuales Clave en la Línea Temporal
+                                <i class="fa-solid fa-flag text-emerald-600 mr-2"></i> Desglose Individual de Hitos
                             </h3>
                             <div id="timelineMilestonesContainer" class="space-y-2">
                                 <!-- Inyectado dinámicamente -->
@@ -194,7 +231,6 @@
                     </div>
                 </div>
 
-                <!-- Tabla / Tarjetas de Eventos -->
                 <div id="repositoryListContainer" class="space-y-2">
                     <!-- Inyectado dinámicamente -->
                 </div>
@@ -233,13 +269,12 @@
             </div>
             <div class="p-6 space-y-4 text-xs text-slate-600 max-h-[75vh] overflow-y-auto custom-scrollbar">
                 
-                <!-- Security Banner -->
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start space-x-3 text-amber-800">
                     <i class="fa-solid fa-shield-halved text-amber-600 text-base mt-0.5"></i>
                     <div>
                         <p class="font-bold mb-0.5 text-xs">Integración directa con Telegram</p>
                         <p class="text-[11px] leading-relaxed">
-                            Pega la dirección URL HTTPS de tu servidor (por ejemplo GitHub Pages) y las claves de tu Bot para habilitar Mini App y notificaciones automáticas al equipo.
+                            Pega la dirección URL HTTPS de tu servidor y las claves de tu Bot para habilitar Mini App y notificaciones automáticas al equipo.
                         </p>
                     </div>
                 </div>
@@ -263,19 +298,6 @@
                         <input type="text" id="tgChatId" placeholder="Ej: -100123456789" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500">
                     </div>
                 </div>
-
-                <!-- Step by step setup -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                    <p class="font-bold text-slate-800 text-xs flex items-center">
-                        <i class="fa-solid fa-list-check text-sky-600 mr-2"></i> Pasos para Integrar en tu Grupo Privado:
-                    </p>
-                    <ol class="list-decimal list-inside space-y-1.5 text-slate-600 text-[11px] leading-relaxed">
-                        <li>Crea un **Grupo de Telegram** e invita a los miembros autorizados.</li>
-                        <li>Ve a <code class="bg-slate-200 px-1 rounded text-slate-800">BotFather</code> en Telegram, crea un Bot con <code class="bg-slate-200 px-1 rounded text-slate-800">/newbot</code> y copia el **Token**.</li>
-                        <li>Añade el bot a tu grupo y dale **Permisos de Administrador** para publicar.</li>
-                        <li>Usa <code class="bg-slate-200 px-1 rounded text-slate-800">/setmenubutton</code> en BotFather con la URL HTTPS de tu app para abrirla como **Mini App dentro de Telegram**.</li>
-                    </ol>
-                </div>
             </div>
             <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
                 <button type="button" onclick="testTelegramBot()" class="px-3.5 py-1.5 text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 rounded-lg transition"><i class="fa-solid fa-paper-plane mr-1"></i> Probar Envío</button>
@@ -284,7 +306,7 @@
         </div>
     </div>
 
-    <!-- MODAL: EVENT FORM -->
+    <!-- MODAL: EVENT FORM WITH PALETTE SELECTOR -->
     <div id="eventModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
             <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
@@ -293,6 +315,7 @@
             </div>
             <form id="eventForm" onsubmit="handleEventSubmit(event)" class="p-6 space-y-4">
                 <input type="hidden" id="eventId">
+                <input type="hidden" id="eventColor" value="indigo">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Evento</label>
                     <input type="text" id="eventTitle" required placeholder="Ej: Lanzamiento de Producto, Sprint 1..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -307,22 +330,18 @@
                         <input type="date" id="eventEnd" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Color del Evento</label>
-                        <select id="eventColor" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="indigo">Índigo (Principal)</option>
-                            <option value="blue">Azul</option>
-                            <option value="emerald">Esmeralda / Verde</option>
-                            <option value="amber">Ámbar / Naranja</option>
-                            <option value="rose">Rosa / Rojo</option>
-                            <option value="purple">Púrpura</option>
-                        </select>
+
+                <!-- PALETA DE COLORES AMPLIADA -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Color del Evento (Paleta Vibrante)</label>
+                    <div class="grid grid-cols-6 gap-2" id="colorPaletteGrid">
+                        <!-- Palette Swatches populated via JS -->
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Categoría</label>
-                        <input type="text" id="eventCategory" placeholder="Ej: Proyecto, Vacaciones, Hito" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Categoría</label>
+                    <input type="text" id="eventCategory" placeholder="Ej: Proyecto, Vacaciones, Hito" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Descripción / Notas</label>
@@ -336,7 +355,7 @@
         </div>
     </div>
 
-    <!-- MODAL: MILESTONE / COMMENT FORM -->
+    <!-- MODAL: MILESTONE FORM WITH PALETTE -->
     <div id="milestoneModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
             <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
@@ -345,6 +364,7 @@
             </div>
             <form id="milestoneForm" onsubmit="handleMilestoneSubmit(event)" class="p-6 space-y-4">
                 <input type="hidden" id="milestoneId">
+                <input type="hidden" id="milestoneColor" value="emerald">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Hito</label>
                     <input type="text" id="milestoneTitle" required placeholder="Ej: Cierre de presupuestos, Reunión anual..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -353,6 +373,15 @@
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha Específica</label>
                     <input type="date" id="milestoneDate" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
                 </div>
+
+                <!-- PALETA DE COLORES AMPLIADA PARA HITOS -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Color del Hito</label>
+                    <div class="grid grid-cols-6 gap-2" id="milestoneColorPaletteGrid">
+                        <!-- Palette Swatches populated via JS -->
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Comentario / Nota Detallada</label>
                     <textarea id="milestoneComment" rows="3" required placeholder="Comentario o descripción para este día..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
@@ -365,7 +394,7 @@
         </div>
     </div>
 
-    <!-- MODAL: DAY DETAILS & QUICK ACTIONS -->
+    <!-- MODAL: DAY DETAILS -->
     <div id="dayDetailsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-100">
             <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
@@ -385,11 +414,26 @@
         </div>
     </div>
 
-    <!-- CUSTOM TOAST NOTIFICATION -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
     <!-- MAIN APP SCRIPT -->
     <script>
+        // Extended Color Palette Config
+        window.colorPalette = [
+            { id: 'indigo', name: 'Índigo', hex: '#4f46e5', bgClass: 'bg-indigo-600', badgeClass: 'bg-indigo-100 text-indigo-700' },
+            { id: 'blue', name: 'Azul', hex: '#2563eb', bgClass: 'bg-blue-600', badgeClass: 'bg-blue-100 text-blue-700' },
+            { id: 'sky', name: 'Cielo', hex: '#0284c7', bgClass: 'bg-sky-500', badgeClass: 'bg-sky-100 text-sky-700' },
+            { id: 'teal', name: 'Turquesa', hex: '#0d9488', bgClass: 'bg-teal-600', badgeClass: 'bg-teal-100 text-teal-700' },
+            { id: 'emerald', name: 'Esmeralda', hex: '#059669', bgClass: 'bg-emerald-600', badgeClass: 'bg-emerald-100 text-emerald-700' },
+            { id: 'amber', name: 'Ámbar', hex: '#d97706', bgClass: 'bg-amber-600', badgeClass: 'bg-amber-100 text-amber-700' },
+            { id: 'orange', name: 'Naranja', hex: '#ea580c', bgClass: 'bg-orange-600', badgeClass: 'bg-orange-100 text-orange-700' },
+            { id: 'rose', name: 'Rosa / Rojo', hex: '#e11d48', bgClass: 'bg-rose-600', badgeClass: 'bg-rose-100 text-rose-700' },
+            { id: 'pink', name: 'Fucsia', hex: '#db2777', bgClass: 'bg-pink-600', badgeClass: 'bg-pink-100 text-pink-700' },
+            { id: 'purple', name: 'Púrpura', hex: '#9333ea', bgClass: 'bg-purple-600', badgeClass: 'bg-purple-100 text-purple-700' },
+            { id: 'violet', name: 'Violeta', hex: '#7c3aed', bgClass: 'bg-violet-600', badgeClass: 'bg-violet-100 text-violet-700' },
+            { id: 'slate', name: 'Pizarra', hex: '#475569', bgClass: 'bg-slate-600', badgeClass: 'bg-slate-100 text-slate-700' }
+        ];
+
         // Global State & Core Logic
         window.currentYear = new Date().getFullYear();
         window.currentTab = 'calendar';
@@ -397,7 +441,6 @@
         window.milestonesList = [];
         window.selectedDateForModal = null;
 
-        // National Holidays Spain (MM-DD)
         window.fixedHolidays = {
             "01-01": "Año Nuevo",
             "01-06": "Reyes Magos",
@@ -413,7 +456,6 @@
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         const dayNamesMin = ["L", "M", "X", "J", "V", "S", "D"];
 
-        // Navigation Tabs & Year Controls
         window.changeYear = function(delta) {
             window.currentYear += delta;
             renderAll();
@@ -439,65 +481,6 @@
             });
         };
 
-        // WhatsApp & Telegram Sharing
-        window.shareEventWhatsApp = function(title, start, end, cat) {
-            const text = encodeURIComponent(`📅 Evento: ${title}\n🗓 Desde: ${formatDisplayDate(start)} hasta: ${formatDisplayDate(end)}\n📂 Categoría: ${cat || 'General'}`);
-            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-        };
-
-        window.shareMilestoneWhatsApp = function(title, date, comment) {
-            const text = encodeURIComponent(`🚩 Hito: ${title}\n🗓 Fecha: ${formatDisplayDate(date)}\n💬 Nota: ${comment}`);
-            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-        };
-
-        window.saveTelegramConfig = function() {
-            const botToken = document.getElementById('tgBotToken').value.trim();
-            const chatId = document.getElementById('tgChatId').value.trim();
-            localStorage.setItem('tg_bot_token', botToken);
-            localStorage.setItem('tg_chat_id', chatId);
-            showToast('Configuración de Telegram guardada', 'success');
-            closeConfigModal();
-        };
-
-        window.sendTelegramNotification = async function(message) {
-            const botToken = localStorage.getItem('tg_bot_token');
-            const chatId = localStorage.getItem('tg_chat_id');
-            if (!botToken || !chatId) return;
-            try {
-                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
-                });
-            } catch(e) {
-                console.error("Error al enviar notificación a Telegram:", e);
-            }
-        };
-
-        window.testTelegramBot = async function() {
-            const botToken = document.getElementById('tgBotToken').value.trim();
-            const chatId = document.getElementById('tgChatId').value.trim();
-            if (!botToken || !chatId) {
-                showToast('Introduce Token y Chat ID primero', 'info');
-                return;
-            }
-            try {
-                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: '🚀 *¡Prueba Exitosa!* Tu bot de Telegram está correctamente conectado.', parse_mode: 'Markdown' })
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showToast('Mensaje de prueba enviado con éxito', 'success');
-                } else {
-                    showToast(`Error de Telegram: ${data.description || 'Verifica los datos'}`, 'info');
-                }
-            } catch(e) {
-                showToast('Error al conectar con la API de Telegram', 'info');
-            }
-        };
-
         function loadLocalData() {
             try {
                 window.eventsList = JSON.parse(localStorage.getItem('local_events') || '[]');
@@ -515,12 +498,14 @@
             
             document.querySelectorAll('.timeline-year-label').forEach(el => el.textContent = window.currentYear);
             
+            renderColorPalettePicker('colorPaletteGrid', 'eventColor');
+            renderColorPalettePicker('milestoneColorPaletteGrid', 'milestoneColor');
+
             renderCalendarGrid();
             renderTimelineView();
             renderRepositoryView();
             renderMilestonesView();
 
-            // Load TG config inputs
             const botToken = localStorage.getItem('tg_bot_token') || '';
             const chatId = localStorage.getItem('tg_chat_id') || '';
             if (document.getElementById('tgBotToken')) document.getElementById('tgBotToken').value = botToken;
@@ -528,16 +513,33 @@
             if (document.getElementById('tgWebAppUrl')) document.getElementById('tgWebAppUrl').value = window.location.href;
         };
 
-        window.copyWebAppUrl = function() {
-            const input = document.getElementById('tgWebAppUrl');
-            if (input && input.value) {
-                input.select();
-                document.execCommand('copy');
-                showToast('URL copiada al portapapeles', 'success');
-            }
-        };
+        // Render Color Swatches Selection Grid
+        function renderColorPalettePicker(containerId, hiddenInputId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const currentSelected = document.getElementById(hiddenInputId)?.value || 'indigo';
+            container.innerHTML = '';
 
-        // --- CALENDAR GRID RENDERER ---
+            window.colorPalette.forEach(c => {
+                const isSelected = c.id === currentSelected;
+                const swatch = document.createElement('button');
+                swatch.type = 'button';
+                swatch.className = `w-8 h-8 rounded-full border-2 transition-transform transform hover:scale-110 flex items-center justify-center ${isSelected ? 'border-slate-900 ring-2 ring-offset-2 ring-indigo-500 scale-105' : 'border-transparent'}`;
+                swatch.style.backgroundColor = c.hex;
+                swatch.title = c.name;
+                swatch.onclick = () => {
+                    document.getElementById(hiddenInputId).value = c.id;
+                    renderColorPalettePicker(containerId, hiddenInputId);
+                };
+
+                if (isSelected) {
+                    swatch.innerHTML = `<i class="fa-solid fa-check text-white text-xs"></i>`;
+                }
+                container.appendChild(swatch);
+            });
+        }
+
+        // --- CALENDAR GRID RENDERER WITH MULTI-EVENT GRADIENTS ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
             if (!grid) return;
@@ -559,7 +561,7 @@
                 daysGrid += `</div><div class="grid grid-cols-7 gap-1 text-center text-xs">`;
 
                 const firstDay = new Date(window.currentYear, month, 1);
-                let startingDay = firstDay.getDay() - 1; // Mon = 0
+                let startingDay = firstDay.getDay() - 1;
                 if (startingDay === -1) startingDay = 6; 
 
                 const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
@@ -580,26 +582,41 @@
                     const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
                     const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
 
+                    let inlineStyle = '';
                     let bgClass = 'hover:bg-slate-100 text-slate-700';
+
                     if (isWeekend) bgClass = 'bg-amber-50/60 text-amber-900 hover:bg-amber-100/60 font-medium';
                     if (isHoliday) bgClass = 'bg-red-50 text-red-700 font-bold border border-red-200';
 
-                    if (activeEvents.length > 0) {
-                        const topColor = getColorClass(activeEvents[0].color);
-                        bgClass = `${topColor} hover:opacity-90 font-bold shadow-xs`;
+                    // MULTI-COLOR BANDING FOR OVERLAPPING EVENTS
+                    if (activeEvents.length === 1) {
+                        const colObj = getColorObj(activeEvents[0].color);
+                        inlineStyle = `background-color: ${colObj.hex}; color: white;`;
+                        bgClass = 'font-bold shadow-xs hover:opacity-90';
+                    } else if (activeEvents.length > 1) {
+                        const hexes = activeEvents.map(e => getColorObj(e.color).hex);
+                        const uniqueHexes = [...new Set(hexes)];
+                        if (uniqueHexes.length === 1) {
+                            inlineStyle = `background-color: ${uniqueHexes[0]}; color: white;`;
+                        } else {
+                            const step = 100 / uniqueHexes.length;
+                            const gradientStops = uniqueHexes.map((hex, idx) => `${hex} ${idx * step}% ${(idx + 1) * step}%`).join(', ');
+                            inlineStyle = `background: linear-gradient(135deg, ${gradientStops}); color: white;`;
+                        }
+                        bgClass = 'font-bold shadow-xs hover:opacity-90';
                     }
 
-                    // Destacado visual prominente de los Hitos en el calendario
                     let milestoneBadge = '';
                     if (dayMilestones.length > 0) {
                         const milestoneTitle = dayMilestones[0].milestoneTitle || 'Hito';
-                        milestoneBadge = `<div class="w-full mt-0.5 px-0.5 py-0.2 bg-emerald-500 text-white rounded text-[8px] font-extrabold truncate flex items-center justify-center leading-none" title="${milestoneTitle}">
+                        const msColorHex = getColorObj(dayMilestones[0].color || 'emerald').hex;
+                        milestoneBadge = `<div class="w-full mt-0.5 px-0.5 py-0.2 text-white rounded text-[8px] font-extrabold truncate flex items-center justify-center leading-none shadow-xs" style="background-color: ${msColorHex};" title="${milestoneTitle}">
                             <i class="fa-solid fa-flag text-[7px] mr-0.5 shrink-0"></i><span class="truncate">${milestoneTitle}</span>
                         </div>`;
                     }
 
-                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="min-h-[2.5rem] p-0.5 rounded-lg flex flex-col items-center justify-between relative cursor-pointer transition ${bgClass}">
-                        <span class="leading-none mt-0.5">${day}</span>
+                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" style="${inlineStyle}" class="min-h-[2.5rem] p-0.5 rounded-lg flex flex-col items-center justify-between relative cursor-pointer transition ${bgClass}">
+                        <span class="leading-none mt-0.5 drop-shadow-xs">${day}</span>
                         ${milestoneBadge}
                     </button>`;
                 }
@@ -610,16 +627,58 @@
             }
         }
 
-        // --- TIMELINE / GANTT RENDERER ---
+        // --- TIMELINE / GANTT RENDERER (UNIFIED MASTER BAR & INDIVIDUAL ROWS) ---
         function renderTimelineView() {
+            const masterBar = document.getElementById('masterTimelineBar');
             const eventsContainer = document.getElementById('timelineEventsContainer');
             const milestonesContainer = document.getElementById('timelineMilestonesContainer');
-            if (!eventsContainer || !milestonesContainer) return;
+            if (!eventsContainer || !milestonesContainer || !masterBar) return;
 
             const totalDaysInYear = 365;
             const yearStart = new Date(window.currentYear, 0, 1);
 
-            // Renderizado de Eventos en la Línea de Tiempo
+            // 1. RENDER MASTER INTEGRATED TIMELINE BAR (All Events & Milestones overlaid)
+            let masterHtml = '';
+            
+            // Events on Master Bar
+            window.eventsList.forEach(evt => {
+                const start = new Date(evt.eventStart);
+                const end = new Date(evt.eventEnd);
+
+                const startDayIndex = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
+                const endDayIndex = Math.min(totalDaysInYear, (end - yearStart) / (1000 * 60 * 60 * 24) + 1);
+                
+                const leftPercent = Math.max(0, Math.min(100, (startDayIndex / totalDaysInYear) * 100));
+                const durationDays = Math.max(1, endDayIndex - startDayIndex);
+                const widthPercent = Math.max(1, Math.min(100 - leftPercent, (durationDays / totalDaysInYear) * 100));
+                const colObj = getColorObj(evt.color);
+
+                masterHtml += `<div class="absolute h-6 top-1.5 rounded-md opacity-85 hover:opacity-100 transition shadow-sm flex items-center px-1 text-[9px] text-white font-bold truncate cursor-pointer" 
+                    style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: ${colObj.hex};"
+                    onclick="editEvent('${evt.id}')"
+                    title="Evento: ${evt.eventTitle} (${formatDisplayDate(evt.eventStart)} - ${formatDisplayDate(evt.eventEnd)})">
+                    <span class="truncate">${evt.eventTitle}</span>
+                </div>`;
+            });
+
+            // Milestones on Master Bar (Flags)
+            window.milestonesList.forEach(ms => {
+                const dateObj = new Date(ms.milestoneDate);
+                const dayIndex = Math.max(0, (dateObj - yearStart) / (1000 * 60 * 60 * 24));
+                const positionPercent = Math.max(0, Math.min(100, (dayIndex / totalDaysInYear) * 100));
+                const msColObj = getColorObj(ms.color || 'emerald');
+
+                masterHtml += `<div class="absolute top-0 bottom-0 z-20 flex flex-col items-center cursor-pointer group" style="left: ${positionPercent}%;" onclick="editMilestone('${ms.id}')" title="Hito: ${ms.milestoneTitle} (${formatDisplayDate(ms.milestoneDate)})">
+                    <div class="w-0.5 h-full bg-white/60 group-hover:bg-white"></div>
+                    <div class="absolute top-1 -translate-x-1/2 p-1 rounded-full text-white shadow-md text-[8px]" style="background-color: ${msColObj.hex};">
+                        <i class="fa-solid fa-flag"></i>
+                    </div>
+                </div>`;
+            });
+
+            masterBar.innerHTML = masterHtml || `<div class="text-center text-slate-500 text-xs py-3">Añade eventos e hitos para ver el cronograma maestro</div>`;
+
+            // 2. RENDER INDIVIDUAL EVENTS
             if (window.eventsList.length === 0) {
                 eventsContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay eventos continuos para este año.</div>`;
             } else {
@@ -635,13 +694,12 @@
                     const durationDays = Math.max(1, endDayIndex - startDayIndex);
                     const widthPercent = Math.max(1.5, Math.min(100 - leftPercent, (durationDays / totalDaysInYear) * 100));
 
-                    const colorBg = getBarColorClass(evt.color);
-                    const badgeColor = getBadgeColorClass(evt.color);
+                    const colObj = getColorObj(evt.color);
 
                     html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 hover:bg-slate-100 transition space-y-1.5">
                         <div class="flex items-center justify-between text-xs">
                             <div class="flex items-center space-x-2 truncate">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${evt.category || 'Evento'}</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colObj.badgeClass}">${evt.category || 'Evento'}</span>
                                 <span class="font-bold text-slate-800 truncate">${evt.eventTitle}</span>
                             </div>
                             <div class="flex items-center space-x-2 shrink-0 text-[11px] text-slate-500 font-medium">
@@ -651,8 +709,8 @@
                             </div>
                         </div>
                         <div class="relative h-4 bg-slate-200/80 rounded-md w-full overflow-hidden">
-                            <div class="absolute h-full ${colorBg} rounded-md text-[9px] text-white font-bold flex items-center px-1.5 overflow-hidden whitespace-nowrap shadow-xs" 
-                                 style="left: ${leftPercent}%; width: ${widthPercent}%;">
+                            <div class="absolute h-full rounded-md text-[9px] text-white font-bold flex items-center px-1.5 overflow-hidden whitespace-nowrap shadow-xs" 
+                                 style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: ${colObj.hex};">
                                  ${evt.eventTitle}
                             </div>
                         </div>
@@ -661,7 +719,7 @@
                 eventsContainer.innerHTML = html;
             }
 
-            // Renderizado de Hitos en la Línea de Tiempo
+            // 3. RENDER INDIVIDUAL MILESTONES
             if (window.milestonesList.length === 0) {
                 milestonesContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay hitos puntuales registrados en la línea temporal.</div>`;
             } else {
@@ -670,22 +728,23 @@
                     const dateObj = new Date(ms.milestoneDate);
                     const dayIndex = Math.max(0, (dateObj - yearStart) / (1000 * 60 * 60 * 24));
                     const positionPercent = Math.max(0, Math.min(100, (dayIndex / totalDaysInYear) * 100));
+                    const msColObj = getColorObj(ms.color || 'emerald');
 
                     msHtml += `<div class="bg-emerald-50/60 border border-emerald-200 rounded-xl p-2.5 hover:bg-emerald-100/60 transition space-y-1.5">
                         <div class="flex items-center justify-between text-xs">
                             <div class="flex items-center space-x-2 truncate">
-                                <span class="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold uppercase"><i class="fa-solid fa-flag mr-1"></i>Hito</span>
+                                <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold uppercase" style="background-color: ${msColObj.hex};"><i class="fa-solid fa-flag mr-1"></i>Hito</span>
                                 <span class="font-bold text-slate-900 truncate">${ms.milestoneTitle}</span>
                             </div>
                             <div class="flex items-center space-x-2 shrink-0 text-[11px] text-slate-600 font-medium">
-                                <span><i class="fa-regular fa-calendar mr-1 text-emerald-600"></i>${formatDisplayDate(ms.milestoneDate)}</span>
+                                <span><i class="fa-regular fa-calendar mr-1"></i>${formatDisplayDate(ms.milestoneDate)}</span>
                                 <button onclick="editMilestone('${ms.id}')" class="text-slate-400 hover:text-emerald-700 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
                                 <button onclick="deleteMilestoneStore('${ms.id}')" class="text-slate-400 hover:text-red-600 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                         <div class="relative h-6 bg-slate-200/60 rounded-md w-full flex items-center">
-                            <div class="absolute border-l-2 border-dashed border-emerald-600 h-full top-0 z-0"></div>
-                            <div class="absolute -translate-x-1/2 flex items-center bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md z-10 whitespace-nowrap" style="left: ${positionPercent}%;">
+                            <div class="absolute border-l-2 border-dashed h-full top-0 z-0" style="border-color: ${msColObj.hex};"></div>
+                            <div class="absolute -translate-x-1/2 flex items-center text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md z-10 whitespace-nowrap" style="left: ${positionPercent}%; background-color: ${msColObj.hex};">
                                 <i class="fa-solid fa-flag mr-1 text-[8px]"></i>${ms.milestoneTitle}
                             </div>
                         </div>
@@ -714,11 +773,11 @@
 
             let html = '';
             filtered.forEach(evt => {
-                const badgeColor = getBadgeColorClass(evt.color);
+                const colObj = getColorObj(evt.color);
                 html += `<div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div class="space-y-1">
                         <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${badgeColor}">${evt.category || 'General'}</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${colObj.badgeClass}">${evt.category || 'General'}</span>
                             <h4 class="font-bold text-slate-900 text-sm">${evt.eventTitle}</h4>
                         </div>
                         <p class="text-xs text-slate-500 font-medium">
@@ -727,9 +786,6 @@
                         ${evt.description ? `<p class="text-xs text-slate-600">${evt.description}</p>` : ''}
                     </div>
                     <div class="flex items-center space-x-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
-                        <button onclick="shareEventWhatsApp('${evt.eventTitle}', '${evt.eventStart}', '${evt.eventEnd}', '${evt.category}')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition flex items-center">
-                            <i class="fa-brands fa-whatsapp mr-1"></i> Compartir
-                        </button>
                         <button onclick="editEvent('${evt.id}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition flex items-center">
                             <i class="fa-solid fa-pen mr-1"></i> Modificar
                         </button>
@@ -749,7 +805,7 @@
             if (!container) return;
 
             if (window.milestonesList.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos o comentarios registrados. Añade notas puntuales en los días que desees.</div>`;
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos o comentarios registrados.</div>`;
                 return;
             }
 
@@ -757,9 +813,10 @@
             let html = '';
 
             sorted.forEach(ms => {
+                const msColObj = getColorObj(ms.color || 'emerald');
                 html += `<div class="flex items-start justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-emerald-300 transition">
                     <div class="flex items-start space-x-3">
-                        <div class="bg-emerald-100 text-emerald-700 p-2.5 rounded-xl shrink-0 mt-0.5">
+                        <div class="text-white p-2.5 rounded-xl shrink-0 mt-0.5" style="background-color: ${msColObj.hex};">
                             <i class="fa-solid fa-flag"></i>
                         </div>
                         <div>
@@ -771,7 +828,6 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-1 shrink-0 ml-4">
-                        <button onclick="shareMilestoneWhatsApp('${ms.milestoneTitle}', '${ms.milestoneDate}', '${ms.milestoneComment}')" class="p-1.5 text-emerald-600 hover:text-emerald-800 transition" title="Compartir en WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i></button>
                         <button onclick="editMilestone('${ms.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600 transition"><i class="fa-solid fa-pen text-xs"></i></button>
                         <button onclick="deleteMilestoneStore('${ms.id}')" class="p-1.5 text-slate-400 hover:text-red-600 transition"><i class="fa-solid fa-trash text-xs"></i></button>
                     </div>
@@ -781,7 +837,7 @@
             container.innerHTML = html;
         }
 
-        // --- DATA MODIFIERS ---
+        // --- STORE MODIFIERS ---
         window.saveEventToStore = function(eventData) {
             saveEventLocal(eventData);
             sendTelegramNotification(`📅 *NUEVO EVENTO EN CRONOGRAMA*\n\n📌 *${eventData.eventTitle}*\n🗓 *Fechas:* ${formatDisplayDate(eventData.eventStart)} al ${formatDisplayDate(eventData.eventEnd)}\n📂 *Categoría:* ${eventData.category || 'General'}\n📝 *Notas:* ${eventData.description || 'Sin descripción'}`);
@@ -801,15 +857,11 @@
         }
 
         window.deleteEventStore = function(id) {
-            deleteEventLocal(id);
-            showToast('Evento eliminado', 'info');
-        };
-
-        function deleteEventLocal(id) {
             window.eventsList = window.eventsList.filter(e => e.id !== id);
             localStorage.setItem('local_events', JSON.stringify(window.eventsList));
             renderAll();
-        }
+            showToast('Evento eliminado', 'info');
+        };
 
         window.saveMilestoneStore = function(milestoneData) {
             saveMilestoneLocal(milestoneData);
@@ -830,23 +882,15 @@
         }
 
         window.deleteMilestoneStore = function(id) {
-            deleteMilestoneLocal(id);
-            showToast('Hito eliminado', 'info');
-        };
-
-        function deleteMilestoneLocal(id) {
             window.milestonesList = window.milestonesList.filter(m => m.id !== id);
             localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
             renderAll();
-        }
+            showToast('Hito eliminado', 'info');
+        };
 
-        // --- MODALS CONTROLS ---
-        window.openConfigModal = function() {
-            document.getElementById('configModal').classList.remove('hidden');
-        };
-        window.closeConfigModal = function() {
-            document.getElementById('configModal').classList.add('hidden');
-        };
+        // --- MODAL CONTROLS & EVENT HANDLERS ---
+        window.openConfigModal = function() { document.getElementById('configModal').classList.remove('hidden'); };
+        window.closeConfigModal = function() { document.getElementById('configModal').classList.add('hidden'); };
 
         window.openEventModal = function(presetDate = null) {
             document.getElementById('eventId').value = '';
@@ -857,11 +901,10 @@
             document.getElementById('eventCategory').value = '';
             document.getElementById('eventDesc').value = '';
             document.getElementById('eventModalTitle').textContent = 'Crear Nuevo Evento / Periodo';
+            renderColorPalettePicker('colorPaletteGrid', 'eventColor');
             document.getElementById('eventModal').classList.remove('hidden');
         };
-        window.closeEventModal = function() {
-            document.getElementById('eventModal').classList.add('hidden');
-        };
+        window.closeEventModal = function() { document.getElementById('eventModal').classList.add('hidden'); };
 
         window.editEvent = function(id) {
             const evt = window.eventsList.find(e => e.id === id);
@@ -874,6 +917,7 @@
             document.getElementById('eventCategory').value = evt.category || '';
             document.getElementById('eventDesc').value = evt.description || evt.eventDesc || '';
             document.getElementById('eventModalTitle').textContent = 'Editar Evento';
+            renderColorPalettePicker('colorPaletteGrid', 'eventColor');
             document.getElementById('eventModal').classList.remove('hidden');
         };
 
@@ -897,13 +941,13 @@
             document.getElementById('milestoneId').value = '';
             document.getElementById('milestoneTitle').value = '';
             document.getElementById('milestoneDate').value = presetDate || `${window.currentYear}-01-01`;
+            document.getElementById('milestoneColor').value = 'emerald';
             document.getElementById('milestoneComment').value = '';
             document.getElementById('milestoneModalTitle').textContent = 'Añadir Hito o Comentario';
+            renderColorPalettePicker('milestoneColorPaletteGrid', 'milestoneColor');
             document.getElementById('milestoneModal').classList.remove('hidden');
         };
-        window.closeMilestoneModal = function() {
-            document.getElementById('milestoneModal').classList.add('hidden');
-        };
+        window.closeMilestoneModal = function() { document.getElementById('milestoneModal').classList.add('hidden'); };
 
         window.editMilestone = function(id) {
             const ms = window.milestonesList.find(m => m.id === id);
@@ -911,8 +955,10 @@
             document.getElementById('milestoneId').value = ms.id;
             document.getElementById('milestoneTitle').value = ms.milestoneTitle;
             document.getElementById('milestoneDate').value = ms.milestoneDate;
+            document.getElementById('milestoneColor').value = ms.color || 'emerald';
             document.getElementById('milestoneComment').value = ms.milestoneComment;
             document.getElementById('milestoneModalTitle').textContent = 'Editar Hito';
+            renderColorPalettePicker('milestoneColorPaletteGrid', 'milestoneColor');
             document.getElementById('milestoneModal').classList.remove('hidden');
         };
 
@@ -923,6 +969,7 @@
                 id: id || undefined,
                 milestoneTitle: document.getElementById('milestoneTitle').value,
                 milestoneDate: document.getElementById('milestoneDate').value,
+                color: document.getElementById('milestoneColor').value,
                 milestoneComment: document.getElementById('milestoneComment').value
             };
             saveMilestoneStore(milestoneData);
@@ -953,14 +1000,14 @@
             if (activeEvents.length > 0) {
                 contentHtml += `<h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Eventos Activos</h4>`;
                 activeEvents.forEach(evt => {
+                    const colObj = getColorObj(evt.color);
                     contentHtml += `<div class="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2 mb-2">
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-slate-900 text-sm">${evt.eventTitle}</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded ${getBadgeColorClass(evt.color)} font-semibold">${evt.category || 'Evento'}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded ${colObj.badgeClass} font-semibold">${evt.category || 'Evento'}</span>
                         </div>
                         <p class="text-xs text-slate-500">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
                         <div class="flex items-center justify-end space-x-2 pt-1 border-t border-slate-200/60">
-                            <button onclick="shareEventWhatsApp('${evt.eventTitle}', '${evt.eventStart}', '${evt.eventEnd}', '${evt.category}')" class="text-emerald-600 hover:text-emerald-800 text-xs font-medium mr-auto"><i class="fa-brands fa-whatsapp mr-1"></i>Compartir</button>
                             <button onclick="closeDayModal(); editEvent('${evt.id}');" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold"><i class="fa-solid fa-pen mr-1"></i>Editar</button>
                             <button onclick="closeDayModal(); deleteEventStore('${evt.id}');" class="text-red-500 hover:text-red-700 text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i>Eliminar</button>
                         </div>
@@ -975,7 +1022,6 @@
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-emerald-900 text-sm"><i class="fa-solid fa-flag mr-1 text-emerald-600"></i> ${ms.milestoneTitle}</span>
                             <div class="flex items-center space-x-2">
-                                <button onclick="shareMilestoneWhatsApp('${ms.milestoneTitle}', '${ms.milestoneDate}', '${ms.milestoneComment}')" class="text-emerald-600 hover:text-emerald-800 text-xs"><i class="fa-brands fa-whatsapp"></i></button>
                                 <button onclick="closeDayModal(); editMilestone('${ms.id}');" class="text-slate-500 hover:text-emerald-600 text-xs"><i class="fa-solid fa-pen"></i></button>
                                 <button onclick="closeDayModal(); deleteMilestoneStore('${ms.id}');" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash"></i></button>
                             </div>
@@ -993,21 +1039,62 @@
             document.getElementById('dayDetailsModal').classList.remove('hidden');
         };
 
-        window.closeDayModal = function() {
-            document.getElementById('dayDetailsModal').classList.add('hidden');
+        window.closeDayModal = function() { document.getElementById('dayDetailsModal').classList.add('hidden'); };
+        window.quickAddEventOnDate = function() { closeDayModal(); openEventModal(window.selectedDateForModal); };
+        window.quickAddMilestoneOnDate = function() { closeDayModal(); openMilestoneModal(window.selectedDateForModal); };
+
+        // --- TELEGRAM UTILS ---
+        window.saveTelegramConfig = function() {
+            const botToken = document.getElementById('tgBotToken').value.trim();
+            const chatId = document.getElementById('tgChatId').value.trim();
+            localStorage.setItem('tg_bot_token', botToken);
+            localStorage.setItem('tg_chat_id', chatId);
+            showToast('Configuración de Telegram guardada', 'success');
+            closeConfigModal();
         };
 
-        window.quickAddEventOnDate = function() {
-            closeDayModal();
-            openEventModal(window.selectedDateForModal);
+        window.sendTelegramNotification = async function(message) {
+            const botToken = localStorage.getItem('tg_bot_token');
+            const chatId = localStorage.getItem('tg_chat_id');
+            if (!botToken || !chatId) return;
+            try {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
+                });
+            } catch(e) { console.error("Error Telegram API:", e); }
         };
 
-        window.quickAddMilestoneOnDate = function() {
-            closeDayModal();
-            openMilestoneModal(window.selectedDateForModal);
+        window.testTelegramBot = async function() {
+            const botToken = document.getElementById('tgBotToken').value.trim();
+            const chatId = document.getElementById('tgChatId').value.trim();
+            if (!botToken || !chatId) {
+                showToast('Introduce Token y Chat ID primero', 'info');
+                return;
+            }
+            try {
+                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: '🚀 *¡Prueba Exitosa!* Tu bot de Telegram está correctamente conectado.', parse_mode: 'Markdown' })
+                });
+                const data = await res.json();
+                if (data.ok) showToast('Mensaje de prueba enviado con éxito', 'success');
+                else showToast(`Error de Telegram: ${data.description || 'Verifica los datos'}`, 'info');
+            } catch(e) { showToast('Error al conectar con la API de Telegram', 'info'); }
         };
 
-        // --- UTILS ---
+        window.copyWebAppUrl = function() {
+            const input = document.getElementById('tgWebAppUrl');
+            if (input && input.value) {
+                input.select();
+                document.execCommand('copy');
+                showToast('URL copiada al portapapeles', 'success');
+            }
+        };
+
+        // --- HELPER UTILS ---
         function formatDateISO(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -1022,37 +1109,9 @@
             return `${parts[2]}/${parts[1]}/${parts[0]}`;
         }
 
-        function getColorClass(color) {
-            switch(color) {
-                case 'blue': return 'bg-blue-600 text-white';
-                case 'emerald': return 'bg-emerald-600 text-white';
-                case 'amber': return 'bg-amber-600 text-white';
-                case 'rose': return 'bg-rose-600 text-white';
-                case 'purple': return 'bg-purple-600 text-white';
-                default: return 'bg-indigo-600 text-white';
-            }
-        }
-
-        function getBarColorClass(color) {
-            switch(color) {
-                case 'blue': return 'bg-blue-500';
-                case 'emerald': return 'bg-emerald-500';
-                case 'amber': return 'bg-amber-500';
-                case 'rose': return 'bg-rose-500';
-                case 'purple': return 'bg-purple-500';
-                default: return 'bg-indigo-500';
-            }
-        }
-
-        function getBadgeColorClass(color) {
-            switch(color) {
-                case 'blue': return 'bg-blue-100 text-blue-700';
-                case 'emerald': return 'bg-emerald-100 text-emerald-700';
-                case 'amber': return 'bg-amber-100 text-amber-700';
-                case 'rose': return 'bg-rose-100 text-rose-700';
-                case 'purple': return 'bg-purple-100 text-purple-700';
-                default: return 'bg-indigo-100 text-indigo-700';
-            }
+        function getColorObj(colorKey) {
+            const found = window.colorPalette.find(c => c.id === colorKey);
+            return found || window.colorPalette[0];
         }
 
         window.showToast = function(message, type = 'success') {
@@ -1071,7 +1130,7 @@
             }, 3000);
         };
 
-        // Initialize on Load
+        // Initialize App
         function initApp() {
             if (window.Telegram && window.Telegram.WebApp) {
                 try {
