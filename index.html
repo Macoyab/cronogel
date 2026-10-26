@@ -27,6 +27,21 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Ensure Date Inputs display clearly across all browsers & Telegram WebApp */
+        input[type="date"] {
+            color-scheme: light;
+            color: #0f172a !important;
+            background-color: #ffffff !important;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(0.3);
+            opacity: 0.8;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-full flex flex-col font-sans overflow-hidden">
@@ -89,6 +104,18 @@
         <!-- TAB 1: CALENDAR VIEW -->
         <div id="tab-calendar" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
             <div class="max-w-7xl mx-auto space-y-6">
+                <!-- Leyenda del Calendario -->
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-xs">
+                    <div class="flex items-center space-x-4 flex-wrap gap-y-1">
+                        <span class="font-bold text-slate-800">Leyenda:</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-indigo-600 inline-block mr-1.5"></span> Evento Planificado</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-emerald-500 inline-block mr-1.5"></span> Hito Destacado</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block mr-1.5"></span> Festivo Nacional</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-amber-50 border border-amber-200 inline-block mr-1.5"></span> Fin de semana</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400 font-medium">Haz clic en cualquier día para gestionar eventos e hitos</span>
+                </div>
+
                 <!-- 12 Month Grid -->
                 <div id="monthsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <!-- Dynamic rendering of 12 months -->
@@ -101,11 +128,14 @@
             <div class="max-w-7xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900">Línea de Tiempo Anual Visual</h2>
-                        <p class="text-xs text-slate-500">Vista panorámica completa del año <span class="timeline-year-label">2026</span> organizada por meses y códigos de color.</p>
+                        <h2 class="text-lg font-bold text-slate-900">Línea de Tiempo Anual Integradora</h2>
+                        <p class="text-xs text-slate-500">Panorama completo del año <span class="timeline-year-label">2026</span> con eventos continuos e hitos puntuales en una misma vista.</p>
                     </div>
-                    <div class="flex items-center space-x-3">
-                        <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openMilestoneModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
+                            <i class="fa-solid fa-flag mr-1.5"></i> Nuevo Hito
+                        </button>
+                        <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
                             <i class="fa-solid fa-plus mr-1.5"></i> Nuevo Evento
                         </button>
                     </div>
@@ -113,17 +143,32 @@
 
                 <!-- Contenedor Matriz Anual con Desplazamiento Horizontal en Pantallas Pequeñas -->
                 <div class="overflow-x-auto custom-scrollbar">
-                    <div class="min-w-[800px]">
+                    <div class="min-w-[850px]">
                         <!-- Cabecera Meses del Año -->
-                        <div class="grid grid-cols-12 gap-1 bg-slate-100 p-2 rounded-xl border border-slate-200 mb-3 text-center text-xs font-bold text-slate-700">
+                        <div class="grid grid-cols-12 gap-1 bg-slate-100 p-2 rounded-xl border border-slate-200 mb-4 text-center text-xs font-bold text-slate-700 shadow-xs">
                             <div>Ene</div><div>Feb</div><div>Mar</div><div>Abr</div>
                             <div>May</div><div>Jun</div><div>Jul</div><div>Ago</div>
                             <div>Sep</div><div>Oct</div><div>Nov</div><div>Dic</div>
                         </div>
 
-                        <!-- Filas de Eventos Anuales -->
-                        <div id="timelineContainer" class="space-y-2">
-                            <!-- Inyectado dinámicamente -->
+                        <!-- Sección de Eventos Anuales -->
+                        <div class="mb-6 space-y-2">
+                            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center">
+                                <i class="fa-solid fa-bars-staggered text-indigo-600 mr-2"></i> Eventos y Periodos Continuos
+                            </h3>
+                            <div id="timelineEventsContainer" class="space-y-2">
+                                <!-- Inyectado dinámicamente -->
+                            </div>
+                        </div>
+
+                        <!-- Sección de Hitos Destacados en la Línea de Tiempo -->
+                        <div class="pt-4 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center">
+                                <i class="fa-solid fa-flag text-emerald-600 mr-2"></i> Hitos Puntuales Clave en la Línea Temporal
+                            </h3>
+                            <div id="timelineMilestonesContainer" class="space-y-2">
+                                <!-- Inyectado dinámicamente -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -192,10 +237,9 @@
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start space-x-3 text-amber-800">
                     <i class="fa-solid fa-shield-halved text-amber-600 text-base mt-0.5"></i>
                     <div>
-                        <p class="font-bold mb-0.5 text-xs">¿Por qué no abre en el navegador o en Telegram?</p>
+                        <p class="font-bold mb-0.5 text-xs">Integración directa con Telegram</p>
                         <p class="text-[11px] leading-relaxed">
-                            • Telegram exige enlace <strong>HTTPS</strong> público (las direcciones <code>file://</code> o <code>http://localhost</code> no abren dentro del cliente Telegram).<br>
-                            • Para abrirlo en cualquier navegador o en Telegram, despliega esta app gratis en <strong>GitHub Pages, Netlify o Vercel</strong>, o usa un túnel seguro con <strong>ngrok</strong>.
+                            Pega la dirección URL HTTPS de tu servidor (por ejemplo GitHub Pages) y las claves de tu Bot para habilitar Mini App y notificaciones automáticas al equipo.
                         </p>
                     </div>
                 </div>
@@ -229,8 +273,7 @@
                         <li>Crea un **Grupo de Telegram** e invita a los miembros autorizados.</li>
                         <li>Ve a <code class="bg-slate-200 px-1 rounded text-slate-800">BotFather</code> en Telegram, crea un Bot con <code class="bg-slate-200 px-1 rounded text-slate-800">/newbot</code> y copia el **Token**.</li>
                         <li>Añade el bot a tu grupo y dale **Permisos de Administrador** para publicar.</li>
-                        <li>Usa <code class="bg-slate-200 px-1 rounded text-slate-800">/setmenubutton</code> en BotFather con la URL de esta aplicación para abrirla directamente como **Mini App dentro de Telegram**.</li>
-                        <li>En los ajustes del grupo, activa **Proteger contenido** para evitar que reenvíen datos fuera del chat.</li>
+                        <li>Usa <code class="bg-slate-200 px-1 rounded text-slate-800">/setmenubutton</code> en BotFather con la URL HTTPS de tu app para abrirla como **Mini App dentro de Telegram**.</li>
                     </ol>
                 </div>
             </div>
@@ -252,16 +295,16 @@
                 <input type="hidden" id="eventId">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Evento</label>
-                    <input type="text" id="eventTitle" required placeholder="Ej: Lanzamiento de Producto, Sprint 1..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="eventTitle" required placeholder="Ej: Lanzamiento de Producto, Sprint 1..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha de Inicio</label>
-                        <input type="date" id="eventStart" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="date" id="eventStart" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha de Fin</label>
-                        <input type="date" id="eventEnd" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="date" id="eventEnd" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -308,7 +351,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha Específica</label>
-                    <input type="date" id="milestoneDate" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="date" id="milestoneDate" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Comentario / Nota Detallada</label>
@@ -522,7 +565,7 @@
                 const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
 
                 for (let i = 0; i < startingDay; i++) {
-                    daysGrid += `<div class="h-8"></div>`;
+                    daysGrid += `<div class="min-h-[2.5rem]"></div>`;
                 }
 
                 for (let day = 1; day <= daysInMonth; day++) {
@@ -541,19 +584,23 @@
                     if (isWeekend) bgClass = 'bg-amber-50/60 text-amber-900 hover:bg-amber-100/60 font-medium';
                     if (isHoliday) bgClass = 'bg-red-50 text-red-700 font-bold border border-red-200';
 
-                    let indicators = '';
                     if (activeEvents.length > 0) {
                         const topColor = getColorClass(activeEvents[0].color);
                         bgClass = `${topColor} hover:opacity-90 font-bold shadow-xs`;
                     }
 
+                    // Destacado visual prominente de los Hitos en el calendario
+                    let milestoneBadge = '';
                     if (dayMilestones.length > 0) {
-                        indicators += `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 border border-white inline-block absolute top-0.5 right-0.5"></span>`;
+                        const milestoneTitle = dayMilestones[0].milestoneTitle || 'Hito';
+                        milestoneBadge = `<div class="w-full mt-0.5 px-0.5 py-0.2 bg-emerald-500 text-white rounded text-[8px] font-extrabold truncate flex items-center justify-center leading-none" title="${milestoneTitle}">
+                            <i class="fa-solid fa-flag text-[7px] mr-0.5 shrink-0"></i><span class="truncate">${milestoneTitle}</span>
+                        </div>`;
                     }
 
-                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-8 rounded-lg flex flex-col items-center justify-center relative cursor-pointer transition ${bgClass}">
-                        <span>${day}</span>
-                        ${indicators}
+                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="min-h-[2.5rem] p-0.5 rounded-lg flex flex-col items-center justify-between relative cursor-pointer transition ${bgClass}">
+                        <span class="leading-none mt-0.5">${day}</span>
+                        ${milestoneBadge}
                     </button>`;
                 }
 
@@ -565,54 +612,87 @@
 
         // --- TIMELINE / GANTT RENDERER ---
         function renderTimelineView() {
-            const container = document.getElementById('timelineContainer');
-            if (!container) return;
+            const eventsContainer = document.getElementById('timelineEventsContainer');
+            const milestonesContainer = document.getElementById('timelineMilestonesContainer');
+            if (!eventsContainer || !milestonesContainer) return;
 
+            const totalDaysInYear = 365;
+            const yearStart = new Date(window.currentYear, 0, 1);
+
+            // Renderizado de Eventos en la Línea de Tiempo
             if (window.eventsList.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay eventos registrados para este año. ¡Crea el primero!</div>`;
-                return;
+                eventsContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay eventos continuos para este año.</div>`;
+            } else {
+                let html = '';
+                window.eventsList.forEach(evt => {
+                    const start = new Date(evt.eventStart);
+                    const end = new Date(evt.eventEnd);
+
+                    const startDayIndex = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
+                    const endDayIndex = Math.min(totalDaysInYear, (end - yearStart) / (1000 * 60 * 60 * 24) + 1);
+                    
+                    const leftPercent = Math.max(0, Math.min(100, (startDayIndex / totalDaysInYear) * 100));
+                    const durationDays = Math.max(1, endDayIndex - startDayIndex);
+                    const widthPercent = Math.max(1.5, Math.min(100 - leftPercent, (durationDays / totalDaysInYear) * 100));
+
+                    const colorBg = getBarColorClass(evt.color);
+                    const badgeColor = getBadgeColorClass(evt.color);
+
+                    html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 hover:bg-slate-100 transition space-y-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${evt.category || 'Evento'}</span>
+                                <span class="font-bold text-slate-800 truncate">${evt.eventTitle}</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0 text-[11px] text-slate-500 font-medium">
+                                <span>${formatDisplayDate(evt.eventStart)} → ${formatDisplayDate(evt.eventEnd)}</span>
+                                <button onclick="editEvent('${evt.id}')" class="text-slate-400 hover:text-indigo-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteEventStore('${evt.id}')" class="text-slate-400 hover:text-red-600 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="relative h-4 bg-slate-200/80 rounded-md w-full overflow-hidden">
+                            <div class="absolute h-full ${colorBg} rounded-md text-[9px] text-white font-bold flex items-center px-1.5 overflow-hidden whitespace-nowrap shadow-xs" 
+                                 style="left: ${leftPercent}%; width: ${widthPercent}%;">
+                                 ${evt.eventTitle}
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                eventsContainer.innerHTML = html;
             }
 
-            let html = '';
-            const totalDaysInYear = 365;
+            // Renderizado de Hitos en la Línea de Tiempo
+            if (window.milestonesList.length === 0) {
+                milestonesContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay hitos puntuales registrados en la línea temporal.</div>`;
+            } else {
+                let msHtml = '';
+                window.milestonesList.forEach(ms => {
+                    const dateObj = new Date(ms.milestoneDate);
+                    const dayIndex = Math.max(0, (dateObj - yearStart) / (1000 * 60 * 60 * 24));
+                    const positionPercent = Math.max(0, Math.min(100, (dayIndex / totalDaysInYear) * 100));
 
-            window.eventsList.forEach(evt => {
-                const start = new Date(evt.eventStart);
-                const end = new Date(evt.eventEnd);
-
-                const yearStart = new Date(window.currentYear, 0, 1);
-                const startDayIndex = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
-                const endDayIndex = Math.min(totalDaysInYear, (end - yearStart) / (1000 * 60 * 60 * 24) + 1);
-                
-                const leftPercent = Math.max(0, Math.min(100, (startDayIndex / totalDaysInYear) * 100));
-                const durationDays = Math.max(1, endDayIndex - startDayIndex);
-                const widthPercent = Math.max(1.5, Math.min(100 - leftPercent, (durationDays / totalDaysInYear) * 100));
-
-                const colorBg = getBarColorClass(evt.color);
-                const badgeColor = getBadgeColorClass(evt.color);
-
-                html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 hover:bg-slate-100 transition space-y-1.5">
-                    <div class="flex items-center justify-between text-xs">
-                        <div class="flex items-center space-x-2 truncate">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeColor}">${evt.category || 'Evento'}</span>
-                            <span class="font-bold text-slate-800 truncate">${evt.eventTitle}</span>
+                    msHtml += `<div class="bg-emerald-50/60 border border-emerald-200 rounded-xl p-2.5 hover:bg-emerald-100/60 transition space-y-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold uppercase"><i class="fa-solid fa-flag mr-1"></i>Hito</span>
+                                <span class="font-bold text-slate-900 truncate">${ms.milestoneTitle}</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0 text-[11px] text-slate-600 font-medium">
+                                <span><i class="fa-regular fa-calendar mr-1 text-emerald-600"></i>${formatDisplayDate(ms.milestoneDate)}</span>
+                                <button onclick="editMilestone('${ms.id}')" class="text-slate-400 hover:text-emerald-700 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteMilestoneStore('${ms.id}')" class="text-slate-400 hover:text-red-600 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2 shrink-0 text-[11px] text-slate-500 font-medium">
-                            <span>${formatDisplayDate(evt.eventStart)} → ${formatDisplayDate(evt.eventEnd)}</span>
-                            <button onclick="editEvent('${evt.id}')" class="text-slate-400 hover:text-indigo-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteEventStore('${evt.id}')" class="text-slate-400 hover:text-red-600 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                        <div class="relative h-6 bg-slate-200/60 rounded-md w-full flex items-center">
+                            <div class="absolute border-l-2 border-dashed border-emerald-600 h-full top-0 z-0"></div>
+                            <div class="absolute -translate-x-1/2 flex items-center bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md z-10 whitespace-nowrap" style="left: ${positionPercent}%;">
+                                <i class="fa-solid fa-flag mr-1 text-[8px]"></i>${ms.milestoneTitle}
+                            </div>
                         </div>
-                    </div>
-                    <div class="relative h-4 bg-slate-200/80 rounded-md w-full overflow-hidden">
-                        <div class="absolute h-full ${colorBg} rounded-md text-[9px] text-white font-bold flex items-center px-1.5 overflow-hidden whitespace-nowrap shadow-xs" 
-                             style="left: ${leftPercent}%; width: ${widthPercent}%;">
-                             ${evt.eventTitle}
-                        </div>
-                    </div>
-                </div>`;
-            });
-
-            container.innerHTML = html;
+                    </div>`;
+                });
+                milestonesContainer.innerHTML = msHtml;
+            }
         }
 
         // --- REPOSITORIO DE EVENTOS RENDERER ---
@@ -891,7 +971,7 @@
             if (dayMilestones.length > 0) {
                 contentHtml += `<h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 mt-4">Hitos y Comentarios</h4>`;
                 dayMilestones.forEach(ms => {
-                    contentHtml += `<div class="p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-1 mb-2">
+                    contentHtml += `<div class="p-3 rounded-xl border border-emerald-200 bg-emerald-50 space-y-1 mb-2">
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-emerald-900 text-sm"><i class="fa-solid fa-flag mr-1 text-emerald-600"></i> ${ms.milestoneTitle}</span>
                             <div class="flex items-center space-x-2">
