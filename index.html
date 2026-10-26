@@ -85,6 +85,17 @@
     </div>
 
     <!-- Main Content Area -->
+    <main class="flex-1 overflow-hidden relative flex flex-col">
+        <!-- TAB 1: CALENDAR VIEW -->
+        <div id="tab-calendar" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+            <div class="max-w-7xl mx-auto space-y-6">
+                <!-- 12 Month Grid -->
+                <div id="monthsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Dynamic rendering of 12 months -->
+                </div>
+            </div>
+        </div>
+
         <!-- TAB 2: TIMELINE / GANTT VIEW (ANUAL COMPACTA DE UN VISTAZO) -->
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
@@ -178,18 +189,18 @@
             <div class="p-6 space-y-4 text-xs text-slate-600 max-h-[75vh] overflow-y-auto custom-scrollbar">
                 
                 <!-- Security Banner -->
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start space-x-3 text-amber-800">
-                <i class="fa-solid fa-shield-halved text-amber-600 text-base mt-0.5"></i>
-                <div>
-                    <p class="font-bold mb-0.5 text-xs">¿Por qué no abre en el navegador o en Telegram?</p>
-                    <p class="text-[11px] leading-relaxed">
-                        • Telegram exige enlace <strong>HTTPS</strong> público (las direcciones <code>file://</code> o <code>http://localhost</code> no abren dentro del cliente Telegram).<br>
-                        • Para abrirlo en cualquier navegador o en Telegram, despliega esta app gratis en <strong>GitHub Pages, Netlify o Vercel</strong>, o usa un túnel seguro con <strong>ngrok</strong>.
-                    </p>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start space-x-3 text-amber-800">
+                    <i class="fa-solid fa-shield-halved text-amber-600 text-base mt-0.5"></i>
+                    <div>
+                        <p class="font-bold mb-0.5 text-xs">¿Por qué no abre en el navegador o en Telegram?</p>
+                        <p class="text-[11px] leading-relaxed">
+                            • Telegram exige enlace <strong>HTTPS</strong> público (las direcciones <code>file://</code> o <code>http://localhost</code> no abren dentro del cliente Telegram).<br>
+                            • Para abrirlo en cualquier navegador o en Telegram, despliega esta app gratis en <strong>GitHub Pages, Netlify o Vercel</strong>, o usa un túnel seguro con <strong>ngrok</strong>.
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="space-y-3">
+                <div class="space-y-3">
                     <div>
                         <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">URL de esta App (Web App Link)</label>
                         <div class="flex items-center space-x-2">
@@ -334,13 +345,9 @@
     <!-- CUSTOM TOAST NOTIFICATION -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
-    <!-- FIREBASE AND APP SCRIPT -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global State
+    <!-- MAIN APP SCRIPT -->
+    <script>
+        // Global State & Core Logic
         window.currentYear = new Date().getFullYear();
         window.currentTab = 'calendar';
         window.eventsList = [];
@@ -363,15 +370,11 @@
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         const dayNamesMin = ["L", "M", "X", "J", "V", "S", "D"];
 
-        let db, auth, userId = null;
-        let forceLocalMode = localStorage.getItem('force_local_mode') === 'true';
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'annual-calendar-collab-v1';
-
         // Navigation Tabs & Year Controls
         window.changeYear = function(delta) {
             window.currentYear += delta;
             renderAll();
-        }
+        };
 
         window.switchTab = function(tabName) {
             window.currentTab = tabName;
@@ -391,23 +394,18 @@
                         : 'text-slate-500 pb-1 shrink-0 px-2';
                 }
             });
-        }
+        };
 
         // WhatsApp & Telegram Sharing
         window.shareEventWhatsApp = function(title, start, end, cat) {
             const text = encodeURIComponent(`📅 Evento: ${title}\n🗓 Desde: ${formatDisplayDate(start)} hasta: ${formatDisplayDate(end)}\n📂 Categoría: ${cat || 'General'}`);
             window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-        }
+        };
 
         window.shareMilestoneWhatsApp = function(title, date, comment) {
             const text = encodeURIComponent(`🚩 Hito: ${title}\n🗓 Fecha: ${formatDisplayDate(date)}\n💬 Nota: ${comment}`);
             window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-        }
-
-        window.shareMonthWhatsApp = function() {
-            const text = encodeURIComponent(`📅 Cronograma Anual ${window.currentYear}\nConsulta los eventos e hitos programados en el calendario colaborativo.`);
-            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-        }
+        };
 
         window.saveTelegramConfig = function() {
             const botToken = document.getElementById('tgBotToken').value.trim();
@@ -416,7 +414,7 @@
             localStorage.setItem('tg_chat_id', chatId);
             showToast('Configuración de Telegram guardada', 'success');
             closeConfigModal();
-        }
+        };
 
         window.sendTelegramNotification = async function(message) {
             const botToken = localStorage.getItem('tg_bot_token');
@@ -431,7 +429,7 @@
             } catch(e) {
                 console.error("Error al enviar notificación a Telegram:", e);
             }
-        }
+        };
 
         window.testTelegramBot = async function() {
             const botToken = document.getElementById('tgBotToken').value.trim();
@@ -444,7 +442,7 @@
                 const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: '🚀 *¡Prueba Exitosa!* Tu bot de Telegram está correctamente conectado con el Cronograma Anual.', parse_mode: 'Markdown' })
+                    body: JSON.stringify({ chat_id: chatId, text: '🚀 *¡Prueba Exitosa!* Tu bot de Telegram está correctamente conectado.', parse_mode: 'Markdown' })
                 });
                 const data = await res.json();
                 if (data.ok) {
@@ -455,114 +453,23 @@
             } catch(e) {
                 showToast('Error al conectar con la API de Telegram', 'info');
             }
-        }
-
-        window.sendMonthToTelegram = function() {
-            const eventsCount = window.eventsList.length;
-            const milestonesCount = window.milestonesList.length;
-            const text = `📊 *RESUMEN DEL CRONOGRAMA ANUAL (${window.currentYear})*\n\n📅 *Eventos totales:* ${eventsCount}\n🚩 *Hitos registrados:* ${milestonesCount}\n\nAccede al calendario para consultar el detalle completo.`;
-            sendTelegramNotification(text);
-            showToast('Resumen enviado al canal/grupo de Telegram', 'success');
-        }
-
-        async function initFirebase() {
-            // Cargar datos locales inmediatamente para que siempre se renderice el contenido
-            loadLocalData();
-
-            if (forceLocalMode) {
-                setLocalModeUI();
-                return;
-            }
-
-            try {
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    const firebaseConfig = JSON.parse(__firebase_config);
-                    const app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-
-                    userId = auth.currentUser?.uid || crypto.randomUUID();
-                    updateSyncUI('cloud', 'Sincronizado en vivo');
-                    setupListeners();
-                } else {
-                    setLocalModeUI();
-                }
-            } catch (err) {
-                console.warn("Firebase no disponible, usando Modo Local:", err);
-                setLocalModeUI();
-            }
-        }
-
-        window.toggleStorageMode = function() {
-            forceLocalMode = !forceLocalMode;
-            localStorage.setItem('force_local_mode', forceLocalMode);
-            showToast(forceLocalMode ? 'Modo Local activado (datos en navegador)' : 'Intentando conectar a Nube/Firebase...', 'info');
-            setTimeout(() => location.reload(), 500);
-        }
-
-        function setLocalModeUI() {
-            db = null;
-            updateSyncUI('local', 'Modo Local (Haz clic para conectar)');
-        }
-
-        function updateSyncUI(mode, label) {
-            const btn = document.getElementById('syncStatusBtn');
-            if (!btn) return;
-            if (mode === 'cloud') {
-                btn.innerHTML = `<i class="fa-solid fa-circle text-emerald-500 mr-1.5 text-[8px]"></i> ${label}`;
-                btn.className = "inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium cursor-pointer hover:bg-emerald-100 transition";
-            } else {
-                btn.innerHTML = `<i class="fa-solid fa-hard-drive text-amber-500 mr-1.5 text-xs"></i> ${label}`;
-                btn.className = "inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium cursor-pointer hover:bg-amber-100 transition";
-            }
-        }
-
-        function setupListeners() {
-            if (!db) return;
-            try {
-                const eventsCol = collection(db, 'artifacts', appId, 'public', 'data', 'events');
-                onSnapshot(eventsCol, (snapshot) => {
-                    window.eventsList = [];
-                    snapshot.forEach(docSnap => {
-                        window.eventsList.push({ id: docSnap.id, ...docSnap.data() });
-                    });
-                    renderAll();
-                }, (error) => {
-                    console.error("Error eventos Firebase:", error);
-                    setLocalModeUI();
-                    loadLocalData();
-                });
-
-                const milestonesCol = collection(db, 'artifacts', appId, 'public', 'data', 'milestones');
-                onSnapshot(milestonesCol, (snapshot) => {
-                    window.milestonesList = [];
-                    snapshot.forEach(docSnap => {
-                        window.milestonesList.push({ id: docSnap.id, ...docSnap.data() });
-                    });
-                    renderAll();
-                }, (error) => {
-                    console.error("Error hitos Firebase:", error);
-                });
-            } catch (e) {
-                setLocalModeUI();
-                loadLocalData();
-            }
-        }
+        };
 
         function loadLocalData() {
-            window.eventsList = JSON.parse(localStorage.getItem('local_events') || '[]');
-            window.milestonesList = JSON.parse(localStorage.getItem('local_milestones') || '[]');
+            try {
+                window.eventsList = JSON.parse(localStorage.getItem('local_events') || '[]');
+                window.milestonesList = JSON.parse(localStorage.getItem('local_milestones') || '[]');
+            } catch(e) {
+                window.eventsList = [];
+                window.milestonesList = [];
+            }
             renderAll();
         }
 
         window.renderAll = function() {
-            document.getElementById('currentYearLabel').textContent = window.currentYear;
+            const currentYearLabel = document.getElementById('currentYearLabel');
+            if (currentYearLabel) currentYearLabel.textContent = window.currentYear;
+            
             document.querySelectorAll('.timeline-year-label').forEach(el => el.textContent = window.currentYear);
             
             renderCalendarGrid();
@@ -576,7 +483,7 @@
             if (document.getElementById('tgBotToken')) document.getElementById('tgBotToken').value = botToken;
             if (document.getElementById('tgChatId')) document.getElementById('tgChatId').value = chatId;
             if (document.getElementById('tgWebAppUrl')) document.getElementById('tgWebAppUrl').value = window.location.href;
-        }
+        };
 
         window.copyWebAppUrl = function() {
             const input = document.getElementById('tgWebAppUrl');
@@ -585,11 +492,12 @@
                 document.execCommand('copy');
                 showToast('URL copiada al portapapeles', 'success');
             }
-        }
+        };
 
         // --- CALENDAR GRID RENDERER ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
+            if (!grid) return;
             grid.innerHTML = '';
 
             for (let month = 0; month < 12; month++) {
@@ -613,12 +521,10 @@
 
                 const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
 
-                // Empty padding days
                 for (let i = 0; i < startingDay; i++) {
                     daysGrid += `<div class="h-8"></div>`;
                 }
 
-                // Month days
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateObj = new Date(window.currentYear, month, day);
                     const dateStr = formatDateISO(dateObj);
@@ -628,7 +534,6 @@
                     const mmdd = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const isHoliday = window.fixedHolidays[mmdd];
 
-                    // Check active events and milestones
                     const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
                     const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
 
@@ -658,9 +563,11 @@
             }
         }
 
-        // --- TIMELINE / GANTT RENDERER (LÍNEA DE TIEMPO ANUAL VISUAL) ---
+        // --- TIMELINE / GANTT RENDERER ---
         function renderTimelineView() {
             const container = document.getElementById('timelineContainer');
+            if (!container) return;
+
             if (window.eventsList.length === 0) {
                 container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay eventos registrados para este año. ¡Crea el primero!</div>`;
                 return;
@@ -673,7 +580,6 @@
                 const start = new Date(evt.eventStart);
                 const end = new Date(evt.eventEnd);
 
-                // Calcular posición global del año en porcentaje
                 const yearStart = new Date(window.currentYear, 0, 1);
                 const startDayIndex = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
                 const endDayIndex = Math.min(totalDaysInYear, (end - yearStart) / (1000 * 60 * 60 * 24) + 1);
@@ -697,7 +603,6 @@
                             <button onclick="deleteEventStore('${evt.id}')" class="text-slate-400 hover:text-red-600 transition" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
-                    <!-- Barra Visual Representativa del Año Completo -->
                     <div class="relative h-4 bg-slate-200/80 rounded-md w-full overflow-hidden">
                         <div class="absolute h-full ${colorBg} rounded-md text-[9px] text-white font-bold flex items-center px-1.5 overflow-hidden whitespace-nowrap shadow-xs" 
                              style="left: ${leftPercent}%; width: ${widthPercent}%;">
@@ -761,6 +666,8 @@
         // --- MILESTONES RENDERER ---
         function renderMilestonesView() {
             const container = document.getElementById('milestonesListContainer');
+            if (!container) return;
+
             if (window.milestonesList.length === 0) {
                 container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos o comentarios registrados. Añade notas puntuales en los días que desees.</div>`;
                 return;
@@ -795,28 +702,11 @@
         }
 
         // --- DATA MODIFIERS ---
-        window.saveEventToStore = async function(eventData) {
-            try {
-                if (db) {
-                    const eventsCol = collection(db, 'artifacts', appId, 'public', 'data', 'events');
-                    if (eventData.id) {
-                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'events', eventData.id);
-                        await updateDoc(docRef, eventData);
-                    } else {
-                        delete eventData.id;
-                        await addDoc(eventsCol, eventData);
-                    }
-                } else {
-                    saveEventLocal(eventData);
-                }
-            } catch (err) {
-                console.warn("Fallo en guardar online, guardando localmente:", err);
-                saveEventLocal(eventData);
-            }
-            
+        window.saveEventToStore = function(eventData) {
+            saveEventLocal(eventData);
             sendTelegramNotification(`📅 *NUEVO EVENTO EN CRONOGRAMA*\n\n📌 *${eventData.eventTitle}*\n🗓 *Fechas:* ${formatDisplayDate(eventData.eventStart)} al ${formatDisplayDate(eventData.eventEnd)}\n📂 *Categoría:* ${eventData.category || 'General'}\n📝 *Notas:* ${eventData.description || 'Sin descripción'}`);
             showToast('Evento guardado correctamente', 'success');
-        }
+        };
 
         function saveEventLocal(eventData) {
             if (!eventData.id) {
@@ -830,18 +720,10 @@
             renderAll();
         }
 
-        window.deleteEventStore = async function(id) {
-            try {
-                if (db) {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
-                } else {
-                    deleteEventLocal(id);
-                }
-            } catch (err) {
-                deleteEventLocal(id);
-            }
+        window.deleteEventStore = function(id) {
+            deleteEventLocal(id);
             showToast('Evento eliminado', 'info');
-        }
+        };
 
         function deleteEventLocal(id) {
             window.eventsList = window.eventsList.filter(e => e.id !== id);
@@ -849,27 +731,11 @@
             renderAll();
         }
 
-        window.saveMilestoneStore = async function(milestoneData) {
-            try {
-                if (db) {
-                    const msCol = collection(db, 'artifacts', appId, 'public', 'data', 'milestones');
-                    if (milestoneData.id) {
-                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'milestones', milestoneData.id);
-                        await updateDoc(docRef, milestoneData);
-                    } else {
-                        delete milestoneData.id;
-                        await addDoc(msCol, milestoneData);
-                    }
-                } else {
-                    saveMilestoneLocal(milestoneData);
-                }
-            } catch (err) {
-                saveMilestoneLocal(milestoneData);
-            }
-
+        window.saveMilestoneStore = function(milestoneData) {
+            saveMilestoneLocal(milestoneData);
             sendTelegramNotification(`🚩 *NUEVO HITO EN CRONOGRAMA*\n\n📌 *${milestoneData.milestoneTitle}*\n🗓 *Fecha:* ${formatDisplayDate(milestoneData.milestoneDate)}\n💬 *Comentario:* ${milestoneData.milestoneComment}`);
             showToast('Hito guardado correctamente', 'success');
-        }
+        };
 
         function saveMilestoneLocal(milestoneData) {
             if (!milestoneData.id) {
@@ -883,18 +749,10 @@
             renderAll();
         }
 
-        window.deleteMilestoneStore = async function(id) {
-            try {
-                if (db) {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'milestones', id));
-                } else {
-                    deleteMilestoneLocal(id);
-                }
-            } catch (err) {
-                deleteMilestoneLocal(id);
-            }
+        window.deleteMilestoneStore = function(id) {
+            deleteMilestoneLocal(id);
             showToast('Hito eliminado', 'info');
-        }
+        };
 
         function deleteMilestoneLocal(id) {
             window.milestonesList = window.milestonesList.filter(m => m.id !== id);
@@ -905,10 +763,10 @@
         // --- MODALS CONTROLS ---
         window.openConfigModal = function() {
             document.getElementById('configModal').classList.remove('hidden');
-        }
+        };
         window.closeConfigModal = function() {
             document.getElementById('configModal').classList.add('hidden');
-        }
+        };
 
         window.openEventModal = function(presetDate = null) {
             document.getElementById('eventId').value = '';
@@ -920,10 +778,10 @@
             document.getElementById('eventDesc').value = '';
             document.getElementById('eventModalTitle').textContent = 'Crear Nuevo Evento / Periodo';
             document.getElementById('eventModal').classList.remove('hidden');
-        }
+        };
         window.closeEventModal = function() {
             document.getElementById('eventModal').classList.add('hidden');
-        }
+        };
 
         window.editEvent = function(id) {
             const evt = window.eventsList.find(e => e.id === id);
@@ -937,7 +795,7 @@
             document.getElementById('eventDesc').value = evt.description || evt.eventDesc || '';
             document.getElementById('eventModalTitle').textContent = 'Editar Evento';
             document.getElementById('eventModal').classList.remove('hidden');
-        }
+        };
 
         window.handleEventSubmit = function(e) {
             e.preventDefault();
@@ -953,7 +811,7 @@
             };
             saveEventToStore(eventData);
             closeEventModal();
-        }
+        };
 
         window.openMilestoneModal = function(presetDate = null) {
             document.getElementById('milestoneId').value = '';
@@ -962,10 +820,10 @@
             document.getElementById('milestoneComment').value = '';
             document.getElementById('milestoneModalTitle').textContent = 'Añadir Hito o Comentario';
             document.getElementById('milestoneModal').classList.remove('hidden');
-        }
+        };
         window.closeMilestoneModal = function() {
             document.getElementById('milestoneModal').classList.add('hidden');
-        }
+        };
 
         window.editMilestone = function(id) {
             const ms = window.milestonesList.find(m => m.id === id);
@@ -976,7 +834,7 @@
             document.getElementById('milestoneComment').value = ms.milestoneComment;
             document.getElementById('milestoneModalTitle').textContent = 'Editar Hito';
             document.getElementById('milestoneModal').classList.remove('hidden');
-        }
+        };
 
         window.handleMilestoneSubmit = function(e) {
             e.preventDefault();
@@ -989,7 +847,7 @@
             };
             saveMilestoneStore(milestoneData);
             closeMilestoneModal();
-        }
+        };
 
         window.openDayDetails = function(dateStr) {
             window.selectedDateForModal = dateStr;
@@ -1053,21 +911,21 @@
 
             document.getElementById('dayModalContent').innerHTML = contentHtml;
             document.getElementById('dayDetailsModal').classList.remove('hidden');
-        }
+        };
 
         window.closeDayModal = function() {
             document.getElementById('dayDetailsModal').classList.add('hidden');
-        }
+        };
 
         window.quickAddEventOnDate = function() {
             closeDayModal();
             openEventModal(window.selectedDateForModal);
-        }
+        };
 
         window.quickAddMilestoneOnDate = function() {
             closeDayModal();
             openMilestoneModal(window.selectedDateForModal);
-        }
+        };
 
         // --- UTILS ---
         function formatDateISO(date) {
@@ -1119,6 +977,7 @@
 
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toastContainer');
+            if (!container) return;
             const toast = document.createElement('div');
             const bg = type === 'success' ? 'bg-slate-900 text-white' : 'bg-indigo-600 text-white';
             toast.className = `${bg} px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center space-x-2 transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto`;
@@ -1130,24 +989,24 @@
                 toast.classList.add('translate-y-2', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
-        }
+        };
 
-        // Initialize on DOM Ready
-        window.addEventListener('DOMContentLoaded', () => {
-            // Telegram WebApp Integration Check
+        // Initialize on Load
+        function initApp() {
             if (window.Telegram && window.Telegram.WebApp) {
                 try {
                     window.Telegram.WebApp.ready();
                     window.Telegram.WebApp.expand();
-                } catch(e) {
-                    console.log("No iniciado dentro de contexto Telegram nativo.");
-                }
+                } catch(e) {}
             }
+            loadLocalData();
+        }
 
-            // Renderizado inicial inmediato
-            renderAll();
-            initFirebase();
-        });
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
