@@ -6,14 +6,12 @@
     <title>Cronograma Anual Colaborativo</title>
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -29,20 +27,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        input[type="date"] {
-            color-scheme: light;
-            color: #0f172a !important;
-            background-color: #ffffff !important;
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-            filter: invert(0.3);
-            opacity: 0.8;
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator:hover {
-            opacity: 1;
-        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-full flex flex-col font-sans overflow-hidden">
@@ -68,25 +52,28 @@
             </div>
 
             <div class="hidden md:flex bg-slate-100 rounded-lg p-1 border border-slate-200 text-sm font-medium">
-                <button onclick="switchTab('calendar')" id="tabBtn-calendar" class="px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-sm transition font-medium">Calendario</button>
-                <button onclick="switchTab('timeline')" id="tabBtn-timeline" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition font-medium">Línea de Tiempo Anual</button>
-                <button onclick="switchTab('repository')" id="tabBtn-repository" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition font-medium">Repositorio Eventos</button>
-                <button onclick="switchTab('milestones')" id="tabBtn-milestones" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition font-medium">Hitos y Comentarios</button>
+                <button onclick="switchTab('calendar')" id="tabBtn-calendar" class="px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-sm transition">Calendario</button>
+                <button onclick="switchTab('timeline')" id="tabBtn-timeline" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Línea de Tiempo</button>
+                <button onclick="switchTab('repository')" id="tabBtn-repository" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Repositorio</button>
+                <button onclick="switchTab('milestones')" id="tabBtn-milestones" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Hitos y Notas</button>
             </div>
 
-            <!-- Action Buttons -->
+            <!-- Sync Status & Action Buttons -->
             <div class="flex items-center space-x-2">
-                <button onclick="openConfigModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1.5 cursor-pointer" title="Ajustes Supabase y Telegram">
-                    <i class="fa-solid fa-database text-lg"></i>
-                    <span class="hidden lg:inline">Ajustes Nube / Bot</span>
+                <button id="syncStatusBtn" onclick="toggleStorageMode()" title="Estado de Sincronización" class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium">
+                    <i class="fa-solid fa-rotate mr-1 animate-spin"></i> Conectando...
                 </button>
-                <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2 cursor-pointer">
+                <button onclick="openConfigModal()" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1.5" title="Integración Telegram">
+                    <i class="fa-brands fa-telegram text-lg"></i>
+                    <span class="hidden lg:inline">Telegram</span>
+                </button>
+                <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
                     <i class="fa-solid fa-plus"></i>
                     <span class="hidden sm:inline">Nuevo Evento</span>
                 </button>
-                <button onclick="openMilestoneModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2 cursor-pointer">
+                <button onclick="openMilestoneModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
                     <i class="fa-solid fa-flag"></i>
-                    <span class="hidden sm:inline">Hito Independiente</span>
+                    <span class="hidden sm:inline">Nuevo Hito</span>
                 </button>
             </div>
         </div>
@@ -101,83 +88,53 @@
     </div>
 
     <!-- Main Content Area -->
-    <main class="flex-1 overflow-hidden relative flex flex-col">
-        <!-- TAB 1: CALENDAR VIEW -->
+    <main class="flex-1 overflow-hidden flex flex-col">
+        <!-- TAB 1: CALENDAR VIEW (12 MESES) -->
         <div id="tab-calendar" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
             <div class="max-w-7xl mx-auto space-y-6">
-                <!-- Leyenda del Calendario -->
-                <div class="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-xs">
-                    <div class="flex items-center space-x-4 flex-wrap gap-y-1">
-                        <span class="font-bold text-slate-800">Leyenda:</span>
-                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-indigo-600 inline-block mr-1.5"></span> Evento Único</span>
-                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-gradient-to-r from-indigo-500 via-rose-500 to-amber-500 inline-block mr-1.5"></span> Múltiples Eventos</span>
-                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-amber-400 inline-block mr-1.5"></span> Sub-hito de Evento</span>
-                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-emerald-500 inline-block mr-1.5"></span> Hito Independiente</span>
-                        <span class="flex items-center"><span class="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block mr-1.5"></span> Festivo Nacional</span>
+                <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">Vista Anual de 12 Meses</h2>
+                        <p class="text-xs text-slate-500">Haz clic en cualquier día para consultar detalles, añadir eventos o hitos puntuales.</p>
                     </div>
-                    <span class="text-[11px] text-slate-400 font-medium">Haz clic en cualquier día para ver detalles</span>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="sendMonthToTelegram()" class="bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center">
+                            <i class="fa-brands fa-telegram mr-1.5 text-sm"></i> Enviar Resumen Telegram
+                        </button>
+                    </div>
                 </div>
 
-                <!-- 12 Month Grid -->
-                <div id="monthsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <!-- Dynamic rendering -->
+                <!-- Rejilla de los 12 meses -->
+                <div id="monthsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <!-- Inyectado dinámicamente -->
                 </div>
             </div>
         </div>
 
-        <!-- TAB 2: TIMELINE VIEW -->
+        <!-- TAB 2: TIMELINE / GANTT VIEW -->
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
-            <div class="max-w-7xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="max-w-7xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900">Línea Temporal Anual y Trimestral</h2>
-                        <p class="text-xs text-slate-500">Visualiza el año completo o filtra por trimestres (3 en 3 meses) para mayor precisión.</p>
+                        <h2 class="text-lg font-bold text-slate-900">Línea de Tiempo Anual Visual</h2>
+                        <p class="text-xs text-slate-500">Vista panorámica completa del año <span class="timeline-year-label">2026</span> organizada por meses y códigos de color.</p>
                     </div>
-                    
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div class="bg-slate-100 p-1 rounded-xl border border-slate-200 flex text-xs font-semibold">
-                            <button onclick="setTimelineViewMode('all')" id="qBtn-all" class="px-2.5 py-1 rounded-lg bg-white text-indigo-600 shadow-xs">Año Completo</button>
-                            <button onclick="setTimelineViewMode('q1')" id="qBtn-q1" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900">Q1 (Ene-Mar)</button>
-                            <button onclick="setTimelineViewMode('q2')" id="qBtn-q2" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900">Q2 (Abr-Jun)</button>
-                            <button onclick="setTimelineViewMode('q3')" id="qBtn-q3" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900">Q3 (Jul-Sep)</button>
-                            <button onclick="setTimelineViewMode('q4')" id="qBtn-q4" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900">Q4 (Oct-Dic)</button>
-                        </div>
-
-                        <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center cursor-pointer">
-                            <i class="fa-solid fa-plus mr-1.5"></i> Evento
+                    <div class="flex items-center space-x-3">
+                        <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
+                            <i class="fa-solid fa-plus mr-1.5"></i> Nuevo Evento
                         </button>
                     </div>
                 </div>
 
                 <div class="overflow-x-auto custom-scrollbar">
-                    <div class="min-w-[900px] space-y-6">
-                        <div id="timelineMonthHeader" class="grid grid-cols-12 gap-1 bg-slate-100 p-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-700 shadow-xs"></div>
-
-                        <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-md space-y-3">
-                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                                <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center">
-                                    <i class="fa-solid fa-chart-line mr-2"></i> Vista General Integrada (Eventos, Mini Hitos e Hitos)
-                                </h3>
-                                <span class="text-[10px] text-slate-400" id="timelineRangeBadge">Ene - Dic 2026</span>
-                            </div>
-
-                            <div class="relative h-14 bg-slate-800/90 rounded-xl overflow-hidden border border-slate-700 flex items-center">
-                                <div id="masterTimelineBar" class="relative w-full h-full"></div>
-                            </div>
+                    <div class="min-w-[800px]">
+                        <div class="grid grid-cols-12 gap-1 bg-slate-100 p-2 rounded-xl border border-slate-200 mb-3 text-center text-xs font-bold text-slate-700">
+                            <div>Ene</div><div>Feb</div><div>Mar</div><div>Abr</div>
+                            <div>May</div><div>Jun</div><div>Jul</div><div>Ago</div>
+                            <div>Sep</div><div>Oct</div><div>Nov</div><div>Dic</div>
                         </div>
-
-                        <div class="space-y-2">
-                            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
-                                <span><i class="fa-solid fa-bars-staggered text-indigo-600 mr-2"></i> Eventos y sus Mini Hitos</span>
-                            </h3>
-                            <div id="timelineEventsContainer" class="space-y-2"></div>
-                        </div>
-
-                        <div class="pt-4 border-t border-slate-200 space-y-2">
-                            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center">
-                                <i class="fa-solid fa-flag text-emerald-600 mr-2"></i> Hitos Independientes Registrados
-                            </h3>
-                            <div id="timelineMilestonesContainer" class="space-y-2"></div>
+                        <div id="timelineContainer" class="space-y-2">
+                            <!-- Inyectado dinámicamente -->
                         </div>
                     </div>
                 </div>
@@ -190,195 +147,169 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">Repositorio General de Eventos</h2>
-                        <p class="text-xs text-slate-500">Lista completa e interactiva para buscar, editar o eliminar eventos y sus sub-hitos</p>
+                        <p class="text-xs text-slate-500">Lista completa e interactiva para buscar, editar o eliminar eventos</p>
                     </div>
                     <div class="flex items-center space-x-2">
                         <div class="relative">
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                             <input type="text" id="repoSearchInput" oninput="renderRepositoryView()" placeholder="Buscar evento..." class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48 sm:w-64">
                         </div>
-                        <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer">
+                        <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0">
                             <i class="fa-solid fa-plus mr-1"></i> Añadir
                         </button>
                     </div>
                 </div>
 
-                <div id="repositoryListContainer" class="space-y-2"></div>
+                <div id="repositoryListContainer" class="space-y-2">
+                    <!-- Inyectado dinámicamente -->
+                </div>
             </div>
         </div>
 
-        <!-- TAB 4: MILESTONES & COMMENTS VIEW -->
+        <!-- TAB 4: MILESTONES & COMMENTS -->
         <div id="tab-milestones" class="flex-1 overflow-y-auto p-6 custom-scrollbar hidden">
-            <div class="max-w-4xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
-                <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
+            <div class="max-w-4xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="flex items-center justify-between mb-6">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900">Hitos Independientes Registrados</h2>
-                        <p class="text-xs text-slate-500">Eventos puntuales asignados a un día específico sin rango continuo</p>
+                        <h2 class="text-lg font-bold text-slate-900">Hitos y Comentarios Registrados</h2>
+                        <p class="text-xs text-slate-500">Notas puntuales asignadas a días específicos del año</p>
                     </div>
-                    <button onclick="openMilestoneModal()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer">
-                        <i class="fa-solid fa-flag mr-1"></i> Añadir Hito Independiente
+                    <button onclick="openMilestoneModal()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                        <i class="fa-solid fa-flag mr-1"></i> Añadir Hito
                     </button>
                 </div>
-                <div id="milestonesListContainer" class="space-y-3"></div>
+
+                <div id="milestonesListContainer" class="space-y-3">
+                    <!-- Dynamic milestones list -->
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- MODAL: CONFIG SUPABASE Y TELEGRAM -->
+    <!-- MODAL: CONFIG BOT TELEGRAM -->
     <div id="configModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-100 transform transition-all">
-            <div class="px-6 py-4 bg-slate-800 text-white flex items-center justify-between">
+            <div class="px-6 py-4 bg-sky-600 text-white flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-cloud text-xl text-emerald-400"></i>
-                    <h3 class="font-bold text-base">Conexión a Supabase y Telegram</h3>
+                    <i class="fa-brands fa-telegram text-xl"></i>
+                    <h3 class="font-bold text-base">Configuración de Grupo Privado en Telegram</h3>
                 </div>
-                <button onclick="closeConfigModal()" class="text-slate-300 hover:text-white p-1 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeConfigModal()" class="text-sky-100 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 text-xs text-slate-600 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                
-                <!-- Supabase Config Block -->
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-3">
-                    <div class="flex items-center space-x-2 text-emerald-900 font-bold text-xs">
-                        <i class="fa-solid fa-database text-emerald-600 text-base"></i>
-                        <span>Configuración de Supabase (Base de datos en Vivo)</span>
-                    </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start space-x-3 text-amber-800">
+                    <i class="fa-solid fa-shield-halved text-amber-600 text-base mt-0.5"></i>
                     <div>
-                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Supabase Project URL</label>
-                        <input type="text" id="supabaseUrl" placeholder="https://xyzcompany.supabase.co" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Supabase Anon Key</label>
-                        <input type="password" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                        <p class="font-bold mb-0.5 text-xs">Requisito para Telegram</p>
+                        <p class="text-[11px] leading-relaxed">
+                            Telegram exige enlace <strong>HTTPS</strong> público (despliega esta app en GitHub Pages, Netlify o Vercel para que funcione correctamente dentro del bot).
+                        </p>
                     </div>
                 </div>
 
-                <!-- Telegram Config Block -->
-                <div class="bg-sky-50 border border-sky-200 rounded-xl p-3.5 space-y-3">
-                    <div class="flex items-center space-x-2 text-sky-900 font-bold text-xs">
-                        <i class="fa-brands fa-telegram text-sky-600 text-base"></i>
-                        <span>Configuración Bot de Telegram (Opcional)</span>
-                    </div>
+                <div class="space-y-3">
                     <div>
-                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">URL Web App</label>
+                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">URL de esta App</label>
                         <div class="flex items-center space-x-2">
-                            <input type="text" id="tgWebAppUrl" readonly class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-slate-100 text-slate-600 focus:outline-none" placeholder="Cargando enlace...">
-                            <button type="button" onclick="copyWebAppUrl()" class="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-lg text-xs flex items-center shrink-0 transition cursor-pointer" title="Copiar URL">
-                                <i class="fa-solid fa-copy mr-1"></i> Copiar
+                            <input type="text" id="tgWebAppUrl" readonly class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 bg-slate-100 text-slate-600 focus:outline-none" placeholder="Cargando enlace...">
+                            <button type="button" onclick="copyWebAppUrl()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-xs flex items-center shrink-0 transition">
+                                <i class="fa-solid fa-copy mr-1.5"></i> Copiar
                             </button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Telegram Bot Token</label>
-                            <input type="text" id="tgBotToken" placeholder="123456:ABC..." class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Chat ID Grupo</label>
-                            <input type="text" id="tgChatId" placeholder="-10012345..." class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
-                        </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Telegram Bot Token</label>
+                        <input type="text" id="tgBotToken" placeholder="Ej: 123456789:ABCdefGhIJKlmNoP..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Chat ID del Grupo Privado</label>
+                        <input type="text" id="tgChatId" placeholder="Ej: -100123456789" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500">
                     </div>
                 </div>
             </div>
             <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
-                <button type="button" onclick="testTelegramBot()" class="px-3 py-1.5 text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 rounded-lg transition cursor-pointer"><i class="fa-solid fa-paper-plane mr-1"></i> Prob. Telegram</button>
-                <button type="button" onclick="saveCloudConfig()" class="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition cursor-pointer">Guardar y Conectar</button>
+                <button type="button" onclick="testTelegramBot()" class="px-3.5 py-1.5 text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 rounded-lg transition"><i class="fa-solid fa-paper-plane mr-1"></i> Probar Envío</button>
+                <button type="button" onclick="saveTelegramConfig()" class="px-4 py-1.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition">Guardar Configuración</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL: EVENT FORM -->
     <div id="eventModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-100 transform transition-all max-h-[90vh] flex flex-col">
-            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
-                <h3 id="eventModalTitle" class="font-bold text-slate-900 text-base">Crear Nuevo Evento</h3>
-                <button onclick="closeEventModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <h3 id="eventModalTitle" class="font-bold text-slate-900 text-base">Crear Nuevo Evento / Periodo</h3>
+                <button onclick="closeEventModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="eventForm" onsubmit="handleEventSubmit(event)" class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+            <form id="eventForm" onsubmit="handleEventSubmit(event)" class="p-6 space-y-4">
                 <input type="hidden" id="eventId">
-                <input type="hidden" id="eventColor" value="indigo">
-                
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Evento</label>
                     <input type="text" id="eventTitle" required placeholder="Ej: Lanzamiento de Producto..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha de Inicio</label>
-                        <input type="date" id="eventStart" required onchange="validateSubMilestoneDates()" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                        <input type="date" id="eventStart" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha de Fin</label>
-                        <input type="date" id="eventEnd" required onchange="validateSubMilestoneDates()" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                        <input type="date" id="eventEnd" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Color del Evento</label>
-                    <div class="grid grid-cols-8 gap-2" id="colorPaletteGrid"></div>
-                </div>
-
-                <div class="pt-2 border-t border-slate-200 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                            <i class="fa-solid fa-gem text-amber-500 mr-1"></i> Mini Hitos del Evento
-                        </label>
-                        <button type="button" onclick="addSubMilestoneRow()" class="px-2.5 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-xs font-bold transition flex items-center cursor-pointer">
-                            <i class="fa-solid fa-plus mr-1"></i> Añadir Sub-hito
-                        </button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Color del Evento</label>
+                        <select id="eventColor" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="indigo">Índigo (Principal)</option>
+                            <option value="blue">Azul</option>
+                            <option value="emerald">Esmeralda / Verde</option>
+                            <option value="amber">Ámbar / Naranja</option>
+                            <option value="rose">Rosa / Rojo</option>
+                            <option value="purple">Púrpura</option>
+                        </select>
                     </div>
-                    <div id="subMilestonesContainer" class="space-y-2 pt-1"></div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Categoría</label>
+                        <input type="text" id="eventCategory" placeholder="Ej: Proyecto, Vacaciones" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
                 </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Categoría</label>
-                    <input type="text" id="eventCategory" placeholder="Ej: Marketing, Desarrollo..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Descripción / Notas</label>
-                    <textarea id="eventDesc" rows="2" placeholder="Detalles adicionales..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <textarea id="eventDesc" rows="3" placeholder="Detalles adicionales..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
-                
-                <div class="flex items-center justify-end space-x-3 pt-2 shrink-0">
-                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition cursor-pointer">Guardar Evento</button>
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Guardar Evento</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: MILESTONE FORM INDEPENDIENTE -->
+    <!-- MODAL: MILESTONE FORM -->
     <div id="milestoneModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
             <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                <h3 id="milestoneModalTitle" class="font-bold text-slate-900 text-base">Añadir Hito Independiente</h3>
-                <button onclick="closeMilestoneModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <h3 id="milestoneModalTitle" class="font-bold text-slate-900 text-base">Añadir Hito o Comentario en Día Puntual</h3>
+                <button onclick="closeMilestoneModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="milestoneForm" onsubmit="handleMilestoneSubmit(event)" class="p-6 space-y-4">
                 <input type="hidden" id="milestoneId">
-                <input type="hidden" id="milestoneColor" value="emerald">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Hito</label>
-                    <input type="text" id="milestoneTitle" required placeholder="Ej: Cierre presupuestario..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="text" id="milestoneTitle" required placeholder="Ej: Cierre de presupuestos..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha Específica</label>
-                    <input type="date" id="milestoneDate" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
+                    <input type="date" id="milestoneDate" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
-
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Color del Hito</label>
-                    <div class="grid grid-cols-8 gap-2" id="milestoneColorPaletteGrid"></div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Comentario / Nota</label>
-                    <textarea id="milestoneComment" rows="3" required placeholder="Comentario o descripción..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Comentario / Nota Detallada</label>
+                    <textarea id="milestoneComment" rows="3" required placeholder="Comentario para este día..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
                 </div>
                 <div class="flex items-center justify-end space-x-3 pt-2">
-                    <button type="button" onclick="closeMilestoneModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition cursor-pointer">Guardar Hito</button>
+                    <button type="button" onclick="closeMilestoneModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition">Guardar Hito</button>
                 </div>
             </form>
         </div>
@@ -390,132 +321,163 @@
             <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <div>
                     <h3 id="dayModalDateTitle" class="font-bold text-slate-900 text-base">Detalle del Día</h3>
-                    <p id="dayModalSub" class="text-xs text-slate-500">Eventos, sub-hitos e hitos en esta fecha</p>
+                    <p id="dayModalSub" class="text-xs text-slate-500">Eventos e hitos en esta fecha</p>
                 </div>
-                <button onclick="closeDayModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeDayModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar" id="dayModalContent"></div>
             <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
-                <button onclick="quickAddEventOnDate()" class="text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer"><i class="fa-solid fa-plus mr-1"></i> Añadir evento aquí</button>
-                <button onclick="quickAddMilestoneOnDate()" class="text-emerald-600 hover:text-emerald-800 font-semibold cursor-pointer"><i class="fa-solid fa-flag mr-1"></i> Añadir hito aquí</button>
+                <button onclick="quickAddEventOnDate()" class="text-indigo-600 hover:text-indigo-800 font-semibold"><i class="fa-solid fa-plus mr-1"></i> Añadir evento aquí</button>
+                <button onclick="quickAddMilestoneOnDate()" class="text-emerald-600 hover:text-emerald-800 font-semibold"><i class="fa-solid fa-flag mr-1"></i> Añadir hito aquí</button>
             </div>
         </div>
     </div>
 
+    <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
-    <!-- MAIN SCRIPT -->
-    <script>
-        window.colorPalette = [
-            { id: 'indigo', name: 'Índigo', hex: '#4f46e5', badgeClass: 'bg-indigo-100 text-indigo-700' },
-            { id: 'violet', name: 'Violeta', hex: '#7c3aed', badgeClass: 'bg-violet-100 text-violet-700' },
-            { id: 'purple', name: 'Púrpura', hex: '#9333ea', badgeClass: 'bg-purple-100 text-purple-700' },
-            { id: 'fuchsia', name: 'Fucsia', hex: '#d946ef', badgeClass: 'bg-fuchsia-100 text-fuchsia-700' },
-            { id: 'pink', name: 'Rosa', hex: '#ec4899', badgeClass: 'bg-pink-100 text-pink-700' },
-            { id: 'crimson', name: 'Carmesí', hex: '#e11d48', badgeClass: 'bg-rose-100 text-rose-700' },
-            { id: 'orange', name: 'Naranja', hex: '#f97316', badgeClass: 'bg-orange-100 text-orange-700' },
-            { id: 'amber', name: 'Ámbar', hex: '#f59e0b', badgeClass: 'bg-amber-100 text-amber-800' },
-            { id: 'lime', name: 'Verde Lima', hex: '#84cc16', badgeClass: 'bg-lime-100 text-lime-800' },
-            { id: 'emerald', name: 'Esmeralda', hex: '#10b981', badgeClass: 'bg-emerald-100 text-emerald-700' },
-            { id: 'teal', name: 'Turquesa', hex: '#14b8a6', badgeClass: 'bg-teal-100 text-teal-700' },
-            { id: 'cyan', name: 'Cian', hex: '#06b6d4', badgeClass: 'bg-cyan-100 text-cyan-700' },
-            { id: 'sky', name: 'Azul Cielo', hex: '#0284c7', badgeClass: 'bg-sky-100 text-sky-700' },
-            { id: 'blue', name: 'Azul', hex: '#2563eb', badgeClass: 'bg-blue-100 text-blue-700' },
-            { id: 'slate', name: 'Gris Pizarra', hex: '#475569', badgeClass: 'bg-slate-100 text-slate-700' },
-            { id: 'dark', name: 'Carbón', hex: '#1e293b', badgeClass: 'bg-slate-200 text-slate-800' }
-        ];
+    <!-- FIREBASE AND APP LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getFirestore, collection, onSnapshot, setDoc, doc, deleteDoc 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+        // Configuración de tu proyecto de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCSDRlF43dv-WC5msPtpG2brnMCzNkmfYk",
+            authDomain: "cronograma-gel.firebaseapp.com",
+            projectId: "cronograma-gel",
+            storageBucket: "cronograma-gel.firebasestorage.app",
+            messagingSenderId: "412035313651",
+            appId: "1:412035313651:web:16c005b2c74ba268652c86",
+            measurementId: "G-RQY15GN612"
+        };
+
+        // Estado Global
         window.currentYear = new Date().getFullYear();
         window.currentTab = 'calendar';
-        window.timelineMode = 'all';
         window.eventsList = [];
         window.milestonesList = [];
         window.selectedDateForModal = null;
-        window.supabaseClient = null;
 
         window.fixedHolidays = {
-            "01-01": "Año Nuevo", "01-06": "Reyes Magos", "05-01": "Día del Trabajador",
-            "08-15": "Asunción de la Virgen", "10-12": "Fiesta Nacional de España",
-            "11-01": "Todos los Santos", "12-06": "Día de la Constitución",
-            "12-08": "Inmaculada Concepción", "12-25": "Navidad"
+            "01-01": "Año Nuevo",
+            "01-06": "Reyes Magos",
+            "05-01": "Día del Trabajador",
+            "08-15": "Asunción de la Virgen",
+            "10-12": "Fiesta Nacional de España",
+            "11-01": "Todos los Santos",
+            "12-06": "Día de la Constitución",
+            "12-08": "Inmaculada Concepción",
+            "12-25": "Navidad"
         };
 
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         const dayNamesMin = ["L", "M", "X", "J", "V", "S", "D"];
 
-        // --- MODAL CONTROLS ---
-        window.openConfigModal = function() {
-            const url = localStorage.getItem('supabase_url') || '';
-            const key = localStorage.getItem('supabase_key') || '';
+        let db = null;
+        let forceLocalMode = localStorage.getItem('force_local_mode') === 'true';
+
+        // Inicializar Firebase Firestore
+        function initFirebase() {
+            loadLocalData(); // Carga inicial instantánea
+            if (forceLocalMode) {
+                setLocalModeUI();
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                updateSyncUI('cloud', 'Firebase Conectado');
+                setupFirestoreListeners();
+            } catch (err) {
+                console.warn("Error al inicializar Firebase, usando Modo Local:", err);
+                setLocalModeUI();
+            }
+        }
+
+        window.toggleStorageMode = function() {
+            forceLocalMode = !forceLocalMode;
+            localStorage.setItem('force_local_mode', forceLocalMode);
+            showToast(forceLocalMode ? 'Modo Local activado' : 'Conectando a Firebase...', 'info');
+            setTimeout(() => location.reload(), 400);
+        }
+
+        function setLocalModeUI() {
+            db = null;
+            updateSyncUI('local', 'Modo Local (Clic para conectar)');
+        }
+
+        function updateSyncUI(mode, label) {
+            const btn = document.getElementById('syncStatusBtn');
+            if (!btn) return;
+            if (mode === 'cloud') {
+                btn.innerHTML = `<i class="fa-solid fa-circle text-emerald-500 mr-1.5 text-[8px]"></i> ${label}`;
+                btn.className = "hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium cursor-pointer hover:bg-emerald-100 transition";
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-hard-drive text-amber-500 mr-1.5 text-xs"></i> ${label}`;
+                btn.className = "hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium cursor-pointer hover:bg-amber-100 transition";
+            }
+        }
+
+        // Sincronización en tiempo real con Firestore
+        function setupFirestoreListeners() {
+            if (!db) return;
+            try {
+                // Colección de Eventos
+                onSnapshot(collection(db, 'events'), (snapshot) => {
+                    window.eventsList = [];
+                    snapshot.forEach(docSnap => {
+                        window.eventsList.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+                    renderAll();
+                }, (error) => {
+                    console.error("Error en eventos Firestore:", error);
+                });
+
+                // Colección de Hitos
+                onSnapshot(collection(db, 'milestones'), (snapshot) => {
+                    window.milestonesList = [];
+                    snapshot.forEach(docSnap => {
+                        window.milestonesList.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+                    renderAll();
+                }, (error) => {
+                    console.error("Error en hitos Firestore:", error);
+                });
+            } catch (e) {
+                setLocalModeUI();
+            }
+        }
+
+        function loadLocalData() {
+            window.eventsList = JSON.parse(localStorage.getItem('local_events') || '[]');
+            window.milestonesList = JSON.parse(localStorage.getItem('local_milestones') || '[]');
+            renderAll();
+        }
+
+        window.renderAll = function() {
+            document.getElementById('currentYearLabel').textContent = window.currentYear;
+            document.querySelectorAll('.timeline-year-label').forEach(el => el.textContent = window.currentYear);
+            
+            renderCalendarGrid();
+            renderTimelineView();
+            renderRepositoryView();
+            renderMilestonesView();
+
             const botToken = localStorage.getItem('tg_bot_token') || '';
             const chatId = localStorage.getItem('tg_chat_id') || '';
-
-            if (document.getElementById('supabaseUrl')) document.getElementById('supabaseUrl').value = url;
-            if (document.getElementById('supabaseKey')) document.getElementById('supabaseKey').value = key;
             if (document.getElementById('tgBotToken')) document.getElementById('tgBotToken').value = botToken;
             if (document.getElementById('tgChatId')) document.getElementById('tgChatId').value = chatId;
             if (document.getElementById('tgWebAppUrl')) document.getElementById('tgWebAppUrl').value = window.location.href;
-
-            const modal = document.getElementById('configModal');
-            if (modal) modal.classList.remove('hidden');
-        };
-
-        window.closeConfigModal = function() {
-            const modal = document.getElementById('configModal');
-            if (modal) modal.classList.add('hidden');
-        };
-
-        window.openEventModal = function(presetDate = null) {
-            document.getElementById('eventId').value = '';
-            document.getElementById('eventTitle').value = '';
-            document.getElementById('eventStart').value = presetDate || `${window.currentYear}-01-01`;
-            document.getElementById('eventEnd').value = presetDate || `${window.currentYear}-01-07`;
-            document.getElementById('eventColor').value = 'indigo';
-            document.getElementById('eventCategory').value = '';
-            document.getElementById('eventDesc').value = '';
-            document.getElementById('eventModalTitle').textContent = 'Crear Nuevo Evento';
-            document.getElementById('subMilestonesContainer').innerHTML = '';
-            renderColorPalettePicker('colorPaletteGrid', 'eventColor');
-            validateSubMilestoneDates();
-            document.getElementById('eventModal').classList.remove('hidden');
-        };
-
-        window.closeEventModal = function() {
-            document.getElementById('eventModal').classList.add('hidden');
-        };
-
-        window.openMilestoneModal = function(presetDate = null) {
-            document.getElementById('milestoneId').value = '';
-            document.getElementById('milestoneTitle').value = '';
-            document.getElementById('milestoneDate').value = presetDate || `${window.currentYear}-01-01`;
-            document.getElementById('milestoneColor').value = 'emerald';
-            document.getElementById('milestoneComment').value = '';
-            document.getElementById('milestoneModalTitle').textContent = 'Añadir Hito Independiente';
-            renderColorPalettePicker('milestoneColorPaletteGrid', 'milestoneColor');
-            document.getElementById('milestoneModal').classList.remove('hidden');
-        };
-
-        window.closeMilestoneModal = function() {
-            document.getElementById('milestoneModal').classList.add('hidden');
-        };
+        }
 
         window.changeYear = function(delta) {
             window.currentYear += delta;
             renderAll();
-        };
-
-        window.setTimelineViewMode = function(mode) {
-            window.timelineMode = mode;
-            ['all', 'q1', 'q2', 'q3', 'q4'].forEach(m => {
-                const btn = document.getElementById(`qBtn-${m}`);
-                if (btn) {
-                    btn.className = m === mode
-                        ? 'px-2.5 py-1 rounded-lg bg-white text-indigo-600 shadow-xs font-bold'
-                        : 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 font-semibold';
-                }
-            });
-            renderTimelineView();
-        };
+        }
 
         window.switchTab = function(tabName) {
             window.currentTab = tabName;
@@ -535,142 +497,80 @@
                         : 'text-slate-500 pb-1 shrink-0 px-2';
                 }
             });
-        };
-
-        // --- SUPABASE & DATA SYNC ---
-        function initSupabase() {
-            const url = localStorage.getItem('supabase_url') || '';
-            const key = localStorage.getItem('supabase_key') || '';
-
-            if (url && key && window.supabase) {
-                try {
-                    window.supabaseClient = window.supabase.createClient(url, key);
-                    subscribeToRealtime();
-                } catch(e) {
-                    console.error("Error inicializando Supabase:", e);
-                }
-            }
         }
 
-        async function loadSupabaseData() {
-            if (!window.supabaseClient) {
-                loadLocalFallback();
-                return;
-            }
+        // WhatsApp & Telegram Sharing
+        window.shareEventWhatsApp = function(title, start, end, cat) {
+            const text = encodeURIComponent(`📅 Evento: ${title}\n🗓 Desde: ${formatDisplayDate(start)} hasta: ${formatDisplayDate(end)}\n📂 Categoría: ${cat || 'General'}`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
 
+        window.shareMilestoneWhatsApp = function(title, date, comment) {
+            const text = encodeURIComponent(`🚩 Hito: ${title}\n🗓 Fecha: ${formatDisplayDate(date)}\n💬 Nota: ${comment}`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        window.saveTelegramConfig = function() {
+            localStorage.setItem('tg_bot_token', document.getElementById('tgBotToken').value.trim());
+            localStorage.setItem('tg_chat_id', document.getElementById('tgChatId').value.trim());
+            showToast('Configuración de Telegram guardada', 'success');
+            closeConfigModal();
+        }
+
+        window.sendTelegramNotification = async function(message) {
+            const botToken = localStorage.getItem('tg_bot_token');
+            const chatId = localStorage.getItem('tg_chat_id');
+            if (!botToken || !chatId) return;
             try {
-                const { data: events } = await window.supabaseClient.from('events').select('*');
-                const { data: milestones } = await window.supabaseClient.from('milestones').select('*');
-
-                if (events) {
-                    window.eventsList = events.map(e => ({
-                        id: e.id,
-                        eventTitle: e.title,
-                        eventStart: e.start_date,
-                        eventEnd: e.end_date,
-                        color: e.color,
-                        category: e.category,
-                        description: e.description,
-                        subMilestones: e.sub_milestones || []
-                    }));
-                }
-
-                if (milestones) {
-                    window.milestonesList = milestones.map(m => ({
-                        id: m.id,
-                        milestoneTitle: m.title,
-                        milestoneDate: m.date,
-                        color: m.color,
-                        milestoneComment: m.comment
-                    }));
-                }
-
-                renderAll();
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
+                });
             } catch(e) {
-                console.error("Error al cargar Supabase:", e);
-                loadLocalFallback();
+                console.error("Error Telegram:", e);
             }
         }
 
-        function subscribeToRealtime() {
-            if (!window.supabaseClient) return;
-            window.supabaseClient
-                .channel('public_changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => loadSupabaseData())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'milestones' }, () => loadSupabaseData())
-                .subscribe();
-        }
-
-        function loadLocalFallback() {
-            try {
-                window.eventsList = JSON.parse(localStorage.getItem('local_events') || '[]');
-                window.milestonesList = JSON.parse(localStorage.getItem('local_milestones') || '[]');
-            } catch(e) {
-                window.eventsList = [];
-                window.milestonesList = [];
-            }
-            renderAll();
-        }
-
-        window.saveCloudConfig = function() {
-            const url = document.getElementById('supabaseUrl').value.trim();
-            const key = document.getElementById('supabaseKey').value.trim();
+        window.testTelegramBot = async function() {
             const botToken = document.getElementById('tgBotToken').value.trim();
             const chatId = document.getElementById('tgChatId').value.trim();
-
-            localStorage.setItem('supabase_url', url);
-            localStorage.setItem('supabase_key', key);
-            localStorage.setItem('tg_bot_token', botToken);
-            localStorage.setItem('tg_chat_id', chatId);
-
-            initSupabase();
-            loadSupabaseData();
-            closeConfigModal();
-            showToast('Configuración guardada y conectada', 'success');
-        };
-
-        window.renderAll = function() {
-            const currentYearLabel = document.getElementById('currentYearLabel');
-            if (currentYearLabel) currentYearLabel.textContent = window.currentYear;
-            
-            renderColorPalettePicker('colorPaletteGrid', 'eventColor');
-            renderColorPalettePicker('milestoneColorPaletteGrid', 'milestoneColor');
-
-            renderCalendarGrid();
-            renderTimelineView();
-            renderRepositoryView();
-            renderMilestonesView();
-        };
-
-        function renderColorPalettePicker(containerId, hiddenInputId) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            const currentSelected = document.getElementById(hiddenInputId)?.value || 'indigo';
-            container.innerHTML = '';
-
-            window.colorPalette.forEach(c => {
-                const isSelected = c.id === currentSelected;
-                const swatch = document.createElement('button');
-                swatch.type = 'button';
-                swatch.className = `w-7 h-7 rounded-full border-2 transition-transform transform hover:scale-110 flex items-center justify-center cursor-pointer ${isSelected ? 'border-slate-900 ring-2 ring-offset-2 ring-indigo-500 scale-105' : 'border-transparent'}`;
-                swatch.style.backgroundColor = c.hex;
-                swatch.title = c.name;
-                swatch.onclick = () => {
-                    document.getElementById(hiddenInputId).value = c.id;
-                    renderColorPalettePicker(containerId, hiddenInputId);
-                };
-
-                if (isSelected) {
-                    swatch.innerHTML = `<i class="fa-solid fa-check text-white text-[10px]"></i>`;
-                }
-                container.appendChild(swatch);
-            });
+            if (!botToken || !chatId) {
+                showToast('Introduce Token y Chat ID primero', 'info');
+                return;
+            }
+            try {
+                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: '🚀 *¡Prueba Exitosa!* Bot conectado correctamente.', parse_mode: 'Markdown' })
+                });
+                const data = await res.json();
+                if (data.ok) showToast('Mensaje de prueba enviado', 'success');
+                else showToast(`Error Telegram: ${data.description}`, 'info');
+            } catch(e) {
+                showToast('Error al conectar con Telegram', 'info');
+            }
         }
 
-        // --- RENDERERS ---
+        window.sendMonthToTelegram = function() {
+            const text = `📊 *RESUMEN DEL CRONOGRAMA (${window.currentYear})*\n\n📅 *Eventos:* ${window.eventsList.length}\n🚩 *Hitos:* ${window.milestonesList.length}`;
+            sendTelegramNotification(text);
+            showToast('Resumen enviado a Telegram', 'success');
+        }
+
+        window.copyWebAppUrl = function() {
+            const input = document.getElementById('tgWebAppUrl');
+            if (input && input.value) {
+                input.select();
+                document.execCommand('copy');
+                showToast('URL copiada', 'success');
+            }
+        }
+
+        // --- CALENDAR GRID RENDERER ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
-            if (!grid) return;
             grid.innerHTML = '';
 
             for (let month = 0; month < 12; month++) {
@@ -695,7 +595,7 @@
                 const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
 
                 for (let i = 0; i < startingDay; i++) {
-                    daysGrid += `<div class="min-h-[2.6rem]"></div>`;
+                    daysGrid += `<div class="h-8"></div>`;
                 }
 
                 for (let day = 1; day <= daysInMonth; day++) {
@@ -703,252 +603,81 @@
                     const dateStr = formatDateISO(dateObj);
                     const dayOfWeek = dateObj.getDay();
                     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
                     const mmdd = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const isHoliday = window.fixedHolidays[mmdd];
 
                     const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
                     const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
-                    
-                    let activeSubMilestones = [];
-                    window.eventsList.forEach(e => {
-                        if (e.subMilestones && Array.isArray(e.subMilestones)) {
-                            e.subMilestones.forEach(sm => {
-                                if (sm.date === dateStr) {
-                                    activeSubMilestones.push({ ...sm, parentTitle: e.eventTitle });
-                                }
-                            });
-                        }
-                    });
 
-                    let inlineStyle = '';
                     let bgClass = 'hover:bg-slate-100 text-slate-700';
-
-                    if (isWeekend) bgClass = 'bg-amber-50/60 text-amber-900 hover:bg-amber-100/60 font-medium';
+                    if (isWeekend) bgClass = 'bg-amber-50/60 text-amber-900 font-medium';
                     if (isHoliday) bgClass = 'bg-red-50 text-red-700 font-bold border border-red-200';
 
-                    if (activeEvents.length === 1) {
-                        const colObj = getColorObj(activeEvents[0].color);
-                        inlineStyle = `background-color: ${colObj.hex}; color: white;`;
-                        bgClass = 'font-bold shadow-xs hover:opacity-90';
-                    } else if (activeEvents.length > 1) {
-                        const hexes = activeEvents.map(e => getColorObj(e.color).hex);
-                        const uniqueHexes = [...new Set(hexes)];
-                        if (uniqueHexes.length === 1) {
-                            inlineStyle = `background-color: ${uniqueHexes[0]}; color: white;`;
-                        } else {
-                            const step = 100 / uniqueHexes.length;
-                            const gradientStops = uniqueHexes.map((hex, idx) => `${hex} ${idx * step}% ${(idx + 1) * step}%`).join(', ');
-                            inlineStyle = `background: linear-gradient(135deg, ${gradientStops}); color: white;`;
-                        }
-                        bgClass = 'font-bold shadow-xs hover:opacity-90';
+                    let indicators = '';
+                    if (activeEvents.length > 0) {
+                        bgClass = `${getColorClass(activeEvents[0].color)} font-bold shadow-xs`;
+                    }
+                    if (dayMilestones.length > 0) {
+                        indicators += `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 border border-white inline-block absolute top-0.5 right-0.5"></span>`;
                     }
 
-                    let badgesHtml = '';
-                    if (activeSubMilestones.length > 0) {
-                        badgesHtml += `<div class="w-full mt-0.5 px-0.5 py-0.2 bg-amber-400 text-slate-900 rounded text-[7px] font-black truncate flex items-center justify-center leading-none shadow-xs" title="Sub-hito: ${activeSubMilestones[0].title}">
-                            <i class="fa-solid fa-gem text-[6px] mr-0.5 shrink-0"></i><span class="truncate">${activeSubMilestones[0].title}</span>
-                        </div>`;
-                    } else if (dayMilestones.length > 0) {
-                        const msTitle = dayMilestones[0].milestoneTitle || 'Hito';
-                        const msHex = getColorObj(dayMilestones[0].color || 'emerald').hex;
-                        badgesHtml += `<div class="w-full mt-0.5 px-0.5 py-0.2 text-white rounded text-[7px] font-extrabold truncate flex items-center justify-center leading-none shadow-xs" style="background-color: ${msHex};" title="Hito: ${msTitle}">
-                            <i class="fa-solid fa-flag text-[6px] mr-0.5 shrink-0"></i><span class="truncate">${msTitle}</span>
-                        </div>`;
-                    }
-
-                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" style="${inlineStyle}" class="min-h-[2.6rem] p-0.5 rounded-lg flex flex-col items-center justify-between relative cursor-pointer transition ${bgClass}">
-                        <span class="leading-none mt-0.5 drop-shadow-xs">${day}</span>
-                        ${badgesHtml}
+                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-8 rounded-lg flex flex-col items-center justify-center relative cursor-pointer transition ${bgClass}">
+                        <span>${day}</span>
+                        ${indicators}
                     </button>`;
                 }
-
                 daysGrid += `</div>`;
                 monthCard.innerHTML = monthHeader + daysGrid;
                 grid.appendChild(monthCard);
             }
         }
 
+        // --- TIMELINE RENDERER ---
         function renderTimelineView() {
-            const monthHeader = document.getElementById('timelineMonthHeader');
-            const masterBar = document.getElementById('masterTimelineBar');
-            const eventsContainer = document.getElementById('timelineEventsContainer');
-            const milestonesContainer = document.getElementById('timelineMilestonesContainer');
-            const rangeBadge = document.getElementById('timelineRangeBadge');
-
-            if (!eventsContainer || !milestonesContainer || !masterBar) return;
-
-            let startMonth = 0;
-            let endMonth = 11;
-            let label = `Ene - Dic ${window.currentYear}`;
-
-            if (window.timelineMode === 'q1') { startMonth = 0; endMonth = 2; label = `Q1: Ene - Mar ${window.currentYear}`; }
-            else if (window.timelineMode === 'q2') { startMonth = 3; endMonth = 5; label = `Q2: Abr - Jun ${window.currentYear}`; }
-            else if (window.timelineMode === 'q3') { startMonth = 6; endMonth = 8; label = `Q3: Jul - Sep ${window.currentYear}`; }
-            else if (window.timelineMode === 'q4') { startMonth = 9; endMonth = 11; label = `Q4: Oct - Dic ${window.currentYear}`; }
-
-            if (rangeBadge) rangeBadge.textContent = label;
-
-            let monthColsHtml = '';
-            const monthsCount = endMonth - startMonth + 1;
-            for (let m = startMonth; m <= endMonth; m++) {
-                monthColsHtml += `<div>${monthNames[m]}</div>`;
-            }
-            if (monthHeader) {
-                monthHeader.className = `grid grid-cols-${monthsCount} gap-1 bg-slate-100 p-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-700 shadow-xs`;
-                monthHeader.innerHTML = monthColsHtml;
+            const container = document.getElementById('timelineContainer');
+            if (window.eventsList.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay eventos registrados.</div>`;
+                return;
             }
 
-            const rangeStartDate = new Date(window.currentYear, startMonth, 1);
-            const rangeEndDate = new Date(window.currentYear, endMonth + 1, 0);
-            const totalDaysInRange = Math.round((rangeEndDate - rangeStartDate) / (1000 * 60 * 60 * 24)) + 1;
+            let html = '';
+            const totalDaysInYear = 365;
 
-            let masterHtml = '';
             window.eventsList.forEach(evt => {
                 const start = new Date(evt.eventStart);
                 const end = new Date(evt.eventEnd);
+                const yearStart = new Date(window.currentYear, 0, 1);
+                const startDayIndex = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
+                const endDayIndex = Math.min(totalDaysInYear, (end - yearStart) / (1000 * 60 * 60 * 24) + 1);
+                
+                const leftPercent = Math.max(0, Math.min(100, (startDayIndex / totalDaysInYear) * 100));
+                const durationDays = Math.max(1, endDayIndex - startDayIndex);
+                const widthPercent = Math.max(1.5, Math.min(100 - leftPercent, (durationDays / totalDaysInYear) * 100));
 
-                if (end < rangeStartDate || start > rangeEndDate) return;
-
-                const effectiveStart = start < rangeStartDate ? rangeStartDate : start;
-                const effectiveEnd = end > rangeEndDate ? rangeEndDate : end;
-
-                const startOffsetDays = (effectiveStart - rangeStartDate) / (1000 * 60 * 60 * 24);
-                const durationDays = (effectiveEnd - effectiveStart) / (1000 * 60 * 60 * 24) + 1;
-
-                const leftPercent = Math.max(0, Math.min(100, (startOffsetDays / totalDaysInRange) * 100));
-                const widthPercent = Math.max(1, Math.min(100 - leftPercent, (durationDays / totalDaysInRange) * 100));
-                const colObj = getColorObj(evt.color);
-
-                masterHtml += `<div class="absolute h-7 top-1.5 rounded-md opacity-90 hover:opacity-100 transition shadow-sm flex items-center px-1.5 text-[10px] text-white font-bold truncate cursor-pointer z-10" 
-                    style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: ${colObj.hex};"
-                    onclick="editEvent('${evt.id}')"
-                    title="Evento: ${evt.eventTitle}">
-                    <span class="truncate">${evt.eventTitle}</span>
+                html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <div class="flex items-center space-x-2 truncate">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getBadgeColorClass(evt.color)}">${evt.category || 'Evento'}</span>
+                            <span class="font-bold text-slate-800 truncate">${evt.eventTitle}</span>
+                        </div>
+                        <div class="flex items-center space-x-2 shrink-0 text-[11px] text-slate-500 font-medium">
+                            <span>${formatDisplayDate(evt.eventStart)} → ${formatDisplayDate(evt.eventEnd)}</span>
+                            <button onclick="editEvent('${evt.id}')" class="text-slate-400 hover:text-indigo-600"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteEventStore('${evt.id}')" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="relative h-4 bg-slate-200/80 rounded-md w-full overflow-hidden">
+                        <div class="absolute h-full ${getBarColorClass(evt.color)} rounded-md text-[9px] text-white font-bold flex items-center px-1.5 overflow-hidden whitespace-nowrap" 
+                             style="left: ${leftPercent}%; width: ${widthPercent}%;">
+                             ${evt.eventTitle}
+                        </div>
+                    </div>
                 </div>`;
             });
-
-            masterBar.innerHTML = masterHtml || `<div class="text-center text-slate-500 text-xs py-4">No hay eventos en este rango.</div>`;
-
-            const filteredEvents = window.eventsList.filter(e => {
-                const start = new Date(e.eventStart);
-                const end = new Date(e.eventEnd);
-                return !(end < rangeStartDate || start > rangeEndDate);
-            });
-
-            if (filteredEvents.length === 0) {
-                eventsContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay eventos en este trimestre.</div>`;
-            } else {
-                let html = '';
-                filteredEvents.forEach(evt => {
-                    const start = new Date(evt.eventStart);
-                    const end = new Date(evt.eventEnd);
-                    const effectiveStart = start < rangeStartDate ? rangeStartDate : start;
-                    const effectiveEnd = end > rangeEndDate ? rangeEndDate : end;
-                    const startOffsetDays = (effectiveStart - rangeStartDate) / (1000 * 60 * 60 * 24);
-                    const durationDays = (effectiveEnd - effectiveStart) / (1000 * 60 * 60 * 24) + 1;
-                    const leftPercent = Math.max(0, Math.min(100, (startOffsetDays / totalDaysInRange) * 100));
-                    const widthPercent = Math.max(1.5, Math.min(100 - leftPercent, (durationDays / totalDaysInRange) * 100));
-                    const colObj = getColorObj(evt.color);
-
-                    html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 hover:bg-slate-100/80 transition space-y-2">
-                        <div class="flex items-center justify-between text-xs">
-                            <div class="flex items-center space-x-2 truncate">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${colObj.badgeClass}">${evt.category || 'General'}</span>
-                                <span class="font-bold text-slate-900 truncate">${evt.eventTitle}</span>
-                            </div>
-                            <div class="flex items-center space-x-2 shrink-0 text-[11px] text-slate-500 font-medium">
-                                <span>${formatDisplayDate(evt.eventStart)} → ${formatDisplayDate(evt.eventEnd)}</span>
-                                <button onclick="editEvent('${evt.id}')" class="text-slate-400 hover:text-indigo-600 cursor-pointer"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteEventStore('${evt.id}')" class="text-slate-400 hover:text-red-600 cursor-pointer"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="relative h-6 bg-slate-200/80 rounded-lg w-full flex items-center">
-                            <div class="absolute h-full rounded-lg text-[10px] text-white font-bold flex items-center px-2 overflow-hidden whitespace-nowrap shadow-xs" 
-                                 style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: ${colObj.hex};">
-                                 ${evt.eventTitle}
-                            </div>
-                        </div>
-                    </div>`;
-                });
-                eventsContainer.innerHTML = html;
-            }
-
-            const filteredMilestones = window.milestonesList.filter(ms => {
-                const dateObj = new Date(ms.milestoneDate);
-                return dateObj >= rangeStartDate && dateObj <= rangeEndDate;
-            });
-
-            if (filteredMilestones.length === 0) {
-                milestonesContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay hitos independientes en este rango.</div>`;
-            } else {
-                let msHtml = '';
-                filteredMilestones.forEach(ms => {
-                    const dateObj = new Date(ms.milestoneDate);
-                    const dayOffset = (dateObj - rangeStartDate) / (1000 * 60 * 60 * 24);
-                    const positionPercent = Math.max(0, Math.min(100, (dayOffset / totalDaysInRange) * 100));
-                    const msColObj = getColorObj(ms.color || 'emerald');
-
-                    msHtml += `<div class="bg-emerald-50/60 border border-emerald-200 rounded-xl p-2.5 hover:bg-emerald-100/60 transition space-y-1.5">
-                        <div class="flex items-center justify-between text-xs">
-                            <div class="flex items-center space-x-2 truncate">
-                                <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold uppercase" style="background-color: ${msColObj.hex};"><i class="fa-solid fa-flag mr-1"></i>Hito</span>
-                                <span class="font-bold text-slate-900 truncate">${ms.milestoneTitle}</span>
-                            </div>
-                            <div class="flex items-center space-x-2 shrink-0 text-[11px] text-slate-600 font-medium">
-                                <span><i class="fa-regular fa-calendar mr-1"></i>${formatDisplayDate(ms.milestoneDate)}</span>
-                                <button onclick="editMilestone('${ms.id}')" class="text-slate-400 hover:text-emerald-700 cursor-pointer"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteMilestoneStore('${ms.id}')" class="text-slate-400 hover:text-red-600 cursor-pointer"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>`;
-                });
-                milestonesContainer.innerHTML = msHtml;
-            }
+            container.innerHTML = html;
         }
 
-        window.addSubMilestoneRow = function(title = '', date = '') {
-            const container = document.getElementById('subMilestonesContainer');
-            if (!container) return;
-
-            const rowId = 'sm_row_' + Math.random().toString(36).substr(2, 9);
-            const row = document.createElement('div');
-            row.id = rowId;
-            row.className = 'flex items-center space-x-2 bg-amber-50/50 p-2 rounded-lg border border-amber-200/80';
-
-            row.innerHTML = `
-                <input type="text" placeholder="Nombre mini hito" value="${title}" required class="sub-ms-title flex-1 px-2.5 py-1.5 text-xs rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500">
-                <input type="date" value="${date}" required class="sub-ms-date w-36 px-2.5 py-1.5 text-xs rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium">
-                <button type="button" onclick="document.getElementById('${rowId}').remove()" class="p-1.5 text-slate-400 hover:text-red-600 transition cursor-pointer" title="Eliminar sub-hito">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            `;
-            container.appendChild(row);
-        };
-
-        window.validateSubMilestoneDates = function() {
-            const start = document.getElementById('eventStart').value;
-            const end = document.getElementById('eventEnd').value;
-            if (!start || !end) return;
-
-            document.querySelectorAll('.sub-ms-date').forEach(input => {
-                input.min = start;
-                input.max = end;
-            });
-        };
-
-        function collectSubMilestones() {
-            const list = [];
-            document.querySelectorAll('#subMilestonesContainer > div').forEach(row => {
-                const title = row.querySelector('.sub-ms-title')?.value.trim();
-                const date = row.querySelector('.sub-ms-date')?.value;
-                if (title && date) {
-                    list.push({ title, date });
-                }
-            });
-            return list;
-        }
-
+        // --- REPOSITORIO RENDERER ---
         function renderRepositoryView() {
             const container = document.getElementById('repositoryListContainer');
             if (!container) return;
@@ -956,176 +685,165 @@
             const searchTerm = (document.getElementById('repoSearchInput')?.value || '').toLowerCase();
             const filtered = window.eventsList.filter(e => 
                 (e.eventTitle && e.eventTitle.toLowerCase().includes(searchTerm)) ||
-                (e.category && e.category.toLowerCase().includes(searchTerm)) ||
-                (e.description && e.description.toLowerCase().includes(searchTerm))
+                (e.category && e.category.toLowerCase().includes(searchTerm))
             );
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No se encontraron eventos en el repositorio.</div>`;
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No se encontraron eventos.</div>`;
                 return;
             }
 
             let html = '';
             filtered.forEach(evt => {
-                const colObj = getColorObj(evt.color);
-                html += `<div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                html += `<div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div class="space-y-1">
                         <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${colObj.badgeClass}">${evt.category || 'General'}</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getBadgeColorClass(evt.color)}">${evt.category || 'General'}</span>
                             <h4 class="font-bold text-slate-900 text-sm">${evt.eventTitle}</h4>
                         </div>
-                        <p class="text-xs text-slate-500 font-medium">
-                            <i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}
-                        </p>
+                        <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
                     </div>
-                    <div class="flex items-center space-x-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
-                        <button onclick="editEvent('${evt.id}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition flex items-center cursor-pointer">
-                            <i class="fa-solid fa-pen mr-1"></i> Modificar
-                        </button>
-                        <button onclick="deleteEventStore('${evt.id}')" class="px-2 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition flex items-center cursor-pointer">
-                            <i class="fa-solid fa-trash mr-1"></i> Borrar
-                        </button>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="shareEventWhatsApp('${evt.eventTitle}', '${evt.eventStart}', '${evt.eventEnd}', '${evt.category}')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold"><i class="fa-brands fa-whatsapp mr-1"></i> Compartir</button>
+                        <button onclick="editEvent('${evt.id}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-semibold"><i class="fa-solid fa-pen mr-1"></i> Editar</button>
+                        <button onclick="deleteEventStore('${evt.id}')" class="px-2 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
                     </div>
                 </div>`;
             });
-
             container.innerHTML = html;
         }
 
+        // --- MILESTONES RENDERER ---
         function renderMilestonesView() {
             const container = document.getElementById('milestonesListContainer');
-            if (!container) return;
-
             if (window.milestonesList.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos independientes registrados.</div>`;
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos registrados.</div>`;
                 return;
             }
 
-            const sorted = [...window.milestonesList].sort((a, b) => a.milestoneDate.localeCompare(b.milestoneDate));
             let html = '';
-
-            sorted.forEach(ms => {
-                const msColObj = getColorObj(ms.color || 'emerald');
-                html += `<div class="flex items-start justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-emerald-300 transition">
+            window.milestonesList.forEach(ms => {
+                html += `<div class="flex items-start justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div class="flex items-start space-x-3">
-                        <div class="text-white p-2.5 rounded-xl shrink-0 mt-0.5" style="background-color: ${msColObj.hex};">
-                            <i class="fa-solid fa-flag"></i>
-                        </div>
+                        <div class="bg-emerald-100 text-emerald-700 p-2.5 rounded-xl shrink-0 mt-0.5"><i class="fa-solid fa-flag"></i></div>
                         <div>
                             <div class="flex items-center space-x-2 mb-1">
                                 <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(ms.milestoneDate)}</span>
                                 <h4 class="font-bold text-slate-900 text-sm">${ms.milestoneTitle}</h4>
                             </div>
-                            <p class="text-xs text-slate-600 leading-relaxed">${ms.milestoneComment}</p>
+                            <p class="text-xs text-slate-600">${ms.milestoneComment}</p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-1 shrink-0 ml-4">
-                        <button onclick="editMilestone('${ms.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600 cursor-pointer"><i class="fa-solid fa-pen text-xs"></i></button>
-                        <button onclick="deleteMilestoneStore('${ms.id}')" class="p-1.5 text-slate-400 hover:text-red-600 cursor-pointer"><i class="fa-solid fa-trash text-xs"></i></button>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="shareMilestoneWhatsApp('${ms.milestoneTitle}', '${ms.milestoneDate}', '${ms.milestoneComment}')" class="p-1.5 text-emerald-600"><i class="fa-brands fa-whatsapp text-sm"></i></button>
+                        <button onclick="editMilestone('${ms.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <button onclick="deleteMilestoneStore('${ms.id}')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
                     </div>
                 </div>`;
             });
-
             container.innerHTML = html;
         }
 
-        // --- STORE ACTIONS ---
+        // --- FIRESTORE DATA MODIFIERS ---
         window.saveEventToStore = async function(eventData) {
-            if (window.supabaseClient) {
-                const payload = {
-                    title: eventData.eventTitle,
-                    start_date: eventData.eventStart,
-                    end_date: eventData.eventEnd,
-                    color: eventData.color,
-                    category: eventData.category,
-                    description: eventData.description,
-                    sub_milestones: eventData.subMilestones || []
-                };
-
-                if (eventData.id) {
-                    await window.supabaseClient.from('events').update(payload).eq('id', eventData.id);
+            try {
+                const id = eventData.id || 'evt_' + Date.now();
+                eventData.id = id;
+                if (db) {
+                    await setDoc(doc(db, 'events', id), eventData);
                 } else {
-                    await window.supabaseClient.from('events').insert([payload]);
+                    saveEventLocal(eventData);
                 }
-                await loadSupabaseData();
-            } else {
+                sendTelegramNotification(`📅 *EVENTO: ${eventData.eventTitle}*\n🗓 ${formatDisplayDate(eventData.eventStart)} al ${formatDisplayDate(eventData.eventEnd)}`);
+                showToast('Evento guardado en Firebase', 'success');
+            } catch (err) {
+                console.error(err);
                 saveEventLocal(eventData);
             }
-
-            sendTelegramNotification(`📅 *EVENTO CRONOGRAMA*\n\n📌 *${eventData.eventTitle}*\n🗓 *Fechas:* ${formatDisplayDate(eventData.eventStart)} al ${formatDisplayDate(eventData.eventEnd)}`);
-            showToast('Evento guardado con éxito', 'success');
-        };
+        }
 
         function saveEventLocal(eventData) {
-            if (!eventData.id) {
-                eventData.id = 'evt_' + Date.now();
-                window.eventsList.push(eventData);
-            } else {
-                const idx = window.eventsList.findIndex(e => e.id === eventData.id);
-                if (idx !== -1) window.eventsList[idx] = eventData;
-            }
+            if (!eventData.id) eventData.id = 'evt_' + Date.now();
+            const idx = window.eventsList.findIndex(e => e.id === eventData.id);
+            if (idx !== -1) window.eventsList[idx] = eventData;
+            else window.eventsList.push(eventData);
             localStorage.setItem('local_events', JSON.stringify(window.eventsList));
             renderAll();
         }
 
         window.deleteEventStore = async function(id) {
-            if (window.supabaseClient) {
-                await window.supabaseClient.from('events').delete().eq('id', id);
-                await loadSupabaseData();
-            } else {
-                window.eventsList = window.eventsList.filter(e => e.id !== id);
-                localStorage.setItem('local_events', JSON.stringify(window.eventsList));
-                renderAll();
+            try {
+                if (db) await deleteDoc(doc(db, 'events', id));
+                else deleteEventLocal(id);
+                showToast('Evento eliminado', 'info');
+            } catch (err) {
+                deleteEventLocal(id);
             }
-            showToast('Evento eliminado', 'info');
-        };
+        }
+
+        function deleteEventLocal(id) {
+            window.eventsList = window.eventsList.filter(e => e.id !== id);
+            localStorage.setItem('local_events', JSON.stringify(window.eventsList));
+            renderAll();
+        }
 
         window.saveMilestoneStore = async function(milestoneData) {
-            if (window.supabaseClient) {
-                const payload = {
-                    title: milestoneData.milestoneTitle,
-                    date: milestoneData.milestoneDate,
-                    color: milestoneData.color,
-                    comment: milestoneData.milestoneComment
-                };
-
-                if (milestoneData.id) {
-                    await window.supabaseClient.from('milestones').update(payload).eq('id', milestoneData.id);
+            try {
+                const id = milestoneData.id || 'ms_' + Date.now();
+                milestoneData.id = id;
+                if (db) {
+                    await setDoc(doc(db, 'milestones', id), milestoneData);
                 } else {
-                    await window.supabaseClient.from('milestones').insert([payload]);
+                    saveMilestoneLocal(milestoneData);
                 }
-                await loadSupabaseData();
-            } else {
+                sendTelegramNotification(`🚩 *HITO: ${milestoneData.milestoneTitle}*\n🗓 ${formatDisplayDate(milestoneData.milestoneDate)}`);
+                showToast('Hito guardado en Firebase', 'success');
+            } catch (err) {
                 saveMilestoneLocal(milestoneData);
             }
-
-            sendTelegramNotification(`🚩 *HITO INDEPENDIENTE*\n\n📌 *${milestoneData.milestoneTitle}*\n🗓 *Fecha:* ${formatDisplayDate(milestoneData.milestoneDate)}`);
-            showToast('Hito guardado con éxito', 'success');
-        };
+        }
 
         function saveMilestoneLocal(milestoneData) {
-            if (!milestoneData.id) {
-                milestoneData.id = 'ms_' + Date.now();
-                window.milestonesList.push(milestoneData);
-            } else {
-                const idx = window.milestonesList.findIndex(m => m.id === milestoneData.id);
-                if (idx !== -1) window.milestonesList[idx] = milestoneData;
-            }
+            if (!milestoneData.id) milestoneData.id = 'ms_' + Date.now();
+            const idx = window.milestonesList.findIndex(m => m.id === milestoneData.id);
+            if (idx !== -1) window.milestonesList[idx] = milestoneData;
+            else window.milestonesList.push(milestoneData);
             localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
             renderAll();
         }
 
         window.deleteMilestoneStore = async function(id) {
-            if (window.supabaseClient) {
-                await window.supabaseClient.from('milestones').delete().eq('id', id);
-                await loadSupabaseData();
-            } else {
-                window.milestonesList = window.milestonesList.filter(m => m.id !== id);
-                localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
-                renderAll();
+            try {
+                if (db) await deleteDoc(doc(db, 'milestones', id));
+                else deleteMilestoneLocal(id);
+                showToast('Hito eliminado', 'info');
+            } catch (err) {
+                deleteMilestoneLocal(id);
             }
-            showToast('Hito eliminado', 'info');
-        };
+        }
+
+        function deleteMilestoneLocal(id) {
+            window.milestonesList = window.milestonesList.filter(m => m.id !== id);
+            localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
+            renderAll();
+        }
+
+        // --- MODALS ---
+        window.openConfigModal = () => document.getElementById('configModal').classList.remove('hidden');
+        window.closeConfigModal = () => document.getElementById('configModal').classList.add('hidden');
+
+        window.openEventModal = function(presetDate = null) {
+            document.getElementById('eventId').value = '';
+            document.getElementById('eventTitle').value = '';
+            document.getElementById('eventStart').value = presetDate || `${window.currentYear}-01-01`;
+            document.getElementById('eventEnd').value = presetDate || `${window.currentYear}-01-07`;
+            document.getElementById('eventColor').value = 'indigo';
+            document.getElementById('eventCategory').value = '';
+            document.getElementById('eventDesc').value = '';
+            document.getElementById('eventModalTitle').textContent = 'Crear Nuevo Evento';
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+        window.closeEventModal = () => document.getElementById('eventModal').classList.add('hidden');
 
         window.editEvent = function(id) {
             const evt = window.eventsList.find(e => e.id === id);
@@ -1138,34 +856,32 @@
             document.getElementById('eventCategory').value = evt.category || '';
             document.getElementById('eventDesc').value = evt.description || '';
             document.getElementById('eventModalTitle').textContent = 'Editar Evento';
-            
-            const container = document.getElementById('subMilestonesContainer');
-            container.innerHTML = '';
-            if (evt.subMilestones && Array.isArray(evt.subMilestones)) {
-                evt.subMilestones.forEach(sm => addSubMilestoneRow(sm.title, sm.date));
-            }
-
-            renderColorPalettePicker('colorPaletteGrid', 'eventColor');
-            validateSubMilestoneDates();
             document.getElementById('eventModal').classList.remove('hidden');
-        };
+        }
 
         window.handleEventSubmit = function(e) {
             e.preventDefault();
-            const id = document.getElementById('eventId').value;
-            const eventData = {
-                id: id || undefined,
+            saveEventToStore({
+                id: document.getElementById('eventId').value || undefined,
                 eventTitle: document.getElementById('eventTitle').value,
                 eventStart: document.getElementById('eventStart').value,
                 eventEnd: document.getElementById('eventEnd').value,
                 color: document.getElementById('eventColor').value,
                 category: document.getElementById('eventCategory').value,
-                description: document.getElementById('eventDesc').value,
-                subMilestones: collectSubMilestones()
-            };
-            saveEventToStore(eventData);
+                description: document.getElementById('eventDesc').value
+            });
             closeEventModal();
-        };
+        }
+
+        window.openMilestoneModal = function(presetDate = null) {
+            document.getElementById('milestoneId').value = '';
+            document.getElementById('milestoneTitle').value = '';
+            document.getElementById('milestoneDate').value = presetDate || `${window.currentYear}-01-01`;
+            document.getElementById('milestoneComment').value = '';
+            document.getElementById('milestoneModalTitle').textContent = 'Añadir Hito o Comentario';
+            document.getElementById('milestoneModal').classList.remove('hidden');
+        }
+        window.closeMilestoneModal = () => document.getElementById('milestoneModal').classList.add('hidden');
 
         window.editMilestone = function(id) {
             const ms = window.milestonesList.find(m => m.id === id);
@@ -1173,188 +889,121 @@
             document.getElementById('milestoneId').value = ms.id;
             document.getElementById('milestoneTitle').value = ms.milestoneTitle;
             document.getElementById('milestoneDate').value = ms.milestoneDate;
-            document.getElementById('milestoneColor').value = ms.color || 'emerald';
             document.getElementById('milestoneComment').value = ms.milestoneComment;
-            document.getElementById('milestoneModalTitle').textContent = 'Editar Hito Independiente';
-            renderColorPalettePicker('milestoneColorPaletteGrid', 'milestoneColor');
+            document.getElementById('milestoneModalTitle').textContent = 'Editar Hito';
             document.getElementById('milestoneModal').classList.remove('hidden');
-        };
+        }
 
         window.handleMilestoneSubmit = function(e) {
             e.preventDefault();
-            const id = document.getElementById('milestoneId').value;
-            const milestoneData = {
-                id: id || undefined,
+            saveMilestoneStore({
+                id: document.getElementById('milestoneId').value || undefined,
                 milestoneTitle: document.getElementById('milestoneTitle').value,
                 milestoneDate: document.getElementById('milestoneDate').value,
-                color: document.getElementById('milestoneColor').value,
                 milestoneComment: document.getElementById('milestoneComment').value
-            };
-            saveMilestoneStore(milestoneData);
+            });
             closeMilestoneModal();
-        };
+        }
 
         window.openDayDetails = function(dateStr) {
             window.selectedDateForModal = dateStr;
             const parts = dateStr.split('-');
-            const mmdd = `${parts[1]}-${parts[2]}`;
-            const holiday = window.fixedHolidays[mmdd];
+            const holiday = window.fixedHolidays[`${parts[1]}-${parts[2]}`];
 
             document.getElementById('dayModalDateTitle').textContent = `Día ${formatDisplayDate(dateStr)}`;
-            let subText = holiday ? `Festivo: ${holiday}` : 'Día laborable';
-            document.getElementById('dayModalSub').textContent = subText;
+            document.getElementById('dayModalSub').textContent = holiday ? `Festivo: ${holiday}` : 'Día ordinario';
 
             const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
             const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
 
             let contentHtml = '';
-
             if (holiday) {
-                contentHtml += `<div class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-center space-x-2">
-                    <i class="fa-solid fa-gift"></i><span>Festivo Nacional: ${holiday}</span>
+                contentHtml += `<div class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">Festivo Nacional: ${holiday}</div>`;
+            }
+
+            activeEvents.forEach(evt => {
+                contentHtml += `<div class="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1 mb-2">
+                    <div class="flex justify-between items-center"><span class="font-bold text-sm">${evt.eventTitle}</span></div>
+                    <p class="text-xs text-slate-500">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
                 </div>`;
-            }
+            });
 
-            if (activeEvents.length > 0) {
-                contentHtml += `<h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Eventos Activos</h4>`;
-                activeEvents.forEach(evt => {
-                    const colObj = getColorObj(evt.color);
-                    contentHtml += `<div class="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2 mb-2">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-slate-900 text-sm">${evt.eventTitle}</span>
-                            <span class="text-[10px] px-2 py-0.5 rounded ${colObj.badgeClass} font-semibold">${evt.category || 'Evento'}</span>
-                        </div>
-                        <p class="text-xs text-slate-500">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
-                        <div class="flex items-center justify-end space-x-2 pt-1 border-t border-slate-200/60">
-                            <button onclick="closeDayModal(); editEvent('${evt.id}');" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold cursor-pointer"><i class="fa-solid fa-pen mr-1"></i>Editar</button>
-                            <button onclick="closeDayModal(); deleteEventStore('${evt.id}');" class="text-red-500 hover:text-red-700 text-xs font-semibold cursor-pointer"><i class="fa-solid fa-trash mr-1"></i>Eliminar</button>
-                        </div>
-                    </div>`;
-                });
-            }
+            dayMilestones.forEach(ms => {
+                contentHtml += `<div class="p-3 rounded-xl border border-emerald-200 bg-emerald-50 space-y-1 mb-2">
+                    <div class="font-bold text-emerald-900 text-sm"><i class="fa-solid fa-flag mr-1"></i> ${ms.milestoneTitle}</div>
+                    <p class="text-xs text-slate-600">${ms.milestoneComment}</p>
+                </div>`;
+            });
 
-            if (dayMilestones.length > 0) {
-                contentHtml += `<h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 mt-4">Hitos Independientes</h4>`;
-                dayMilestones.forEach(ms => {
-                    contentHtml += `<div class="p-3 rounded-xl border border-emerald-200 bg-emerald-50 space-y-1 mb-2">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-emerald-900 text-sm"><i class="fa-solid fa-flag mr-1 text-emerald-600"></i> ${ms.milestoneTitle}</span>
-                            <div class="flex items-center space-x-2">
-                                <button onclick="closeDayModal(); editMilestone('${ms.id}');" class="text-slate-500 hover:text-emerald-600 text-xs cursor-pointer"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="closeDayModal(); deleteMilestoneStore('${ms.id}');" class="text-red-500 hover:text-red-700 text-xs cursor-pointer"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <p class="text-xs text-slate-600">${ms.milestoneComment}</p>
-                    </div>`;
-                });
-            }
-
-            if (activeEvents.length === 0 && dayMilestones.length === 0 && !holiday) {
-                contentHtml += `<p class="text-xs text-slate-400 text-center py-6">No hay eventos ni hitos en este día.</p>`;
+            if (!activeEvents.length && !dayMilestones.length && !holiday) {
+                contentHtml += `<p class="text-xs text-slate-400 text-center py-4">No hay registros en este día.</p>`;
             }
 
             document.getElementById('dayModalContent').innerHTML = contentHtml;
             document.getElementById('dayDetailsModal').classList.remove('hidden');
-        };
+        }
 
-        window.closeDayModal = function() { document.getElementById('dayDetailsModal').classList.add('hidden'); };
-        window.quickAddEventOnDate = function() { closeDayModal(); openEventModal(window.selectedDateForModal); };
-        window.quickAddMilestoneOnDate = function() { closeDayModal(); openMilestoneModal(window.selectedDateForModal); };
-
-        // --- TELEGRAM UTILS ---
-        window.sendTelegramNotification = async function(message) {
-            const botToken = localStorage.getItem('tg_bot_token');
-            const chatId = localStorage.getItem('tg_chat_id');
-            if (!botToken || !chatId) return;
-            try {
-                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
-                });
-            } catch(e) { console.error("Error Telegram:", e); }
-        };
-
-        window.testTelegramBot = async function() {
-            const botToken = document.getElementById('tgBotToken').value.trim();
-            const chatId = document.getElementById('tgChatId').value.trim();
-            if (!botToken || !chatId) {
-                showToast('Introduce Token y Chat ID primero', 'info');
-                return;
-            }
-            try {
-                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: '🚀 *¡Prueba Exitosa!* Tu bot está conectado.', parse_mode: 'Markdown' })
-                });
-                const data = await res.json();
-                if (data.ok) showToast('Mensaje de prueba enviado con éxito', 'success');
-                else showToast(`Error de Telegram: ${data.description || 'Verifica datos'}`, 'info');
-            } catch(e) { showToast('Error al conectar con la API de Telegram', 'info'); }
-        };
-
-        window.copyWebAppUrl = function() {
-            const input = document.getElementById('tgWebAppUrl');
-            if (input && input.value) {
-                input.select();
-                document.execCommand('copy');
-                showToast('URL copiada al portapapeles', 'success');
-            }
-        };
+        window.closeDayModal = () => document.getElementById('dayDetailsModal').classList.add('hidden');
+        window.quickAddEventOnDate = () => { closeDayModal(); openEventModal(window.selectedDateForModal); }
+        window.quickAddMilestoneOnDate = () => { closeDayModal(); openMilestoneModal(window.selectedDateForModal); }
 
         // --- UTILS ---
         function formatDateISO(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
-
         function formatDisplayDate(dateStr) {
             if (!dateStr) return '';
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return dateStr;
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            const p = dateStr.split('-');
+            return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : dateStr;
         }
 
-        function getColorObj(colorKey) {
-            const found = window.colorPalette.find(c => c.id === colorKey);
-            return found || window.colorPalette[0];
+        function getColorClass(c) {
+            switch(c) {
+                case 'blue': return 'bg-blue-600 text-white';
+                case 'emerald': return 'bg-emerald-600 text-white';
+                case 'amber': return 'bg-amber-600 text-white';
+                case 'rose': return 'bg-rose-600 text-white';
+                case 'purple': return 'bg-purple-600 text-white';
+                default: return 'bg-indigo-600 text-white';
+            }
+        }
+        function getBarColorClass(c) {
+            switch(c) {
+                case 'blue': return 'bg-blue-500';
+                case 'emerald': return 'bg-emerald-500';
+                case 'amber': return 'bg-amber-500';
+                case 'rose': return 'bg-rose-500';
+                case 'purple': return 'bg-purple-500';
+                default: return 'bg-indigo-500';
+            }
+        }
+        function getBadgeColorClass(c) {
+            switch(c) {
+                case 'blue': return 'bg-blue-100 text-blue-700';
+                case 'emerald': return 'bg-emerald-100 text-emerald-700';
+                case 'amber': return 'bg-amber-100 text-amber-700';
+                case 'rose': return 'bg-rose-100 text-rose-700';
+                case 'purple': return 'bg-purple-100 text-purple-700';
+                default: return 'bg-indigo-100 text-indigo-700';
+            }
         }
 
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toastContainer');
-            if (!container) return;
             const toast = document.createElement('div');
-            const bg = type === 'success' ? 'bg-slate-900 text-white' : 'bg-indigo-600 text-white';
-            toast.className = `${bg} px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center space-x-2 transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto`;
+            toast.className = `bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center space-x-2`;
             toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
             container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
 
-            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
-            setTimeout(() => {
-                toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        };
-
-        function initApp() {
+        // Arranque
+        window.addEventListener('DOMContentLoaded', () => {
             if (window.Telegram && window.Telegram.WebApp) {
-                try {
-                    window.Telegram.WebApp.ready();
-                    window.Telegram.WebApp.expand();
-                } catch(e) {}
+                try { Telegram.WebApp.ready(); Telegram.WebApp.expand(); } catch(e) {}
             }
-            initSupabase();
-            loadSupabaseData();
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
+            initFirebase();
+        });
     </script>
 </body>
 </html>
