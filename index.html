@@ -28,10 +28,17 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Asegurar visibilidad limpia de inputs de tipo fecha */
         input[type="date"]::-webkit-calendar-picker-indicator {
             cursor: pointer;
             filter: invert(0.4);
+        }
+
+        /* Estilo Bandera Madera para Hitos/MiniHitos en Línea de Tiempo */
+        .wooden-badge {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #d97706;
+            color: #78350f;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
     </style>
 </head>
@@ -95,13 +102,13 @@
 
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden flex flex-col">
-        <!-- TAB 1: CALENDAR VIEW (12 MESES) -->
+        <!-- TAB 1: CALENDAR VIEW (12 MESES MULTICOLOR) -->
         <div id="tab-calendar" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
             <div class="max-w-7xl mx-auto space-y-6">
                 <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                     <div>
                         <h2 class="text-base font-bold text-slate-900">Vista Anual de 12 Meses</h2>
-                        <p class="text-xs text-slate-500">Muestra eventos por franjas de color y resalta hitos destacados (🚩).</p>
+                        <p class="text-xs text-slate-500">Muestra franjas de todos los eventos concurrentes por colores, Hitos (🚩) y Mini-Hitos (📌).</p>
                     </div>
                     <button onclick="sendMonthToTelegram()" class="bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center">
                         <i class="fa-brands fa-telegram mr-1.5 text-sm"></i> Resumen a Telegram
@@ -114,32 +121,39 @@
             </div>
         </div>
 
-        <!-- TAB 2: TIMELINE VIEW (GANTT TRIMESTRAL + LÍNEA GENERAL + DETALLE) -->
+        <!-- TAB 2: TIMELINE VIEW (MACRO BARRA UNIFICADA + GANTT TRIMESTRAL CON MADERA) -->
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-6">
-                <!-- Banner Línea General Integrada -->
+                <!-- Macro Línea Anual Unificada con Hitos Integrados -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900">Línea Temporal Anual Unificada</h2>
-                            <p class="text-xs text-slate-500">Panorama completo del año con todos los eventos, hitos y sub-hitos en secuencia.</p>
+                            <p class="text-xs text-slate-500">Colores exactos por evento con marcadores de Hitos (🚩) y Mini-Hitos (📌) posicionados por fecha.</p>
                         </div>
                         <span class="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs timeline-year-label">2026</span>
                     </div>
-                    <!-- Barra Macro Anual -->
-                    <div id="macroTimelineBar" class="relative h-6 bg-slate-100 rounded-lg border border-slate-200 overflow-hidden flex">
-                        <!-- Fragmentos inyectados dinámicamente -->
+                    
+                    <!-- Contenedor Barra Macro -->
+                    <div class="relative pt-4 pb-2">
+                        <div id="macroTimelineBar" class="relative h-7 bg-slate-100 rounded-lg border border-slate-200 overflow-hidden flex shadow-inner">
+                            <!-- Fragmentos de colores inyectados dinámicamente -->
+                        </div>
+                        <!-- Capa de Marcadores de Hitos sobre la Barra Macro -->
+                        <div id="macroMilestonesOverlay" class="absolute inset-0 pointer-events-none pt-4">
+                            <!-- Banderas / Pines posicionados por porcentaje del año -->
+                        </div>
                     </div>
                 </div>
 
-                <!-- Trimestres (3 a 3 meses para visibilidad perfecta) -->
+                <!-- Trimestres con Indicaciones de Madera -->
                 <div id="quartersContainer" class="space-y-6">
                     <!-- Inyectados Q1, Q2, Q3, Q4 -->
                 </div>
             </div>
         </div>
 
-        <!-- TAB 3: REPOSITORIO GENERAL DE EVENTOS -->
+        <!-- TAB 3: REPOSITORIO GENERAL -->
         <div id="tab-repository" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -349,7 +363,6 @@
             measurementId: "G-RQY15GN612"
         };
 
-        // Paleta Extendida de 10 Colores
         window.colorPalette = [
             { id: 'indigo', hex: '#4f46e5', name: 'Índigo', bg: 'bg-indigo-600', text: 'text-white', badge: 'bg-indigo-100 text-indigo-700' },
             { id: 'blue', hex: '#2563eb', name: 'Azul', bg: 'bg-blue-600', text: 'text-white', badge: 'bg-blue-100 text-blue-700' },
@@ -500,10 +513,20 @@
             renderColorPaletteUI();
         }
 
-        // --- CALENDARIO CON MULTICOLOR E HITOS DESTACADOS ---
+        // --- CALENDARIO MULTICOLOR EXACTO + HITOS Y MINI-HITOS ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
             grid.innerHTML = '';
+
+            // Recopilar todos los sub-hitos en un array plano con su contexto
+            const allSubMilestones = [];
+            window.eventsList.forEach(evt => {
+                (evt.subMilestones || []).forEach(sm => {
+                    if (sm.date) {
+                        allSubMilestones.push({ ...sm, parentTitle: evt.eventTitle });
+                    }
+                });
+            });
 
             for (let month = 0; month < 12; month++) {
                 const monthCard = document.createElement('div');
@@ -533,8 +556,10 @@
                     const mmdd = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const isHoliday = window.fixedHolidays[mmdd];
 
+                    // Filtrar coincidencias
                     const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
                     const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
+                    const daySubMilestones = allSubMilestones.filter(sm => sm.date === dateStr);
 
                     let bgStyle = '';
                     let textClass = 'text-slate-700';
@@ -542,30 +567,33 @@
                     if (isWeekend) textClass = 'text-amber-800 bg-amber-50/50';
                     if (isHoliday) textClass = 'text-red-700 font-bold bg-red-50 border border-red-200';
 
-                    // Generación de barra multicolor cuando coinciden varios eventos
-                    let multiColorBar = '';
-                    if (activeEvents.length === 1) {
-                        const col = getColorObj(activeEvents[0].color);
-                        bgStyle = `background-color: ${col.hex}15; border-bottom: 3px solid ${col.hex};`;
-                    } else if (activeEvents.length > 1) {
-                        const sliceWidth = (100 / activeEvents.length).toFixed(1);
-                        const gradients = activeEvents.map((evt, idx) => {
+                    // Franjas verticales de colores según los eventos que coincidan
+                    let colorBarsHtml = '';
+                    if (activeEvents.length > 0) {
+                        const barWidthPercent = (100 / activeEvents.length).toFixed(1);
+                        colorBarsHtml = `<div class="absolute bottom-0 left-0 right-0 h-2 flex rounded-b-md overflow-hidden">`;
+                        activeEvents.forEach(evt => {
                             const c = getColorObj(evt.color);
-                            return `${c.hex} ${idx * sliceWidth}% ${(idx + 1) * sliceWidth}%`;
-                        }).join(', ');
-                        multiColorBar = `<div class="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-md" style="background: linear-gradient(to right, ${gradients});"></div>`;
+                            colorBarsHtml += `<div style="width: ${barWidthPercent}%; background-color: ${c.hex};" class="h-full" title="${evt.eventTitle}"></div>`;
+                        });
+                        colorBarsHtml += `</div>`;
                     }
 
-                    // Hito destacado
-                    let milestoneBadge = '';
+                    // Iconos de Hitos y Mini Hitos
+                    let markers = '';
                     if (dayMilestones.length > 0) {
-                        milestoneBadge = `<div class="absolute top-0.5 right-0.5 bg-emerald-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[8px] font-bold shadow-xs" title="${dayMilestones[0].milestoneTitle}">🚩</div>`;
+                        markers += `<span class="text-[9px]" title="Hito: ${dayMilestones[0].milestoneTitle}">🚩</span>`;
+                    }
+                    if (daySubMilestones.length > 0) {
+                        markers += `<span class="text-[9px]" title="Mini-hito: ${daySubMilestones[0].title}">📌</span>`;
                     }
 
-                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" style="${bgStyle}" class="h-10 rounded-md flex flex-col items-center justify-center relative cursor-pointer hover:bg-slate-100 transition ${textClass}">
-                        <span class="font-semibold">${day}</span>
-                        ${milestoneBadge}
-                        ${multiColorBar}
+                    let markersOverlay = markers ? `<div class="absolute top-0.5 right-0.5 flex space-x-0.5">${markers}</div>` : '';
+
+                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-10 rounded-md flex flex-col items-center justify-center relative cursor-pointer hover:bg-slate-100 transition ${textClass}">
+                        <span class="font-semibold text-xs z-10">${day}</span>
+                        ${markersOverlay}
+                        ${colorBarsHtml}
                     </button>`;
                 }
                 daysGrid += `</div>`;
@@ -574,28 +602,60 @@
             }
         }
 
-        // --- LÍNEA DE TIEMPO TRIMESTRAL (Q1-Q4) + SUB-HITOS ---
+        // --- LÍNEA DE TIEMPO ANUAL UNIFICADA Y QUARTERLY CON MADERA ---
         function renderTimelineView() {
             const container = document.getElementById('quartersContainer');
             const macroBar = document.getElementById('macroTimelineBar');
-            if (!container) return;
+            const macroOverlay = document.getElementById('macroMilestonesOverlay');
 
-            // Render Macro Barra Anual
+            if (!container || !macroBar) return;
+
+            // Renderizar Macro Barra Anual
             if (window.eventsList.length === 0) {
-                macroBar.innerHTML = `<div class="text-xs text-slate-400 p-1 pl-3">Sin eventos creados para el resumen anual</div>`;
+                macroBar.innerHTML = `<div class="text-xs text-slate-400 p-1 pl-3 flex items-center">Sin eventos registrados</div>`;
+                macroOverlay.innerHTML = '';
             } else {
                 macroBar.innerHTML = window.eventsList.map(evt => {
                     const col = getColorObj(evt.color);
                     return `<div class="h-full" style="background-color: ${col.hex}; flex: 1;" title="${evt.eventTitle}"></div>`;
                 }).join('');
+
+                // overlay de hitos y subhitos
+                const totalDays = 365;
+                const yearStart = new Date(window.currentYear, 0, 1);
+                let overlayHtml = '';
+
+                window.milestonesList.forEach(ms => {
+                    const d = new Date(ms.milestoneDate);
+                    const dayIdx = (d - yearStart) / (1000 * 60 * 60 * 24);
+                    if (dayIdx >= 0 && dayIdx <= totalDays) {
+                        const pct = ((dayIdx / totalDays) * 100).toFixed(1);
+                        overlayHtml += `<div class="absolute top-0 text-xs transform -translate-x-1/2" style="left: ${pct}%;" title="Hito: ${ms.milestoneTitle}">🚩</div>`;
+                    }
+                });
+
+                window.eventsList.forEach(evt => {
+                    (evt.subMilestones || []).forEach(sm => {
+                        if (sm.date) {
+                            const d = new Date(sm.date);
+                            const dayIdx = (d - yearStart) / (1000 * 60 * 60 * 24);
+                            if (dayIdx >= 0 && dayIdx <= totalDays) {
+                                const pct = ((dayIdx / totalDays) * 100).toFixed(1);
+                                overlayHtml += `<div class="absolute top-0 text-xs transform -translate-x-1/2" style="left: ${pct}%;" title="Mini-hito: ${sm.title}">📌</div>`;
+                            }
+                        }
+                    });
+                });
+
+                macroOverlay.innerHTML = overlayHtml;
             }
 
-            // Render Trimestres (Q1 a Q4)
+            // Renderizar Vistas Trimestrales con Badges de Madera
             const quarters = [
-                { name: "Q1: Enero - Marzo", startMonth: 0, endMonth: 2, days: 90 },
-                { name: "Q2: Abril - Junio", startMonth: 3, endMonth: 5, days: 91 },
-                { name: "Q3: Julio - Septiembre", startMonth: 6, endMonth: 8, days: 92 },
-                { name: "Q4: Octubre - Diciembre", startMonth: 9, endMonth: 11, days: 92 }
+                { name: "Q1: Enero - Marzo", startMonth: 0, endMonth: 2 },
+                { name: "Q2: Abril - Junio", startMonth: 3, endMonth: 5 },
+                { name: "Q3: Julio - Septiembre", startMonth: 6, endMonth: 8 },
+                { name: "Q4: Octubre - Diciembre", startMonth: 9, endMonth: 11 }
             ];
 
             let html = '';
@@ -609,33 +669,46 @@
                 const milestonesInQ = window.milestonesList.filter(m => m.milestoneDate >= qStartStr && m.milestoneDate <= qEndStr);
 
                 html += `<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
-                    <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">${q.name}</h3>
-                    <div class="space-y-2">`;
+                    <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2 flex items-center justify-between">
+                        <span>${q.name}</span>
+                        <span class="text-xs font-normal text-slate-400">${formatDisplayDate(qStartStr)} al ${formatDisplayDate(qEndStr)}</span>
+                    </h3>
+                    <div class="space-y-3">`;
 
                 if (activeInQ.length === 0 && milestonesInQ.length === 0) {
-                    html += `<div class="text-xs text-slate-400 py-3 text-center">Sin actividad en este trimestre</div>`;
+                    html += `<div class="text-xs text-slate-400 py-2 text-center">Sin actividad en este trimestre</div>`;
                 } else {
                     activeInQ.forEach(evt => {
                         const col = getColorObj(evt.color);
-                        const subHitosHtml = (evt.subMilestones || []).map(sm => `
-                            <span class="inline-flex items-center text-[10px] bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-700 mr-1">
-                                <i class="fa-solid ${sm.completed ? 'fa-check-circle text-emerald-500' : 'fa-circle-dot text-indigo-500'} mr-1"></i> ${sm.title} (${formatDisplayDate(sm.date)})
-                            </span>
+                        
+                        // Render mini-hitos del evento que caen en este trimestre con Estilo Madera
+                        const subHitosInQ = (evt.subMilestones || []).filter(sm => sm.date >= qStartStr && sm.date <= qEndStr);
+                        const subHitosHtml = subHitosInQ.map(sm => `
+                            <div class="wooden-badge px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center shadow-xs mr-2 mb-1">
+                                <i class="fa-solid fa-thumbtack mr-1.5 text-amber-700"></i>
+                                <span>${sm.title}</span>
+                                <span class="ml-1.5 opacity-80 text-[10px] font-bold">(${formatDisplayDate(sm.date)})</span>
+                            </div>
                         `).join('');
 
-                        html += `<div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50/50 space-y-1.5">
+                        html += `<div class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
                             <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-full mr-1.5" style="background-color:${col.hex}"></span>${evt.eventTitle}</span>
-                                <span class="text-[11px] text-slate-500 font-medium">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</span>
+                                <span class="font-bold text-slate-900 flex items-center">
+                                    <span class="inline-block w-3 h-3 rounded-full mr-2 shadow-xs" style="background-color:${col.hex}"></span>
+                                    ${evt.eventTitle}
+                                </span>
+                                <span class="text-[11px] font-medium text-slate-500">${formatDisplayDate(evt.eventStart)} → ${formatDisplayDate(evt.eventEnd)}</span>
                             </div>
-                            ${subHitosHtml ? `<div class="pt-1">${subHitosHtml}</div>` : ''}
+                            ${subHitosHtml ? `<div class="pt-1 flex flex-wrap">${subHitosHtml}</div>` : ''}
                         </div>`;
                     });
 
                     milestonesInQ.forEach(ms => {
-                        html += `<div class="p-2 rounded-lg border border-emerald-200 bg-emerald-50/40 flex items-center justify-between text-xs">
-                            <span class="font-bold text-emerald-900"><i class="fa-solid fa-flag text-emerald-600 mr-1.5"></i> ${ms.milestoneTitle}</span>
-                            <span class="text-[10px] font-semibold text-emerald-700">${formatDisplayDate(ms.milestoneDate)}</span>
+                        html += `<div class="p-2.5 rounded-xl border border-amber-200 wooden-badge flex items-center justify-between text-xs">
+                            <span class="font-bold flex items-center">
+                                <i class="fa-solid fa-flag text-amber-800 mr-2"></i> ${ms.milestoneTitle}
+                            </span>
+                            <span class="text-[10px] font-extrabold bg-amber-200/80 px-2 py-0.5 rounded text-amber-900">${formatDisplayDate(ms.milestoneDate)}</span>
                         </div>`;
                     });
                 }
@@ -656,7 +729,7 @@
             const filteredMilestones = window.milestonesList.filter(m => (m.milestoneTitle || '').toLowerCase().includes(searchTerm));
 
             if (filteredEvents.length === 0 && filteredMilestones.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No se encontraron registros en el repositorio.</div>`;
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No se encontraron registros.</div>`;
                 return;
             }
 
@@ -726,10 +799,9 @@
             `).join('');
         }
 
-        // --- GESTIÓN DE SUB-HITOS / MINI HITOS EN EVENTOS ---
+        // --- MINI HITOS EN EVENTOS ---
         window.addSubMilestoneInput = function(title = '', date = '', completed = false) {
             const container = document.getElementById('subMilestonesContainer');
-            const id = 'sub_' + Date.now() + Math.random().toString(36).substr(2, 4);
             const div = document.createElement('div');
             div.className = 'flex items-center space-x-2 bg-slate-50 p-2 rounded-lg border border-slate-200 sub-milestone-row';
             div.innerHTML = `
@@ -755,7 +827,7 @@
             return subMilestones;
         }
 
-        // --- FIRESTORE DATA MODIFIERS ---
+        // --- MODIFICADORES DE FIRESTORE / LOCAL ---
         window.saveEventToStore = async function(eventData) {
             try {
                 const id = eventData.id || 'evt_' + Date.now();
@@ -836,7 +908,7 @@
             renderAll();
         }
 
-        // --- CONTROLES DE MODALES ---
+        // --- MODALES ---
         window.openConfigModal = () => document.getElementById('configModal').classList.remove('hidden');
         window.closeConfigModal = () => document.getElementById('configModal').classList.add('hidden');
 
