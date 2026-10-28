@@ -23,9 +23,9 @@
         }
     </script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         input[type="date"]::-webkit-calendar-picker-indicator {
@@ -33,12 +33,25 @@
             filter: invert(0.4);
         }
 
-        /* Estilo Bandera Madera para Hitos/MiniHitos en Línea de Tiempo */
         .wooden-badge {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             border: 1px solid #d97706;
             color: #78350f;
             box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+
+        /* Tooltip personalizado en CSS */
+        .has-tooltip {
+            position: relative;
+        }
+        .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .has-tooltip:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
@@ -97,7 +110,7 @@
         <button onclick="switchTab('calendar')" id="mobTabBtn-calendar" class="text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600 shrink-0 px-2">Calendario</button>
         <button onclick="switchTab('timeline')" id="mobTabBtn-timeline" class="text-slate-500 pb-1 shrink-0 px-2">Línea de Tiempo</button>
         <button onclick="switchTab('repository')" id="mobTabBtn-repository" class="text-slate-500 pb-1 shrink-0 px-2">Repositorio</button>
-        <button onclick="switchTab('milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1 shrink-0 px-2">Hitos</button>
+        <button onclick="switchTab('milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1 shrink-0 px-2">Hitos y Notas</button>
     </div>
 
     <!-- Main Content Area -->
@@ -121,35 +134,56 @@
             </div>
         </div>
 
-        <!-- TAB 2: TIMELINE VIEW (MACRO BARRA UNIFICADA + GANTT TRIMESTRAL CON MADERA) -->
+        <!-- TAB 2: TIMELINE VIEW (AMPLIADA PANORÁMICA + VISTA TRIMESTRE EN CURSO) -->
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-6">
-                <!-- Macro Línea Anual Unificada con Hitos Integrados -->
+                
+                <!-- Section 1: Macro Línea Temporal Anual Unificada Interactiva (Scrollable Horizontal) -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900">Línea Temporal Anual Unificada</h2>
-                            <p class="text-xs text-slate-500">Colores exactos por evento con marcadores de Hitos (🚩) y Mini-Hitos (📌) posicionados por fecha.</p>
+                            <h2 class="text-lg font-bold text-slate-900">Línea Temporal Anual Unificada (<span class="timeline-year-label">2026</span>)</h2>
+                            <p class="text-xs text-slate-500">Haz scroll horizontal para desplazarte de Ene a Dic. Pasa el ratón sobre eventos e hitos para ver el detalle en Tooltip.</p>
                         </div>
-                        <span class="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs timeline-year-label">2026</span>
+                        <span class="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">Desplazamiento Completo Ene - Dic</span>
                     </div>
-                    
-                    <!-- Contenedor Barra Macro -->
-                    <div class="relative pt-4 pb-2">
-                        <div id="macroTimelineBar" class="relative h-7 bg-slate-100 rounded-lg border border-slate-200 overflow-hidden flex shadow-inner">
-                            <!-- Fragmentos de colores inyectados dinámicamente -->
-                        </div>
-                        <!-- Capa de Marcadores de Hitos sobre la Barra Macro -->
-                        <div id="macroMilestonesOverlay" class="absolute inset-0 pointer-events-none pt-4">
-                            <!-- Banderas / Pines posicionados por porcentaje del año -->
+
+                    <!-- Scroll Wrapper Horizontal -->
+                    <div class="overflow-x-auto custom-scrollbar pb-4 pt-2">
+                        <div class="min-w-[1400px] relative space-y-2">
+                            <!-- Cabecera de Meses -->
+                            <div class="grid grid-cols-12 gap-1 bg-slate-100 p-2 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-700">
+                                <div>Enero</div><div>Febrero</div><div>Marzo</div><div>Abril</div>
+                                <div>Mayo</div><div>Junio</div><div>Julio</div><div>Agosto</div>
+                                <div>Septiembre</div><div>Octubre</div><div>Noviembre</div><div>Diciembre</div>
+                            </div>
+
+                            <!-- Contenedor Principal de Pistas de Eventos e Hitos -->
+                            <div id="macroTimelineExpandedContainer" class="relative bg-slate-50/50 rounded-xl border border-slate-200 p-3 min-h-[160px] space-y-3">
+                                <!-- Inyectado dinámicamente -->
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Trimestres con Indicaciones de Madera -->
-                <div id="quartersContainer" class="space-y-6">
-                    <!-- Inyectados Q1, Q2, Q3, Q4 -->
+                <!-- Section 2: Trimestre en Curso (Detallado y Focalizado) -->
+                <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900" id="currentQuarterTitle">Trimestre en Curso</h2>
+                            <p class="text-xs text-slate-500">Detalle ampliado de eventos, hitos y mini-hitos del trimestre activo.</p>
+                        </div>
+                        <div class="flex items-center space-x-1" id="quarterSelectorButtons">
+                            <!-- Botones Q1, Q2, Q3, Q4 inyectados -->
+                        </div>
+                    </div>
+
+                    <!-- Contenedor del Trimestre Ampliado -->
+                    <div id="currentQuarterDetailContainer" class="space-y-4">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
                 </div>
+
             </div>
         </div>
 
@@ -178,21 +212,21 @@
             </div>
         </div>
 
-        <!-- TAB 4: HITOS Y NOTAS -->
+        <!-- TAB 4: HITOS Y NOTAS (INCLUYE MINI HITOS) -->
         <div id="tab-milestones" class="flex-1 overflow-y-auto p-6 custom-scrollbar hidden">
-            <div class="max-w-4xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                <div class="flex items-center justify-between mb-6">
+            <div class="max-w-5xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900">Hitos y Comentarios Registrados</h2>
-                        <p class="text-xs text-slate-500">Notas puntuales asignadas a fechas específicas</p>
+                        <h2 class="text-lg font-bold text-slate-900">Hitos y Notas Registrados</h2>
+                        <p class="text-xs text-slate-500">Muestra tanto los hitos independientes (🚩) como los mini-hitos creados dentro de eventos (📌).</p>
                     </div>
                     <button onclick="openMilestoneModal()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition">
-                        <i class="fa-solid fa-flag mr-1"></i> Añadir Hito
+                        <i class="fa-solid fa-flag mr-1"></i> Añadir Hito Principal
                     </button>
                 </div>
 
                 <div id="milestonesListContainer" class="space-y-3">
-                    <!-- Dynamic milestones list -->
+                    <!-- Inyectados Hitos e Hitos de Eventos -->
                 </div>
             </div>
         </div>
@@ -377,6 +411,7 @@
         ];
 
         window.currentYear = new Date().getFullYear();
+        window.selectedQuarter = getCurrentQuarterIndex(); // 0: Q1, 1: Q2, 2: Q3, 3: Q4
         window.currentTab = 'calendar';
         window.eventsList = [];
         window.milestonesList = [];
@@ -393,6 +428,11 @@
 
         let db = null;
         let forceLocalMode = localStorage.getItem('force_local_mode') === 'true';
+
+        function getCurrentQuarterIndex() {
+            const m = new Date().getMonth();
+            return Math.floor(m / 3);
+        }
 
         function initFirebase() {
             loadLocalData();
@@ -513,12 +553,11 @@
             renderColorPaletteUI();
         }
 
-        // --- CALENDARIO MULTICOLOR EXACTO + HITOS Y MINI-HITOS ---
+        // --- CALENDARIO MULTICOLOR Y MARCADORES ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
             grid.innerHTML = '';
 
-            // Recopilar todos los sub-hitos en un array plano con su contexto
             const allSubMilestones = [];
             window.eventsList.forEach(evt => {
                 (evt.subMilestones || []).forEach(sm => {
@@ -556,18 +595,14 @@
                     const mmdd = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const isHoliday = window.fixedHolidays[mmdd];
 
-                    // Filtrar coincidencias
                     const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
                     const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
                     const daySubMilestones = allSubMilestones.filter(sm => sm.date === dateStr);
 
-                    let bgStyle = '';
                     let textClass = 'text-slate-700';
-
                     if (isWeekend) textClass = 'text-amber-800 bg-amber-50/50';
                     if (isHoliday) textClass = 'text-red-700 font-bold bg-red-50 border border-red-200';
 
-                    // Franjas verticales de colores según los eventos que coincidan
                     let colorBarsHtml = '';
                     if (activeEvents.length > 0) {
                         const barWidthPercent = (100 / activeEvents.length).toFixed(1);
@@ -579,7 +614,6 @@
                         colorBarsHtml += `</div>`;
                     }
 
-                    // Iconos de Hitos y Mini Hitos
                     let markers = '';
                     if (dayMilestones.length > 0) {
                         markers += `<span class="text-[9px]" title="Hito: ${dayMilestones[0].milestoneTitle}">🚩</span>`;
@@ -602,118 +636,186 @@
             }
         }
 
-        // --- LÍNEA DE TIEMPO ANUAL UNIFICADA Y QUARTERLY CON MADERA ---
+        // --- LÍNEA DE TIEMPO AMPLIADA Y TRIMESTRE ACTIVO ---
         function renderTimelineView() {
-            const container = document.getElementById('quartersContainer');
-            const macroBar = document.getElementById('macroTimelineBar');
-            const macroOverlay = document.getElementById('macroMilestonesOverlay');
+            const macroContainer = document.getElementById('macroTimelineExpandedContainer');
+            if (!macroContainer) return;
 
-            if (!container || !macroBar) return;
+            const totalDaysInYear = 365;
+            const yearStart = new Date(window.currentYear, 0, 1);
 
-            // Renderizar Macro Barra Anual
-            if (window.eventsList.length === 0) {
-                macroBar.innerHTML = `<div class="text-xs text-slate-400 p-1 pl-3 flex items-center">Sin eventos registrados</div>`;
-                macroOverlay.innerHTML = '';
+            // 1. MACRO LÍNEA TEMPORAL COMPLETA Y SCROLLABLE (ENE -> DIC)
+            if (window.eventsList.length === 0 && window.milestonesList.length === 0) {
+                macroContainer.innerHTML = `<div class="text-xs text-slate-400 py-8 text-center">No hay eventos ni hitos registrados para el año ${window.currentYear}</div>`;
             } else {
-                macroBar.innerHTML = window.eventsList.map(evt => {
-                    const col = getColorObj(evt.color);
-                    return `<div class="h-full" style="background-color: ${col.hex}; flex: 1;" title="${evt.eventTitle}"></div>`;
-                }).join('');
+                let htmlTracks = '';
 
-                // overlay de hitos y subhitos
-                const totalDays = 365;
-                const yearStart = new Date(window.currentYear, 0, 1);
-                let overlayHtml = '';
-
-                window.milestonesList.forEach(ms => {
-                    const d = new Date(ms.milestoneDate);
-                    const dayIdx = (d - yearStart) / (1000 * 60 * 60 * 24);
-                    if (dayIdx >= 0 && dayIdx <= totalDays) {
-                        const pct = ((dayIdx / totalDays) * 100).toFixed(1);
-                        overlayHtml += `<div class="absolute top-0 text-xs transform -translate-x-1/2" style="left: ${pct}%;" title="Hito: ${ms.milestoneTitle}">🚩</div>`;
-                    }
-                });
-
+                // Render Pistas de Eventos
                 window.eventsList.forEach(evt => {
+                    const start = new Date(evt.eventStart);
+                    const end = new Date(evt.eventEnd);
+                    const startDay = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
+                    const endDay = Math.min(totalDaysInYear, (end - yearStart) / (1000 * 60 * 60 * 24) + 1);
+
+                    const leftPct = Math.max(0, Math.min(100, (startDay / totalDaysInYear) * 100));
+                    const widthPct = Math.max(0.8, Math.min(100 - leftPct, ((endDay - startDay) / totalDaysInYear) * 100));
+                    const col = getColorObj(evt.color);
+
+                    // Sub-hitos dentro de la barra de este evento
+                    let subHitosMarkers = '';
                     (evt.subMilestones || []).forEach(sm => {
                         if (sm.date) {
-                            const d = new Date(sm.date);
-                            const dayIdx = (d - yearStart) / (1000 * 60 * 60 * 24);
-                            if (dayIdx >= 0 && dayIdx <= totalDays) {
-                                const pct = ((dayIdx / totalDays) * 100).toFixed(1);
-                                overlayHtml += `<div class="absolute top-0 text-xs transform -translate-x-1/2" style="left: ${pct}%;" title="Mini-hito: ${sm.title}">📌</div>`;
+                            const smDate = new Date(sm.date);
+                            const smDay = (smDate - yearStart) / (1000 * 60 * 60 * 24);
+                            const smPct = ((smDay - startDay) / (endDay - startDay)) * 100;
+                            if (smPct >= 0 && smPct <= 100) {
+                                subHitosMarkers += `<div class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 text-xs has-tooltip z-20 cursor-pointer" style="left: ${smPct}%;">
+                                    📌
+                                    <div class="tooltip-content absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap z-30">
+                                        📌 Mini-Hito: ${sm.title} (${formatDisplayDate(sm.date)})
+                                    </div>
+                                </div>`;
                             }
                         }
                     });
+
+                    htmlTracks += `<div class="relative h-9 my-1.5 bg-slate-100 rounded-lg overflow-visible">
+                        <div class="absolute h-full rounded-lg shadow-sm flex items-center px-3 text-xs font-bold text-white transition hover:brightness-110 has-tooltip cursor-pointer" 
+                             style="left: ${leftPct}%; width: ${widthPct}%; background-color: ${col.hex};">
+                            <span class="truncate">${evt.eventTitle}</span>
+                            ${subHitosMarkers}
+                            <!-- Tooltip Evento -->
+                            <div class="tooltip-content absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-30">
+                                <p class="font-bold text-amber-300">${evt.eventTitle}</p>
+                                <p class="text-[10px] opacity-90">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
+                            </div>
+                        </div>
+                    </div>`;
                 });
 
-                macroOverlay.innerHTML = overlayHtml;
-            }
-
-            // Renderizar Vistas Trimestrales con Badges de Madera
-            const quarters = [
-                { name: "Q1: Enero - Marzo", startMonth: 0, endMonth: 2 },
-                { name: "Q2: Abril - Junio", startMonth: 3, endMonth: 5 },
-                { name: "Q3: Julio - Septiembre", startMonth: 6, endMonth: 8 },
-                { name: "Q4: Octubre - Diciembre", startMonth: 9, endMonth: 11 }
-            ];
-
-            let html = '';
-            quarters.forEach(q => {
-                const qStartDate = new Date(window.currentYear, q.startMonth, 1);
-                const qEndDate = new Date(window.currentYear, q.endMonth + 1, 0);
-                const qStartStr = formatDateISO(qStartDate);
-                const qEndStr = formatDateISO(qEndDate);
-
-                const activeInQ = window.eventsList.filter(e => e.eventEnd >= qStartStr && e.eventStart <= qEndStr);
-                const milestonesInQ = window.milestonesList.filter(m => m.milestoneDate >= qStartStr && m.milestoneDate <= qEndStr);
-
-                html += `<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
-                    <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2 flex items-center justify-between">
-                        <span>${q.name}</span>
-                        <span class="text-xs font-normal text-slate-400">${formatDisplayDate(qStartStr)} al ${formatDisplayDate(qEndStr)}</span>
-                    </h3>
-                    <div class="space-y-3">`;
-
-                if (activeInQ.length === 0 && milestonesInQ.length === 0) {
-                    html += `<div class="text-xs text-slate-400 py-2 text-center">Sin actividad en este trimestre</div>`;
-                } else {
-                    activeInQ.forEach(evt => {
-                        const col = getColorObj(evt.color);
-                        
-                        // Render mini-hitos del evento que caen en este trimestre con Estilo Madera
-                        const subHitosInQ = (evt.subMilestones || []).filter(sm => sm.date >= qStartStr && sm.date <= qEndStr);
-                        const subHitosHtml = subHitosInQ.map(sm => `
-                            <div class="wooden-badge px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center shadow-xs mr-2 mb-1">
-                                <i class="fa-solid fa-thumbtack mr-1.5 text-amber-700"></i>
-                                <span>${sm.title}</span>
-                                <span class="ml-1.5 opacity-80 text-[10px] font-bold">(${formatDisplayDate(sm.date)})</span>
-                            </div>
-                        `).join('');
-
-                        html += `<div class="p-3 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-slate-900 flex items-center">
-                                    <span class="inline-block w-3 h-3 rounded-full mr-2 shadow-xs" style="background-color:${col.hex}"></span>
-                                    ${evt.eventTitle}
-                                </span>
-                                <span class="text-[11px] font-medium text-slate-500">${formatDisplayDate(evt.eventStart)} → ${formatDisplayDate(evt.eventEnd)}</span>
-                            </div>
-                            ${subHitosHtml ? `<div class="pt-1 flex flex-wrap">${subHitosHtml}</div>` : ''}
-                        </div>`;
+                // Render Pista de Hitos Independientes
+                if (window.milestonesList.length > 0) {
+                    let flagsHtml = '';
+                    window.milestonesList.forEach(ms => {
+                        const msDate = new Date(ms.milestoneDate);
+                        const msDay = (msDate - yearStart) / (1000 * 60 * 60 * 24);
+                        if (msDay >= 0 && msDay <= totalDaysInYear) {
+                            const leftPct = ((msDay / totalDaysInYear) * 100).toFixed(2);
+                            flagsHtml += `<div class="absolute transform -translate-x-1/2 has-tooltip cursor-pointer" style="left: ${leftPct}%;">
+                                <div class="text-lg">🚩</div>
+                                <div class="tooltip-content absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-30">
+                                    🚩 Hito: ${ms.milestoneTitle} (${formatDisplayDate(ms.milestoneDate)})
+                                </div>
+                            </div>`;
+                        }
                     });
 
-                    milestonesInQ.forEach(ms => {
-                        html += `<div class="p-2.5 rounded-xl border border-amber-200 wooden-badge flex items-center justify-between text-xs">
-                            <span class="font-bold flex items-center">
-                                <i class="fa-solid fa-flag text-amber-800 mr-2"></i> ${ms.milestoneTitle}
-                            </span>
-                            <span class="text-[10px] font-extrabold bg-amber-200/80 px-2 py-0.5 rounded text-amber-900">${formatDisplayDate(ms.milestoneDate)}</span>
-                        </div>`;
-                    });
+                    htmlTracks += `<div class="relative h-8 my-2 bg-emerald-50/50 rounded-lg border border-emerald-100 flex items-center">
+                        <span class="text-[10px] font-bold text-emerald-700 px-2 uppercase tracking-wider">Hitos:</span>
+                        <div class="relative flex-1 h-full flex items-center">${flagsHtml}</div>
+                    </div>`;
                 }
 
-                html += `</div></div>`;
+                macroContainer.innerHTML = htmlTracks;
+            }
+
+            // 2. RENDEREAR SELECTOR Y DETALLE DEL TRIMESTRE EN CURSO
+            renderQuarterSelectorUI();
+            renderCurrentQuarterDetail();
+        }
+
+        function renderQuarterSelectorUI() {
+            const container = document.getElementById('quarterSelectorButtons');
+            if (!container) return;
+            const qNames = ['Q1 (Ene-Mar)', 'Q2 (Abr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dic)'];
+            
+            container.innerHTML = qNames.map((name, idx) => `
+                <button onclick="setQuarter(${idx})" 
+                        class="px-3 py-1 rounded-lg text-xs font-bold transition ${window.selectedQuarter === idx ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                    ${name}
+                </button>
+            `).join('');
+
+            document.getElementById('currentQuarterTitle').textContent = `Trimestre en Curso: ${qNames[window.selectedQuarter]}`;
+        }
+
+        window.setQuarter = function(idx) {
+            window.selectedQuarter = idx;
+            renderQuarterSelectorUI();
+            renderCurrentQuarterDetail();
+        }
+
+        function renderCurrentQuarterDetail() {
+            const container = document.getElementById('currentQuarterDetailContainer');
+            if (!container) return;
+
+            const qStartMonth = window.selectedQuarter * 3;
+            const qEndMonth = qStartMonth + 2;
+
+            const qStartDate = new Date(window.currentYear, qStartMonth, 1);
+            const qEndDate = new Date(window.currentYear, qEndMonth + 1, 0);
+            const qStartStr = formatDateISO(qStartDate);
+            const qEndStr = formatDateISO(qEndDate);
+
+            const activeEventsInQ = window.eventsList.filter(e => e.eventEnd >= qStartStr && e.eventStart <= qEndStr);
+            const activeMilestonesInQ = window.milestonesList.filter(m => m.milestoneDate >= qStartStr && m.milestoneDate <= qEndStr);
+
+            if (activeEventsInQ.length === 0 && activeMilestonesInQ.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No hay eventos ni hitos programados en este trimestre.</div>`;
+                return;
+            }
+
+            let html = '';
+
+            // Renderizar tarjetas de eventos ampliadas
+            activeEventsInQ.forEach(evt => {
+                const col = getColorObj(evt.color);
+                const subHitosInQ = (evt.subMilestones || []).filter(sm => sm.date >= qStartStr && sm.date <= qEndStr);
+                
+                let subHitosListHtml = '';
+                if (subHitosInQ.length > 0) {
+                    subHitosListHtml = `<div class="mt-3 pt-3 border-t border-slate-200/80 space-y-1.5">
+                        <p class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Mini-hitos asociados en este trimestre:</p>
+                        <div class="flex flex-wrap gap-2">
+                            ${subHitosInQ.map(sm => `
+                                <div class="wooden-badge px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center shadow-xs">
+                                    <i class="fa-solid fa-thumbtack mr-1.5 text-amber-700"></i>
+                                    <span>${sm.title}</span>
+                                    <span class="ml-2 font-bold text-[10px] bg-amber-200/80 px-1.5 py-0.5 rounded text-amber-900">${formatDisplayDate(sm.date)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`;
+                }
+
+                html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 hover:border-slate-300 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background-color: ${col.hex}"></span>
+                            <h4 class="font-bold text-slate-900 text-base">${evt.eventTitle}</h4>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${col.badge}">${evt.category || 'General'}</span>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200">
+                            <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> ${formatDisplayDate(evt.eventStart)} → ${formatDisplayDate(evt.eventEnd)}
+                        </span>
+                    </div>
+                    ${evt.description ? `<p class="text-xs text-slate-600 pl-5">${evt.description}</p>` : ''}
+                    ${subHitosListHtml}
+                </div>`;
+            });
+
+            // Renderizar hitos independientes en el trimestre
+            activeMilestonesInQ.forEach(ms => {
+                html += `<div class="wooden-badge p-4 rounded-xl flex items-center justify-between shadow-xs">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xl">🚩</span>
+                        <div>
+                            <h4 class="font-bold text-amber-950 text-sm">${ms.milestoneTitle}</h4>
+                            <p class="text-xs text-amber-900/80">${ms.milestoneComment}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-extrabold bg-amber-200/90 text-amber-950 px-3 py-1 rounded-lg border border-amber-300">${formatDisplayDate(ms.milestoneDate)}</span>
+                </div>`;
             });
 
             container.innerHTML = html;
@@ -770,36 +872,86 @@
             container.innerHTML = html;
         }
 
-        // --- MILESTONES VIEW ---
+        // --- HITOS Y NOTAS (UNIFICADOS: HITOS E HITOS DE EVENTO) ---
         function renderMilestonesView() {
             const container = document.getElementById('milestonesListContainer');
             if (!container) return;
-            if (window.milestonesList.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos registrados.</div>`;
+
+            // Recopilar Hitos Principales
+            const mainMilestones = window.milestonesList.map(m => ({
+                id: m.id,
+                type: 'main',
+                title: m.milestoneTitle,
+                date: m.milestoneDate,
+                comment: m.milestoneComment
+            }));
+
+            // Recopilar Mini-hitos creados dentro de eventos
+            const eventSubMilestones = [];
+            window.eventsList.forEach(evt => {
+                (evt.subMilestones || []).forEach(sm => {
+                    if (sm.title && sm.date) {
+                        eventSubMilestones.push({
+                            id: evt.id,
+                            type: 'sub',
+                            title: sm.title,
+                            date: sm.date,
+                            comment: `Mini-hito dentro del evento: "${evt.eventTitle}"`,
+                            parentEventId: evt.id,
+                            completed: sm.completed
+                        });
+                    }
+                });
+            });
+
+            const combined = [...mainMilestones, ...eventSubMilestones].sort((a, b) => a.date.localeCompare(b.date));
+
+            if (combined.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos ni notas registradas.</div>`;
                 return;
             }
 
-            container.innerHTML = window.milestonesList.map(ms => `
-                <div class="flex items-start justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <div class="flex items-start space-x-3">
-                        <div class="bg-emerald-100 text-emerald-700 p-2.5 rounded-xl shrink-0 mt-0.5"><i class="fa-solid fa-flag"></i></div>
-                        <div>
-                            <div class="flex items-center space-x-2 mb-1">
-                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(ms.milestoneDate)}</span>
-                                <h4 class="font-bold text-slate-900 text-sm">${ms.milestoneTitle}</h4>
+            container.innerHTML = combined.map(item => {
+                if (item.type === 'main') {
+                    return `<div class="flex items-start justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-emerald-300 transition">
+                        <div class="flex items-start space-x-3">
+                            <div class="bg-emerald-100 text-emerald-700 p-2.5 rounded-xl shrink-0 mt-0.5"><i class="fa-solid fa-flag"></i></div>
+                            <div>
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">Hito Principal</span>
+                                    <span class="text-xs text-slate-500 font-semibold"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(item.date)}</span>
+                                </div>
+                                <h4 class="font-bold text-slate-900 text-sm">${item.title}</h4>
+                                <p class="text-xs text-slate-600 mt-0.5">${item.comment}</p>
                             </div>
-                            <p class="text-xs text-slate-600">${ms.milestoneComment}</p>
                         </div>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                        <button onclick="editMilestone('${ms.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600"><i class="fa-solid fa-pen text-xs"></i></button>
-                        <button onclick="deleteMilestoneStore('${ms.id}')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
-                    </div>
-                </div>
-            `).join('');
+                        <div class="flex items-center space-x-1">
+                            <button onclick="editMilestone('${item.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deleteMilestoneStore('${item.id}')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    </div>`;
+                } else {
+                    return `<div class="flex items-start justify-between p-4 rounded-xl border border-amber-200 wooden-badge shadow-xs">
+                        <div class="flex items-start space-x-3">
+                            <div class="bg-amber-200/80 text-amber-900 p-2.5 rounded-xl shrink-0 mt-0.5"><i class="fa-solid fa-thumbtack"></i></div>
+                            <div>
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <span class="px-2 py-0.5 rounded bg-amber-200 text-amber-900 text-xs font-extrabold">Mini-Hito de Evento</span>
+                                    <span class="text-xs text-amber-900 font-bold"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(item.date)}</span>
+                                </div>
+                                <h4 class="font-bold text-amber-950 text-sm">${item.title}</h4>
+                                <p class="text-xs text-amber-900/80 mt-0.5">${item.comment}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="editEvent('${item.parentEventId}')" class="px-2.5 py-1 bg-amber-200/90 text-amber-950 rounded-md text-xs font-bold hover:bg-amber-300 transition">Ver Evento</button>
+                        </div>
+                    </div>`;
+                }
+            }).join('');
         }
 
-        // --- MINI HITOS EN EVENTOS ---
+        // --- MINI HITOS EN FORMULARIO ---
         window.addSubMilestoneInput = function(title = '', date = '', completed = false) {
             const container = document.getElementById('subMilestonesContainer');
             const div = document.createElement('div');
@@ -827,7 +979,7 @@
             return subMilestones;
         }
 
-        // --- MODIFICADORES DE FIRESTORE / LOCAL ---
+        // --- FIRESTORE MODIFIERS ---
         window.saveEventToStore = async function(eventData) {
             try {
                 const id = eventData.id || 'evt_' + Date.now();
@@ -908,7 +1060,7 @@
             renderAll();
         }
 
-        // --- MODALES ---
+        // --- CONTROLES DE MODALES ---
         window.openConfigModal = () => document.getElementById('configModal').classList.remove('hidden');
         window.closeConfigModal = () => document.getElementById('configModal').classList.add('hidden');
 
