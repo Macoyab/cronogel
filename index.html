@@ -2,7 +2,7 @@
 <html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cronograma Anual Colaborativo</title>
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -23,9 +23,9 @@
         }
     </script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         input[type="date"]::-webkit-calendar-picker-indicator {
@@ -55,25 +55,27 @@
 </head>
 <body class="bg-slate-50 text-slate-800 h-full flex flex-col font-sans overflow-hidden">
 
-    <!-- Top Navigation Bar -->
-    <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-sm">
-        <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center w-10 h-10">
-                <i class="fa-solid fa-calendar-days text-lg"></i>
+    <!-- Top Navigation Bar (Responsive) -->
+    <header class="bg-white border-b border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shrink-0 shadow-sm">
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 shrink-0">
+                <i class="fa-solid fa-calendar-days text-base sm:text-lg"></i>
             </div>
             <div>
-                <h1 class="font-bold text-lg text-slate-900 leading-tight">Cronograma Anual</h1>
-                <p class="text-xs text-slate-500">Planificador y Línea de Tiempo Colaborativa</p>
+                <h1 class="font-bold text-sm sm:text-lg text-slate-900 leading-tight">Cronograma Anual</h1>
+                <p class="text-[10px] sm:text-xs text-slate-500 hidden xs:block">Planificador y Línea de Tiempo</p>
             </div>
         </div>
 
-        <div class="flex items-center space-x-2 sm:space-x-4">
-            <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
-                <button onclick="changeYear(-1)" class="px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-white rounded shadow-sm transition"><i class="fa-solid fa-chevron-left"></i></button>
-                <span id="currentYearLabel" class="px-3 font-semibold text-sm text-slate-800">2026</span>
-                <button onclick="changeYear(1)" class="px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-white rounded shadow-sm transition"><i class="fa-solid fa-chevron-right"></i></button>
+        <div class="flex items-center space-x-1.5 sm:space-x-3">
+            <!-- Year Selector -->
+            <div class="flex items-center bg-slate-100 rounded-lg p-0.5 sm:p-1 border border-slate-200">
+                <button onclick="changeYear(-1)" class="px-2 py-1 text-xs sm:text-sm font-medium text-slate-600 hover:bg-white rounded shadow-sm transition"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="currentYearLabel" class="px-2 sm:px-3 font-semibold text-xs sm:text-sm text-slate-800">2026</span>
+                <button onclick="changeYear(1)" class="px-2 py-1 text-xs sm:text-sm font-medium text-slate-600 hover:bg-white rounded shadow-sm transition"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
+            <!-- Desktop View Tabs -->
             <div class="hidden md:flex bg-slate-100 rounded-lg p-1 border border-slate-200 text-sm font-medium">
                 <button onclick="switchTab('calendar')" id="tabBtn-calendar" class="px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-sm transition">Calendario</button>
                 <button onclick="switchTab('timeline')" id="tabBtn-timeline" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Línea de Tiempo</button>
@@ -81,132 +83,123 @@
                 <button onclick="switchTab('milestones')" id="tabBtn-milestones" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Hitos y Notas</button>
             </div>
 
-            <div class="flex items-center space-x-2">
-                <button id="syncStatusBtn" onclick="toggleStorageMode()" title="Estado de Sincronización" class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium">
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-1.5 sm:space-x-2">
+                <button id="syncStatusBtn" onclick="toggleStorageMode()" title="Estado de Sincronización" class="hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium">
                     <i class="fa-solid fa-rotate mr-1 animate-spin"></i> Conectando...
                 </button>
-                <button onclick="openConfigModal()" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1.5" title="Integración Telegram">
-                    <i class="fa-brands fa-telegram text-lg"></i>
-                    <span class="hidden lg:inline">Telegram</span>
+                <button onclick="openConfigModal()" class="bg-sky-600 hover:bg-sky-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1" title="Integración Telegram">
+                    <i class="fa-brands fa-telegram text-base sm:text-lg"></i>
+                    <span class="hidden lg:inline text-xs">Telegram</span>
                 </button>
-                <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
-                    <i class="fa-solid fa-plus"></i>
-                    <span class="hidden sm:inline">Nuevo Evento</span>
+                <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 sm:px-3.5 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1.5" title="Nuevo Evento">
+                    <i class="fa-solid fa-plus text-xs sm:text-sm"></i>
+                    <span class="hidden sm:inline text-xs">Evento</span>
                 </button>
-                <button onclick="openMilestoneModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
-                    <i class="fa-solid fa-flag"></i>
-                    <span class="hidden sm:inline">Nuevo Hito</span>
+                <button onclick="openMilestoneModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white p-2 sm:px-3.5 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1.5" title="Nuevo Hito">
+                    <i class="fa-solid fa-flag text-xs sm:text-sm"></i>
+                    <span class="hidden sm:inline text-xs">Hito</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Mobile Tabs -->
-    <div class="md:hidden flex bg-white border-b border-slate-200 px-2 py-2 text-[11px] font-medium justify-around shrink-0 overflow-x-auto">
-        <button onclick="switchTab('calendar')" id="mobTabBtn-calendar" class="text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600 shrink-0 px-2">Calendario</button>
-        <button onclick="switchTab('timeline')" id="mobTabBtn-timeline" class="text-slate-500 pb-1 shrink-0 px-2">Línea de Tiempo</button>
-        <button onclick="switchTab('repository')" id="mobTabBtn-repository" class="text-slate-500 pb-1 shrink-0 px-2">Repositorio</button>
-        <button onclick="switchTab('milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1 shrink-0 px-2">Hitos</button>
+    <!-- Mobile Tabs (Scrollable & Responsive) -->
+    <div class="md:hidden flex bg-white border-b border-slate-200 px-2 py-2 text-xs font-medium justify-around shrink-0 overflow-x-auto custom-scrollbar space-x-2">
+        <button onclick="switchTab('calendar')" id="mobTabBtn-calendar" class="text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600 shrink-0 px-3 whitespace-nowrap">Calendario</button>
+        <button onclick="switchTab('timeline')" id="mobTabBtn-timeline" class="text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap">Línea de Tiempo</button>
+        <button onclick="switchTab('repository')" id="mobTabBtn-repository" class="text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap">Repositorio</button>
+        <button onclick="switchTab('milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap">Hitos y Notas</button>
     </div>
 
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden flex flex-col">
         <!-- TAB 1: CALENDAR VIEW -->
-        <div id="tab-calendar" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
-            <div class="max-w-7xl mx-auto space-y-6">
-                <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div id="tab-calendar" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar">
+            <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm gap-3">
                     <div>
-                        <h2 class="text-base font-bold text-slate-900">Vista Anual de 12 Meses</h2>
-                        <p class="text-xs text-slate-500">Muestra franjas de todos los eventos concurrentes por colores, Hitos (🚩) y Mini-Hitos (📌).</p>
+                        <h2 class="text-sm sm:text-base font-bold text-slate-900">Vista Anual de 12 Meses</h2>
+                        <p class="text-[11px] sm:text-xs text-slate-500">Muestra franjas de eventos concurrentes por colores, Hitos (🚩) y Mini-Hitos (📌).</p>
                     </div>
-                    <button onclick="sendMonthToTelegram()" class="bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center">
+                    <button onclick="sendMonthToTelegram()" class="bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center w-full sm:w-auto">
                         <i class="fa-brands fa-telegram mr-1.5 text-sm"></i> Resumen a Telegram
                     </button>
                 </div>
-                <div id="monthsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                <div id="monthsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"></div>
             </div>
         </div>
 
         <!-- TAB 2: TIMELINE VIEW -->
-        <div id="tab-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
-            <div class="max-w-7xl mx-auto space-y-6">
+        <div id="tab-timeline" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
+            <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 
-                <!-- Section 1: Línea Temporal Anual Unificada Panorámica -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900">Línea Temporal Anual Unificada (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Cronología continua (Enero - Diciembre). Pasa el ratón por encima de las chinchetas (📌) para ver el detalle completo de cada mini-hito.</p>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal Anual Unificada (<span class="timeline-year-label">2026</span>)</h2>
+                            <p class="text-xs text-slate-500">Cronología continua (Enero - Diciembre). Desliza horizontalmente en pantallas táctiles para explorar.</p>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs">Enero ➔ Diciembre</span>
-                        </div>
+                        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">Enero ➔ Diciembre</span>
                     </div>
 
-                    <!-- Scroll Horizontal para la Línea Temporal Gantt -->
-                    <div class="overflow-x-auto custom-scrollbar pb-8 pt-2 bg-slate-50/50 rounded-xl border border-slate-200 p-4">
-                        <div class="min-w-[1600px] space-y-3">
-                            <!-- Fila de Cabecera de Meses -->
+                    <div class="overflow-x-auto custom-scrollbar pb-6 pt-2 bg-slate-50/50 rounded-xl border border-slate-200 p-3 sm:p-4">
+                        <div class="min-w-[1400px] space-y-3">
                             <div class="grid grid-cols-12 gap-1 bg-white p-2 rounded-lg border border-slate-200 text-center text-xs font-bold text-slate-700 shadow-xs">
                                 <div>Enero</div><div>Febrero</div><div>Marzo</div><div>Abril</div>
                                 <div>Mayo</div><div>Junio</div><div>Julio</div><div>Agosto</div>
                                 <div>Septiembre</div><div>Octubre</div><div>Noviembre</div><div>Diciembre</div>
                             </div>
-
-                            <!-- Pistas de Eventos y Marcas -->
-                            <div id="ganttTimelineTracksContainer" class="relative min-h-[200px] space-y-3 pt-2">
-                                <!-- Inyectado dinámicamente -->
-                            </div>
+                            <div id="ganttTimelineTracksContainer" class="relative min-h-[200px] space-y-3 pt-2"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 2: Trimestre en Curso -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900" id="currentQuarterTitle">Trimestre en Curso</h2>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900" id="currentQuarterTitle">Trimestre en Curso</h2>
                             <p class="text-xs text-slate-500">Detalle ampliado de eventos, hitos y mini-hitos del trimestre activo.</p>
                         </div>
-                        <div class="flex items-center space-x-1" id="quarterSelectorButtons"></div>
+                        <div class="flex flex-wrap items-center gap-1" id="quarterSelectorButtons"></div>
                     </div>
-                    <div id="currentQuarterDetailContainer" class="space-y-4"></div>
+                    <div id="currentQuarterDetailContainer" class="space-y-3 sm:space-y-4"></div>
                 </div>
 
             </div>
         </div>
 
         <!-- TAB 3: REPOSITORIO GENERAL -->
-        <div id="tab-repository" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
+        <div id="tab-repository" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-6xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900">Repositorio General de Eventos e Hitos</h2>
-                        <p class="text-xs text-slate-500">Gestión completa para modificar, consultar o eliminar cualquier registro.</p>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900">Repositorio General</h2>
+                        <p class="text-xs text-slate-500">Gestión completa para modificar, consultar o eliminar registros.</p>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="relative">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                            <input type="text" id="repoSearchInput" oninput="renderRepositoryView()" placeholder="Buscar evento o hito..." class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48 sm:w-64">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <div class="relative w-full sm:w-auto">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="repoSearchInput" oninput="renderRepositoryView()" placeholder="Buscar evento o hito..." class="pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64">
                         </div>
-                        <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                        <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center">
                             <i class="fa-solid fa-plus mr-1"></i> Añadir
                         </button>
                     </div>
                 </div>
-                <div id="repositoryListContainer" class="space-y-2"></div>
+                <div id="repositoryListContainer" class="space-y-2.5"></div>
             </div>
         </div>
 
         <!-- TAB 4: HITOS Y NOTAS -->
-        <div id="tab-milestones" class="flex-1 overflow-y-auto p-6 custom-scrollbar hidden">
-            <div class="max-w-5xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div id="tab-milestones" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
+            <div class="max-w-5xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900">Hitos y Notas Registrados</h2>
-                        <p class="text-xs text-slate-500">Muestra tanto los hitos independientes (🚩) como los mini-hitos creados dentro de eventos (📌).</p>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900">Hitos y Notas Registrados</h2>
+                        <p class="text-xs text-slate-500">Muestra hitos independientes (🚩) y mini-hitos creados dentro de eventos (📌).</p>
                     </div>
-                    <button onclick="openMilestoneModal()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                    <button onclick="openMilestoneModal()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center">
                         <i class="fa-solid fa-flag mr-1"></i> Añadir Hito Principal
                     </button>
                 </div>
@@ -216,60 +209,60 @@
     </main>
 
     <!-- MODAL: CONFIG BOT TELEGRAM -->
-    <div id="configModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="configModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-100 transform transition-all">
-            <div class="px-6 py-4 bg-sky-600 text-white flex items-center justify-between">
+            <div class="px-5 sm:px-6 py-4 bg-sky-600 text-white flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <i class="fa-brands fa-telegram text-xl"></i>
                     <h3 class="font-bold text-base">Configuración Telegram</h3>
                 </div>
                 <button onclick="closeConfigModal()" class="text-sky-100 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div class="p-6 space-y-4 text-xs text-slate-600 max-h-[75vh] overflow-y-auto custom-scrollbar">
+            <div class="p-5 sm:p-6 space-y-4 text-xs text-slate-600 max-h-[75vh] overflow-y-auto custom-scrollbar">
                 <div>
                     <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">URL de esta App</label>
                     <div class="flex items-center space-x-2">
-                        <input type="text" id="tgWebAppUrl" readonly class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 bg-slate-100 text-slate-600 focus:outline-none">
+                        <input type="text" id="tgWebAppUrl" readonly class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 bg-slate-100 text-slate-600 focus:outline-none">
                         <button type="button" onclick="copyWebAppUrl()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-xs shrink-0 transition">Copiar</button>
                     </div>
                 </div>
                 <div>
                     <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Telegram Bot Token</label>
-                    <input type="text" id="tgBotToken" placeholder="Ej: 123456789:ABCdefGhIJKlmNoP..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500">
+                    <input type="text" id="tgBotToken" placeholder="Ej: 123456789:ABCdefGhIJKlmNoP..." class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500">
                 </div>
                 <div>
                     <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Chat ID del Grupo</label>
-                    <input type="text" id="tgChatId" placeholder="Ej: -100123456789" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500">
+                    <input type="text" id="tgChatId" placeholder="Ej: -100123456789" class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500">
                 </div>
             </div>
-            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
-                <button type="button" onclick="testTelegramBot()" class="px-3.5 py-1.5 text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 rounded-lg transition"><i class="fa-solid fa-paper-plane mr-1"></i> Probar Envío</button>
-                <button type="button" onclick="saveTelegramConfig()" class="px-4 py-1.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition">Guardar</button>
+            <div class="px-5 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <button type="button" onclick="testTelegramBot()" class="px-3.5 py-2 text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 rounded-lg transition"><i class="fa-solid fa-paper-plane mr-1"></i> Probar Envío</button>
+                <button type="button" onclick="saveTelegramConfig()" class="px-4 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition">Guardar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL: EVENT FORM -->
-    <div id="eventModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="eventModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-100 transform transition-all">
-            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div class="px-5 sm:px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <h3 id="eventModalTitle" class="font-bold text-slate-900 text-base">Crear / Editar Evento</h3>
                 <button onclick="closeEventModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="eventForm" onsubmit="handleEventSubmit(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <form id="eventForm" onsubmit="handleEventSubmit(event)" class="p-4 sm:p-6 space-y-3.5 sm:space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
                 <input type="hidden" id="eventId">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Evento</label>
-                    <input type="text" id="eventTitle" required placeholder="Ej: Proyecto Alfa" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="eventTitle" required placeholder="Ej: Proyecto Alfa" class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha Inicio</label>
-                        <input type="date" id="eventStart" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="date" id="eventStart" required class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha Fin</label>
-                        <input type="date" id="eventEnd" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="date" id="eventEnd" required class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
 
@@ -279,14 +272,14 @@
                     <input type="hidden" id="eventColor" value="indigo">
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Categoría</label>
-                        <input type="text" id="eventCategory" placeholder="Ej: Desarrollo, Negocio" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="eventCategory" placeholder="Ej: Desarrollo, Negocio" class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Descripción</label>
-                        <input type="text" id="eventDesc" placeholder="Notas breves..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="eventDesc" placeholder="Notas breves..." class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
 
@@ -301,54 +294,54 @@
                 </div>
 
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Guardar Evento</button>
+                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Guardar Evento</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- MODAL: MILESTONE FORM -->
-    <div id="milestoneModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="milestoneModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 transform transition-all">
-            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div class="px-5 sm:px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <h3 id="milestoneModalTitle" class="font-bold text-slate-900 text-base">Añadir Hito Puntual</h3>
                 <button onclick="closeMilestoneModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="milestoneForm" onsubmit="handleMilestoneSubmit(event)" class="p-6 space-y-4">
+            <form id="milestoneForm" onsubmit="handleMilestoneSubmit(event)" class="p-4 sm:p-6 space-y-4">
                 <input type="hidden" id="milestoneId">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Título del Hito</label>
-                    <input type="text" id="milestoneTitle" required placeholder="Ej: Cierre de presupuestos..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="text" id="milestoneTitle" required placeholder="Ej: Cierre de presupuestos..." class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Fecha Específica</label>
-                    <input type="date" id="milestoneDate" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="date" id="milestoneDate" required class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Comentario / Nota</label>
-                    <textarea id="milestoneComment" rows="3" required placeholder="Detalles de este hito..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    <textarea id="milestoneComment" rows="3" required placeholder="Detalles de este hito..." class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
                 </div>
                 <div class="flex items-center justify-end space-x-3 pt-2">
-                    <button type="button" onclick="closeMilestoneModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition">Guardar Hito</button>
+                    <button type="button" onclick="closeMilestoneModal()" class="px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition">Guardar Hito</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- MODAL: DAY DETAILS -->
-    <div id="dayDetailsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="dayDetailsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-100">
-            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div class="px-5 sm:px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <div>
                     <h3 id="dayModalDateTitle" class="font-bold text-slate-900 text-base">Detalle del Día</h3>
                     <p id="dayModalSub" class="text-xs text-slate-500">Eventos e hitos en esta fecha</p>
                 </div>
                 <button onclick="closeDayModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar" id="dayModalContent"></div>
-            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
+            <div class="p-4 sm:p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar" id="dayModalContent"></div>
+            <div class="px-5 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
                 <button onclick="quickAddEventOnDate()" class="text-indigo-600 hover:text-indigo-800 font-semibold"><i class="fa-solid fa-plus mr-1"></i> Añadir evento</button>
                 <button onclick="quickAddMilestoneOnDate()" class="text-emerald-600 hover:text-emerald-800 font-semibold"><i class="fa-solid fa-flag mr-1"></i> Añadir hito</button>
             </div>
@@ -442,10 +435,10 @@
             if (!btn) return;
             if (mode === 'cloud') {
                 btn.innerHTML = `<i class="fa-solid fa-circle text-emerald-500 mr-1.5 text-[8px]"></i> ${label}`;
-                btn.className = "hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium cursor-pointer";
+                btn.className = "hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium cursor-pointer";
             } else {
                 btn.innerHTML = `<i class="fa-solid fa-hard-drive text-amber-500 mr-1.5 text-xs"></i> ${label}`;
-                btn.className = "hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium cursor-pointer";
+                btn.className = "hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium cursor-pointer";
             }
         }
 
@@ -506,8 +499,8 @@
                 }
                 if (mobBtn) {
                     mobBtn.className = t === tabName
-                        ? 'text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600 shrink-0 px-2'
-                        : 'text-slate-500 pb-1 shrink-0 px-2';
+                        ? 'text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600 shrink-0 px-3 whitespace-nowrap'
+                        : 'text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap';
                 }
             });
         }
@@ -566,7 +559,7 @@
                 if (startingDay === -1) startingDay = 6; 
                 const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
 
-                for (let i = 0; i < startingDay; i++) daysGrid += `<div class="h-10"></div>`;
+                for (let i = 0; i < startingDay; i++) daysGrid += `<div class="h-9 sm:h-10"></div>`;
 
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateObj = new Date(window.currentYear, month, day);
@@ -597,15 +590,15 @@
 
                     let markers = '';
                     if (dayMilestones.length > 0) {
-                        markers += `<span class="text-[9px]" title="Hito: ${dayMilestones[0].milestoneTitle}">🚩</span>`;
+                        markers += `<span class="text-[9px]">🚩</span>`;
                     }
                     if (daySubMilestones.length > 0) {
-                        markers += `<span class="text-[9px]" title="Mini-hito: ${daySubMilestones.map(s => s.title).join(', ')}">📌</span>`;
+                        markers += `<span class="text-[9px]">📌</span>`;
                     }
 
                     let markersOverlay = markers ? `<div class="absolute top-0.5 right-0.5 flex space-x-0.5">${markers}</div>` : '';
 
-                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-10 rounded-md flex flex-col items-center justify-center relative cursor-pointer hover:bg-slate-100 transition ${textClass}">
+                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-9 sm:h-10 rounded-md flex flex-col items-center justify-center relative cursor-pointer hover:bg-slate-100 transition ${textClass}">
                         <span class="font-semibold text-xs z-10">${day}</span>
                         ${markersOverlay}
                         ${colorBarsHtml}
@@ -617,7 +610,7 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL FLUIDA CON RENDERIZADO INDIVIDUAL DE CADA MINI-HITO Y TOOLTIPS COMPLETOS ---
+        // --- LÍNEA TEMPORAL ---
         function renderTimelineView() {
             const container = document.getElementById('ganttTimelineTracksContainer');
             if (!container) return;
@@ -644,11 +637,10 @@
                 const widthPct = Math.max(1.5, Math.min(100 - leftPct, ((endDay - startDay) / totalDaysInYear) * 100));
                 const col = getColorObj(evt.color);
 
-                // Generar cada mini-hito con su propia posición porcentual calculada en la barra del año
                 let subHitosMarkers = '';
                 const subMilestones = evt.subMilestones || [];
                 
-                subMilestones.forEach((sm, smIdx) => {
+                subMilestones.forEach((sm) => {
                     if (sm.date) {
                         const smDate = new Date(sm.date);
                         const smDay = (smDate - yearStart) / (1000 * 60 * 60 * 24);
@@ -674,18 +666,14 @@
                 });
 
                 htmlTracks += `<div class="relative h-12 bg-slate-100/80 rounded-xl border border-slate-200/80 shadow-xs flex items-center">
-                    <!-- Barra de Evento -->
                     <div class="absolute h-9 rounded-lg shadow-sm flex items-center px-3 text-xs font-bold text-white transition hover:brightness-110 has-tooltip cursor-pointer" 
                          style="left: ${leftPct}%; width: ${widthPct}%; background-color: ${col.hex};">
                         <span class="truncate pr-4">${evt.eventTitle}</span>
-                        
-                        <!-- Tooltip Evento Padre -->
                         <div class="tooltip-content absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-40">
                             <p class="font-bold text-amber-300">${evt.eventTitle}</p>
                             <p class="text-[10px] opacity-90">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
                         </div>
                     </div>
-                    <!-- Capa superior con todos los Mini-Hitos posicionados sin corte -->
                     <div class="absolute inset-0 pointer-events-none">
                         <div class="relative w-full h-full pointer-events-auto">
                             ${subHitosMarkers}
@@ -694,7 +682,6 @@
                 </div>`;
             });
 
-            // Pista para Hitos Principales
             if (window.milestonesList.length > 0) {
                 let flagsHtml = '';
                 window.milestonesList.forEach(ms => {
@@ -712,7 +699,7 @@
                 });
 
                 htmlTracks += `<div class="relative h-11 bg-emerald-50/80 rounded-xl border border-emerald-200 flex items-center">
-                    <span class="text-[10px] font-bold text-emerald-800 px-3 uppercase tracking-wider shrink-0">Hitos Principales:</span>
+                    <span class="text-[10px] font-bold text-emerald-800 px-3 uppercase tracking-wider shrink-0">Hitos:</span>
                     <div class="relative flex-1 h-full">${flagsHtml}</div>
                 </div>`;
             }
@@ -729,7 +716,7 @@
             
             container.innerHTML = qNames.map((name, idx) => `
                 <button onclick="setQuarter(${idx})" 
-                        class="px-3 py-1 rounded-lg text-xs font-bold transition ${window.selectedQuarter === idx ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        class="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition ${window.selectedQuarter === idx ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
                     ${name}
                 </button>
             `).join('');
@@ -783,14 +770,14 @@
                     </div>`;
                 }
 
-                html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 hover:border-slate-300 transition">
+                html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-2 hover:border-slate-300 transition">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div class="flex items-center space-x-2">
                             <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background-color: ${col.hex}"></span>
-                            <h4 class="font-bold text-slate-900 text-base">${evt.eventTitle}</h4>
+                            <h4 class="font-bold text-slate-900 text-sm sm:text-base">${evt.eventTitle}</h4>
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${col.badge}">${evt.category || 'General'}</span>
                         </div>
-                        <span class="text-xs font-semibold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200">
+                        <span class="text-xs font-semibold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200 w-fit">
                             <i class="fa-regular fa-calendar mr-1 text-slate-400"></i> ${formatDisplayDate(evt.eventStart)} → ${formatDisplayDate(evt.eventEnd)}
                         </span>
                     </div>
@@ -800,15 +787,15 @@
             });
 
             activeMilestonesInQ.forEach(ms => {
-                html += `<div class="wooden-badge p-4 rounded-xl flex items-center justify-between shadow-xs">
-                    <div class="flex items-center space-x-3">
+                html += `<div class="wooden-badge p-3.5 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between shadow-xs gap-2">
+                    <div class="flex items-start sm:items-center space-x-3">
                         <span class="text-xl">🚩</span>
                         <div>
                             <h4 class="font-bold text-amber-950 text-sm">${ms.milestoneTitle}</h4>
                             <p class="text-xs text-amber-900/80">${ms.milestoneComment}</p>
                         </div>
                     </div>
-                    <span class="text-xs font-extrabold bg-amber-200/90 text-amber-950 px-3 py-1 rounded-lg border border-amber-300">${formatDisplayDate(ms.milestoneDate)}</span>
+                    <span class="text-xs font-extrabold bg-amber-200/90 text-amber-950 px-3 py-1 rounded-lg border border-amber-300 w-fit">${formatDisplayDate(ms.milestoneDate)}</span>
                 </div>`;
             });
 
@@ -840,7 +827,7 @@
                         </div>
                         <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2 self-end sm:self-auto">
                         <button onclick="editEvent('${evt.id}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-pen mr-1"></i> Editar</button>
                         <button onclick="deleteEventStore('${evt.id}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
                     </div>
@@ -856,7 +843,7 @@
                         </div>
                         <p class="text-xs text-slate-600"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(ms.milestoneDate)} - ${ms.milestoneComment}</p>
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2 self-end sm:self-auto">
                         <button onclick="editMilestone('${ms.id}')" class="px-2.5 py-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-pen mr-1"></i> Editar</button>
                         <button onclick="deleteMilestoneStore('${ms.id}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
                     </div>
@@ -896,7 +883,7 @@
 
             container.innerHTML = combined.map(item => {
                 if (item.type === 'main') {
-                    return `<div class="flex items-start justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-emerald-300 transition">
+                    return `<div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-emerald-300 transition gap-3">
                         <div class="flex items-start space-x-3">
                             <div class="bg-emerald-100 text-emerald-700 p-2.5 rounded-xl shrink-0 mt-0.5"><i class="fa-solid fa-flag"></i></div>
                             <div>
@@ -908,13 +895,13 @@
                                 <p class="text-xs text-slate-600 mt-0.5">${item.comment}</p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-1">
-                            <button onclick="editMilestone('${item.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600"><i class="fa-solid fa-pen text-xs"></i></button>
-                            <button onclick="deleteMilestoneStore('${item.id}')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
+                        <div class="flex items-center space-x-1 self-end sm:self-auto">
+                            <button onclick="editMilestone('${item.id}')" class="p-2 text-slate-400 hover:text-emerald-600"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deleteMilestoneStore('${item.id}')" class="p-2 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                     </div>`;
                 } else {
-                    return `<div class="flex items-start justify-between p-4 rounded-xl border border-amber-200 wooden-badge shadow-xs">
+                    return `<div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 rounded-xl border border-amber-200 wooden-badge shadow-xs gap-3">
                         <div class="flex items-start space-x-3">
                             <div class="bg-amber-200/80 text-amber-900 p-2.5 rounded-xl shrink-0 mt-0.5"><i class="fa-solid fa-thumbtack"></i></div>
                             <div>
@@ -926,8 +913,8 @@
                                 <p class="text-xs text-amber-900/80 mt-0.5">${item.comment}</p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-1">
-                            <button onclick="editEvent('${item.parentEventId}')" class="px-2.5 py-1 bg-amber-200/90 text-amber-950 rounded-md text-xs font-bold hover:bg-amber-300 transition">Ver Evento</button>
+                        <div class="flex items-center space-x-1 self-end sm:self-auto">
+                            <button onclick="editEvent('${item.parentEventId}')" class="px-3 py-1.5 bg-amber-200/90 text-amber-950 rounded-lg text-xs font-bold hover:bg-amber-300 transition">Ver Evento</button>
                         </div>
                     </div>`;
                 }
@@ -940,10 +927,10 @@
             const div = document.createElement('div');
             div.className = 'flex items-center space-x-2 bg-slate-50 p-2 rounded-lg border border-slate-200 sub-milestone-row';
             div.innerHTML = `
-                <input type="checkbox" ${completed ? 'checked' : ''} class="sub-ms-complete rounded text-indigo-600">
-                <input type="text" value="${title}" placeholder="Título del mini hito" class="sub-ms-title flex-1 px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none">
-                <input type="date" value="${date}" class="sub-ms-date text-xs border border-slate-300 rounded px-1 py-1 focus:outline-none">
-                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                <input type="checkbox" ${completed ? 'checked' : ''} class="sub-ms-complete rounded text-indigo-600 shrink-0">
+                <input type="text" value="${title}" placeholder="Título del mini hito" class="sub-ms-title flex-1 px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none min-w-0">
+                <input type="date" value="${date}" class="sub-ms-date text-xs border border-slate-300 rounded px-1 py-1 focus:outline-none shrink-0">
+                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 px-1 text-xs shrink-0"><i class="fa-solid fa-xmark"></i></button>
             `;
             container.appendChild(div);
         }
