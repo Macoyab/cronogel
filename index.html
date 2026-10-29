@@ -105,7 +105,7 @@
         <button onclick="switchTab('calendar')" id="mobTabBtn-calendar" class="text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600 shrink-0 px-2">Calendario</button>
         <button onclick="switchTab('timeline')" id="mobTabBtn-timeline" class="text-slate-500 pb-1 shrink-0 px-2">Línea de Tiempo</button>
         <button onclick="switchTab('repository')" id="mobTabBtn-repository" class="text-slate-500 pb-1 shrink-0 px-2">Repositorio</button>
-        <button onclick="switchTab('milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1 shrink-0 px-2">Hitos y Notas</button>
+        <button onclick="switchTab('milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1 shrink-0 px-2">Hitos</button>
     </div>
 
     <!-- Main Content Area -->
@@ -126,28 +126,38 @@
             </div>
         </div>
 
-        <!-- TAB 2: TIMELINE VIEW (LÍNEA ESPECÍFICA CALENDARIO + TRIMESTRE) -->
+        <!-- TAB 2: TIMELINE VIEW (LÍNEA HORIZONTAL FLUIDA + TRIMESTRE) -->
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-6">
                 
-                <!-- Section 1: Línea Temporal Unificada Estilo Calendario Lineal (Ene -> Dic) -->
-                <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-3">
+                <!-- Section 1: Línea Temporal Horizontal Panorámica (Ene -> Dic) -->
+                <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900">Línea Temporal Unificada Anual (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Estructura continua mes a mes reflejando exactamente el calendario con eventos, hitos y mini-hitos.</p>
+                            <h2 class="text-lg font-bold text-slate-900">Línea Temporal Anual Unificada (<span class="timeline-year-label">2026</span>)</h2>
+                            <p class="text-xs text-slate-500">Vista continua de Enero a Diciembre con barras de colores, marcas de hitos (🚩) y mini-hitos (📌). Desplaza horizontalmente si es necesario.</p>
                         </div>
                         <span class="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">Enero - Diciembre</span>
                     </div>
 
-                    <div class="overflow-x-auto custom-scrollbar pb-4 pt-2">
-                        <div class="min-w-[1200px] grid grid-cols-12 gap-3" id="linearCalendarTimelineContainer">
-                            <!-- Inyectado dinámicamente mes a mes como el calendario -->
+                    <div class="overflow-x-auto custom-scrollbar pb-6 pt-3">
+                        <div class="min-w-[1100px] space-y-4">
+                            <!-- Cabecera de Meses con Franjas -->
+                            <div class="grid grid-cols-12 gap-1 bg-slate-100 p-2.5 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-700">
+                                <div>Enero</div><div>Febrero</div><div>Marzo</div><div>Abril</div>
+                                <div>Mayo</div><div>Junio</div><div>Julio</div><div>Agosto</div>
+                                <div>Septiembre</div><div>Octubre</div><div>Noviembre</div><div>Diciembre</div>
+                            </div>
+
+                            <!-- Pistas de Eventos e Hitos Fluidas -->
+                            <div id="fluidTimelineTracksContainer" class="relative bg-slate-50/50 rounded-xl border border-slate-200 p-4 min-h-[180px] space-y-3">
+                                <!-- Inyectado dinámicamente -->
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 2: Trimestre en Curso (Detallado y Focalizado) -->
+                <!-- Section 2: Trimestre en Curso -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <div>
@@ -603,75 +613,91 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL EXACTAMENTE IGUAL QUE EL CALENDARIO (LINEAL) ---
+        // --- LÍNEA TEMPORAL FLUIDA ESTILO GANTT (ENE -> DIC) ---
         function renderTimelineView() {
-            const container = document.getElementById('linearCalendarTimelineContainer');
+            const container = document.getElementById('fluidTimelineTracksContainer');
             if (!container) return;
+
+            const totalDaysInYear = 365;
+            const yearStart = new Date(window.currentYear, 0, 1);
             const allSubMilestones = getAllSubMilestones();
 
-            let html = '';
-            for (let month = 0; month < 12; month++) {
-                let daysGrid = `<div class="grid grid-cols-7 gap-1 text-center text-[9px] font-bold text-slate-400 mb-1">`;
-                dayNamesMin.forEach(d => daysGrid += `<div>${d}</div>`);
-                daysGrid += `</div><div class="grid grid-cols-7 gap-1 text-center text-[11px]">`;
+            if (window.eventsList.length === 0 && window.milestonesList.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-400 py-12 text-center">No hay eventos ni hitos registrados para el año ${window.currentYear}</div>`;
+                renderQuarterSelectorUI();
+                renderCurrentQuarterDetail();
+                return;
+            }
 
-                const firstDay = new Date(window.currentYear, month, 1);
-                let startingDay = firstDay.getDay() - 1;
-                if (startingDay === -1) startingDay = 6; 
-                const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
+            let htmlTracks = '';
 
-                for (let i = 0; i < startingDay; i++) daysGrid += `<div class="h-8"></div>`;
+            // Renderizar pistas horizontales para cada Evento
+            window.eventsList.forEach(evt => {
+                const start = new Date(evt.eventStart);
+                const end = new Date(evt.eventEnd);
+                const startDay = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
+                const endDay = Math.min(totalDaysInYear, (end - yearStart) / (1000 * 60 * 60 * 24) + 1);
 
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dateObj = new Date(window.currentYear, month, day);
-                    const dateStr = formatDateISO(dateObj);
+                const leftPct = Math.max(0, Math.min(100, (startDay / totalDaysInYear) * 100));
+                const widthPct = Math.max(1.2, Math.min(100 - leftPct, ((endDay - startDay) / totalDaysInYear) * 100));
+                const col = getColorObj(evt.color);
 
-                    const activeEvents = window.eventsList.filter(e => dateStr >= e.eventStart && dateStr <= e.eventEnd);
-                    const dayMilestones = window.milestonesList.filter(m => m.milestoneDate === dateStr);
-                    const daySubMilestones = allSubMilestones.filter(sm => sm.date === dateStr);
-
-                    let colorBarsHtml = '';
-                    if (activeEvents.length > 0) {
-                        const barWidthPercent = (100 / activeEvents.length).toFixed(1);
-                        colorBarsHtml = `<div class="absolute bottom-0 left-0 right-0 h-1.5 flex rounded-b overflow-hidden">`;
-                        activeEvents.forEach(evt => {
-                            const c = getColorObj(evt.color);
-                            colorBarsHtml += `<div style="width: ${barWidthPercent}%; background-color: ${c.hex};" class="h-full"></div>`;
-                        });
-                        colorBarsHtml += `</div>`;
+                // Mini-hitos posicionados dentro de la franja del evento
+                let subHitosMarkers = '';
+                (evt.subMilestones || []).forEach(sm => {
+                    if (sm.date) {
+                        const smDate = new Date(sm.date);
+                        const smDay = (smDate - yearStart) / (1000 * 60 * 60 * 24);
+                        const totalEvtDays = Math.max(1, endDay - startDay);
+                        const smPct = ((smDay - startDay) / totalEvtDays) * 100;
+                        if (smPct >= 0 && smPct <= 100) {
+                            subHitosMarkers += `<div class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 text-xs has-tooltip z-20 cursor-pointer" style="left: ${smPct}%;">
+                                📌
+                                <div class="tooltip-content absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap z-30 pointer-events-none">
+                                    📌 Mini-Hito: ${sm.title} (${formatDisplayDate(sm.date)})
+                                </div>
+                            </div>`;
+                        }
                     }
+                });
 
-                    let markers = '';
-                    if (dayMilestones.length > 0) markers += `🚩`;
-                    if (daySubMilestones.length > 0) markers += `📌`;
-
-                    let tooltipTitle = [];
-                    activeEvents.forEach(e => tooltipTitle.push(e.eventTitle));
-                    dayMilestones.forEach(m => tooltipTitle.push(`Hito: ${m.milestoneTitle}`));
-                    daySubMilestones.forEach(sm => tooltipTitle.push(`Mini-hito: ${sm.title} (${sm.parentTitle})`));
-                    const tipText = tooltipTitle.join(' | ') || `${day} de ${monthNames[month]}`;
-
-                    daysGrid += `<div class="h-8 rounded bg-slate-50 border border-slate-200 flex flex-col items-center justify-center relative has-tooltip cursor-default">
-                        <span class="font-semibold text-[10px]">${day}</span>
-                        <span class="absolute top-0 right-0 text-[8px]">${markers}</span>
-                        ${colorBarsHtml}
-                        <div class="tooltip-content absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded shadow-xl whitespace-nowrap z-30 pointer-events-none">
-                            ${tipText} (${formatDisplayDate(dateStr)})
+                htmlTracks += `<div class="relative h-10 my-2 bg-slate-100 rounded-xl overflow-visible border border-slate-200/60 shadow-xs flex items-center">
+                    <div class="absolute h-8 rounded-lg shadow-sm flex items-center px-3 text-xs font-bold text-white transition hover:brightness-110 has-tooltip cursor-pointer" 
+                         style="left: ${leftPct}%; width: ${widthPct}%; background-color: ${col.hex};">
+                        <span class="truncate">${evt.eventTitle}</span>
+                        ${subHitosMarkers}
+                        <div class="tooltip-content absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-30 pointer-events-none">
+                            <p class="font-bold text-amber-300">${evt.eventTitle}</p>
+                            <p class="text-[10px] opacity-90">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
                         </div>
-                    </div>`;
-                }
-                daysGrid += `</div>`;
-
-                html += `<div class="bg-white rounded-xl border border-slate-200 p-3 shadow-xs flex flex-col justify-between">
-                    <div class="border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
-                        <h4 class="font-bold text-slate-800 text-xs">${monthNames[month]}</h4>
-                        <span class="text-[9px] text-slate-400">${window.currentYear}</span>
                     </div>
-                    ${daysGrid}
+                </div>`;
+            });
+
+            // Renderizar pista de Hitos Principales
+            if (window.milestonesList.length > 0) {
+                let flagsHtml = '';
+                window.milestonesList.forEach(ms => {
+                    const msDate = new Date(ms.milestoneDate);
+                    const msDay = (msDate - yearStart) / (1000 * 60 * 60 * 24);
+                    if (msDay >= 0 && msDay <= totalDaysInYear) {
+                        const leftPct = ((msDay / totalDaysInYear) * 100).toFixed(2);
+                        flagsHtml += `<div class="absolute transform -translate-x-1/2 has-tooltip cursor-pointer top-1" style="left: ${leftPct}%;">
+                            <div class="text-base">🚩</div>
+                            <div class="tooltip-content absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-30 pointer-events-none">
+                                🚩 Hito: ${ms.milestoneTitle} (${formatDisplayDate(ms.milestoneDate)})
+                            </div>
+                        </div>`;
+                    }
+                });
+
+                htmlTracks += `<div class="relative h-10 my-2 bg-emerald-50/70 rounded-xl border border-emerald-200 flex items-center">
+                    <span class="text-[10px] font-bold text-emerald-800 px-3 uppercase tracking-wider shrink-0">Hitos:</span>
+                    <div class="relative flex-1 h-full">${flagsHtml}</div>
                 </div>`;
             }
 
-            container.innerHTML = html;
+            container.innerHTML = htmlTracks;
             renderQuarterSelectorUI();
             renderCurrentQuarterDetail();
         }
