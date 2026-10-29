@@ -23,9 +23,9 @@
         }
     </script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 10px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         input[type="date"]::-webkit-calendar-picker-indicator {
@@ -126,31 +126,34 @@
             </div>
         </div>
 
-        <!-- TAB 2: TIMELINE VIEW (LÍNEA HORIZONTAL FLUIDA + TRIMESTRE) -->
+        <!-- TAB 2: TIMELINE VIEW (LÍNEA CONTINUA HORIZONTAL TIPO GANTT) -->
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-6">
                 
-                <!-- Section 1: Línea Temporal Horizontal Panorámica (Ene -> Dic) -->
+                <!-- Section 1: Línea Temporal Unificada Anual Panorámica -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900">Línea Temporal Anual Unificada (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Vista continua de Enero a Diciembre con barras de colores, marcas de hitos (🚩) y mini-hitos (📌). Desplaza horizontalmente si es necesario.</p>
+                            <p class="text-xs text-slate-500">Cronología continua (Enero - Diciembre). Desplázate horizontalmente para explorar las barras de eventos, hitos (🚩) y mini-hitos (📌).</p>
                         </div>
-                        <span class="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">Enero - Diciembre</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs">Enero ➔ Diciembre</span>
+                        </div>
                     </div>
 
-                    <div class="overflow-x-auto custom-scrollbar pb-6 pt-3">
-                        <div class="min-w-[1100px] space-y-4">
-                            <!-- Cabecera de Meses con Franjas -->
-                            <div class="grid grid-cols-12 gap-1 bg-slate-100 p-2.5 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-700">
+                    <!-- Scroll Horizontal para la Línea Temporal Gantt -->
+                    <div class="overflow-x-auto custom-scrollbar pb-6 pt-2 bg-slate-50/50 rounded-xl border border-slate-200 p-4">
+                        <div class="min-w-[1600px] space-y-3">
+                            <!-- Fila de Cabecera de Meses -->
+                            <div class="grid grid-cols-12 gap-1 bg-white p-2 rounded-lg border border-slate-200 text-center text-xs font-bold text-slate-700 shadow-xs">
                                 <div>Enero</div><div>Febrero</div><div>Marzo</div><div>Abril</div>
                                 <div>Mayo</div><div>Junio</div><div>Julio</div><div>Agosto</div>
                                 <div>Septiembre</div><div>Octubre</div><div>Noviembre</div><div>Diciembre</div>
                             </div>
 
-                            <!-- Pistas de Eventos e Hitos Fluidas -->
-                            <div id="fluidTimelineTracksContainer" class="relative bg-slate-50/50 rounded-xl border border-slate-200 p-4 min-h-[180px] space-y-3">
+                            <!-- Pistas de Eventos y Marcas -->
+                            <div id="ganttTimelineTracksContainer" class="relative min-h-[200px] space-y-2.5 pt-2">
                                 <!-- Inyectado dinámicamente -->
                             </div>
                         </div>
@@ -613,14 +616,13 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL FLUIDA ESTILO GANTT (ENE -> DIC) ---
+        // --- LÍNEA TEMPORAL FLUIDA TIPO GANTT (SIN COMPRESIÓN VERTICAL) ---
         function renderTimelineView() {
-            const container = document.getElementById('fluidTimelineTracksContainer');
+            const container = document.getElementById('ganttTimelineTracksContainer');
             if (!container) return;
 
             const totalDaysInYear = 365;
             const yearStart = new Date(window.currentYear, 0, 1);
-            const allSubMilestones = getAllSubMilestones();
 
             if (window.eventsList.length === 0 && window.milestonesList.length === 0) {
                 container.innerHTML = `<div class="text-xs text-slate-400 py-12 text-center">No hay eventos ni hitos registrados para el año ${window.currentYear}</div>`;
@@ -631,7 +633,7 @@
 
             let htmlTracks = '';
 
-            // Renderizar pistas horizontales para cada Evento
+            // Renderizar barras horizontales tipo Gantt para cada evento
             window.eventsList.forEach(evt => {
                 const start = new Date(evt.eventStart);
                 const end = new Date(evt.eventEnd);
@@ -639,10 +641,10 @@
                 const endDay = Math.min(totalDaysInYear, (end - yearStart) / (1000 * 60 * 60 * 24) + 1);
 
                 const leftPct = Math.max(0, Math.min(100, (startDay / totalDaysInYear) * 100));
-                const widthPct = Math.max(1.2, Math.min(100 - leftPct, ((endDay - startDay) / totalDaysInYear) * 100));
+                const widthPct = Math.max(1.5, Math.min(100 - leftPct, ((endDay - startDay) / totalDaysInYear) * 100));
                 const col = getColorObj(evt.color);
 
-                // Mini-hitos posicionados dentro de la franja del evento
+                // Marcadores de mini-hitos dentro de la franja del evento
                 let subHitosMarkers = '';
                 (evt.subMilestones || []).forEach(sm => {
                     if (sm.date) {
@@ -661,8 +663,8 @@
                     }
                 });
 
-                htmlTracks += `<div class="relative h-10 my-2 bg-slate-100 rounded-xl overflow-visible border border-slate-200/60 shadow-xs flex items-center">
-                    <div class="absolute h-8 rounded-lg shadow-sm flex items-center px-3 text-xs font-bold text-white transition hover:brightness-110 has-tooltip cursor-pointer" 
+                htmlTracks += `<div class="relative h-11 bg-slate-100 rounded-xl border border-slate-200/80 shadow-xs flex items-center">
+                    <div class="absolute h-9 rounded-lg shadow-sm flex items-center px-3 text-xs font-bold text-white transition hover:brightness-110 has-tooltip cursor-pointer" 
                          style="left: ${leftPct}%; width: ${widthPct}%; background-color: ${col.hex};">
                         <span class="truncate">${evt.eventTitle}</span>
                         ${subHitosMarkers}
@@ -674,7 +676,7 @@
                 </div>`;
             });
 
-            // Renderizar pista de Hitos Principales
+            // Pista para Hitos Principales
             if (window.milestonesList.length > 0) {
                 let flagsHtml = '';
                 window.milestonesList.forEach(ms => {
@@ -682,7 +684,7 @@
                     const msDay = (msDate - yearStart) / (1000 * 60 * 60 * 24);
                     if (msDay >= 0 && msDay <= totalDaysInYear) {
                         const leftPct = ((msDay / totalDaysInYear) * 100).toFixed(2);
-                        flagsHtml += `<div class="absolute transform -translate-x-1/2 has-tooltip cursor-pointer top-1" style="left: ${leftPct}%;">
+                        flagsHtml += `<div class="absolute transform -translate-x-1/2 has-tooltip cursor-pointer top-1.5" style="left: ${leftPct}%;">
                             <div class="text-base">🚩</div>
                             <div class="tooltip-content absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-30 pointer-events-none">
                                 🚩 Hito: ${ms.milestoneTitle} (${formatDisplayDate(ms.milestoneDate)})
@@ -691,8 +693,8 @@
                     }
                 });
 
-                htmlTracks += `<div class="relative h-10 my-2 bg-emerald-50/70 rounded-xl border border-emerald-200 flex items-center">
-                    <span class="text-[10px] font-bold text-emerald-800 px-3 uppercase tracking-wider shrink-0">Hitos:</span>
+                htmlTracks += `<div class="relative h-11 bg-emerald-50/80 rounded-xl border border-emerald-200 flex items-center">
+                    <span class="text-[10px] font-bold text-emerald-800 px-3 uppercase tracking-wider shrink-0">Hitos Principales:</span>
                     <div class="relative flex-1 h-full">${flagsHtml}</div>
                 </div>`;
             }
