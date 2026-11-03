@@ -117,7 +117,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm gap-3">
                     <div>
                         <h2 class="text-sm sm:text-base font-bold text-slate-900">Vista Anual de 12 Meses</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-500">Muestra franjas multide color superiores por evento concurrente + abreviaturas inferiores.</p>
+                        <p class="text-[11px] sm:text-xs text-slate-500">Muestra franjas de color superiores por evento concurrente + abreviaturas de 3 caracteres.</p>
                     </div>
                     <button onclick="sendMonthToTelegram()" class="bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center w-full sm:w-auto">
                         <i class="fa-brands fa-telegram mr-1.5 text-sm"></i> Resumen a Telegram
@@ -131,27 +131,27 @@
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 
-                <!-- Línea Temporal Continua Elegante -->
+                <!-- Regla Escalar Anual Día a Día -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal Anual Precisa (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Eje de Enero a Diciembre con marcadores de día y etiquetas flotantes inclinadas.</p>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Eje Temporal Escalar Anual (<span class="timeline-year-label">2026</span>)</h2>
+                            <p class="text-xs text-slate-500">Regla continua de 365/366 días (Líneas = Meses, Puntos = Días). Desliza horizontalmente.</p>
                         </div>
-                        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">Desliza para recorrer todo el año ➔</span>
+                        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">1 de Ene ➔ 31 de Dic</span>
                     </div>
 
-                    <!-- Contenedor con Scroll Horizontal (Ampliado a 2400px para máxima claridad) -->
-                    <div class="overflow-x-auto custom-scrollbar pt-28 pb-12 bg-slate-50/50 rounded-xl border border-slate-200 px-8">
-                        <div class="min-w-[2400px] relative">
+                    <!-- Contenedor con Scroll Horizontal (3650px de ancho para máxima precisión: 10px por día) -->
+                    <div class="overflow-x-auto custom-scrollbar pt-32 pb-16 bg-slate-50/60 rounded-xl border border-slate-200 px-8">
+                        <div id="timelineDayRuleWrapper" class="relative" style="width: 3650px; min-height: 220px;">
                             
-                            <!-- Contenedor de Banderolas e Inclinaciones de Eventos/Hitos -->
-                            <div id="straightLineLabelsContainer" class="absolute inset-0 pointer-events-none"></div>
+                            <!-- Banderolas / Banderines Flotantes -->
+                            <div id="dayRuleLabelsContainer" class="absolute inset-0 pointer-events-none"></div>
 
-                            <!-- Barra Recta Principal -->
-                            <div class="relative h-2 bg-sky-800 rounded-full w-full my-6 flex items-center">
-                                <!-- Marcas de División de los 12 Meses -->
-                                <div id="timelineMonthMarksContainer" class="w-full relative h-full"></div>
+                            <!-- Barra Eje Recta Central -->
+                            <div class="absolute bottom-12 left-0 right-0 h-2 bg-sky-800 rounded-full flex items-center">
+                                <!-- Marcas de Días y Meses -->
+                                <div id="dayRuleTicksContainer" class="w-full relative h-full"></div>
                             </div>
 
                         </div>
@@ -550,7 +550,7 @@
             return list;
         }
 
-        // --- CALENDARIO GENERAL CON BARRAS SUPERIORES DE COLORES + ABREVIATURA INFERIOR ---
+        // --- CALENDARIO GENERAL ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
             grid.innerHTML = '';
@@ -592,7 +592,6 @@
                     if (isWeekend) textClass = 'text-amber-800 bg-amber-50/40';
                     if (isHoliday) textClass = 'text-red-700 font-bold bg-red-50 border border-red-200';
 
-                    // 1. Barras de color superiores (si hay varios eventos concurrentes)
                     let topColorBars = '';
                     if (activeEvents.length > 0) {
                         const widthPct = (100 / activeEvents.length).toFixed(1);
@@ -604,7 +603,6 @@
                         topColorBars += `</div>`;
                     }
 
-                    // 2. Abreviatura de 3 caracteres en la parte inferior
                     let abbrevBadge = '';
                     if (activeEvents.length > 0) {
                         const evt = activeEvents[0];
@@ -635,76 +633,101 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL CONTINUA EXACTA SEGÚN REFERENCIA VISUAL ---
+        // --- LÍNEA TEMPORAL ESCALAR DÍA A DÍA (365/366 DÍAS) ---
         function renderTimelineView() {
-            const marksContainer = document.getElementById('timelineMonthMarksContainer');
-            const labelsContainer = document.getElementById('straightLineLabelsContainer');
-            if (!marksContainer || !labelsContainer) return;
+            const ticksContainer = document.getElementById('dayRuleTicksContainer');
+            const labelsContainer = document.getElementById('dayRuleLabelsContainer');
+            if (!ticksContainer || !labelsContainer) return;
+
+            const isLeap = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+            const totalDays = isLeap(window.currentYear) ? 366 : 365;
+            const pxPerDay = 10; // 1 Día = 10px exactos -> Total ancho = ~3650px
+            const totalWidthPx = totalDays * pxPerDay;
+
+            document.getElementById('timelineDayRuleWrapper').style.width = `${totalWidthPx}px`;
 
             const yearStart = new Date(window.currentYear, 0, 1);
-            const totalDaysInYear = 365;
 
-            // Renderizar muescas y nombres de los 12 meses
-            let monthMarksHtml = '';
-            for (let m = 0; m < 12; m++) {
-                const mStart = new Date(window.currentYear, m, 1);
-                const dayOfYear = (mStart - yearStart) / (1000 * 60 * 60 * 24);
-                const leftPct = ((dayOfYear / totalDaysInYear) * 100).toFixed(2);
+            // 1. Trazado de marcas (Líneas para meses, Puntos para días)
+            let ticksHtml = '';
+            for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
+                const currentDate = new Date(window.currentYear, 0, dayIndex + 1);
+                const isFirstOfMonth = currentDate.getDate() === 1;
+                const posX = dayIndex * pxPerDay;
 
-                monthMarksHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 flex flex-col items-start" style="left: ${leftPct}%;">
-                    <div class="h-6 w-1 bg-sky-800 rounded-full"></div>
-                    <span class="text-[11px] font-bold text-slate-700 mt-2 uppercase -rotate-45 origin-top-left whitespace-nowrap">${monthNames[m]}</span>
-                </div>`;
+                if (isFirstOfMonth) {
+                    const mName = monthNames[currentDate.getMonth()];
+                    ticksHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 flex flex-col items-start z-10" style="left: ${posX}px;">
+                        <div class="h-8 w-1 bg-sky-900 rounded-full"></div>
+                        <span class="text-[11px] font-extrabold text-slate-800 mt-2 uppercase -rotate-45 origin-top-left whitespace-nowrap">${mName}</span>
+                    </div>`;
+                } else {
+                    ticksHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-sky-500/80" style="left: ${posX}px;" title="${formatDisplayDate(formatDateISO(currentDate))}"></div>`;
+                }
             }
-            marksContainer.innerHTML = monthMarksHtml;
+            ticksContainer.innerHTML = ticksHtml;
 
-            // Renderizar Banderolas / Banderines Inclinados (-45°) perfectamente alineados
+            // 2. Renderizado de Eventos (Inicio y Fin exactos) e Hitos
             let labelsHtml = '';
 
             // Eventos
             window.eventsList.forEach((evt, idx) => {
                 const start = new Date(evt.eventStart);
-                const startDay = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
-                const leftPct = ((startDay / totalDaysInYear) * 100).toFixed(2);
+                const end = new Date(evt.eventEnd);
+                const startDayIdx = Math.max(0, Math.floor((start - yearStart) / (1000 * 60 * 60 * 24)));
+                const endDayIdx = Math.min(totalDays - 1, Math.floor((end - yearStart) / (1000 * 60 * 60 * 24)));
+
+                const startPx = startDayIdx * pxPerDay;
+                const endPx = endDayIdx * pxPerDay;
+                const durationPx = Math.max(12, endPx - startPx);
+
                 const col = getColorObj(evt.color);
                 const abbrev = (evt.abbrev || evt.eventTitle.substring(0, 3)).toUpperCase();
 
-                // Altura escalonada para evitar colisión si hay fechas cercanas
-                const verticalOffset = (idx % 2 === 0) ? '-top-20' : '-top-28';
+                // Barra conectora de duración del evento entre Inicio y Fin
+                labelsHtml += `<div class="absolute bottom-12 h-3 rounded-full shadow-xs border border-white/40 opacity-80" 
+                                    style="left: ${startPx}px; width: ${durationPx}px; background-color: ${col.hex};" 
+                                    title="${evt.eventTitle} (${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)})"></div>`;
 
-                labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 z-20 pointer-events-auto" style="left: ${leftPct}%;">
-                    <!-- Muesca exacta sobre la línea -->
-                    <div class="w-1 h-5 bg-emerald-600 mx-auto transform -translate-y-1/2 rounded-full border border-white shadow-xs"></div>
-                    
-                    <!-- Línea guía vertical que sube a la etiqueta -->
-                    <div class="w-0.5 h-12 bg-emerald-600/70 mx-auto -mt-6"></div>
-
-                    <!-- Banderola estilo tarjeta inclinada -->
-                    <div class="absolute ${verticalOffset} left-1/2 transform -rotate-45 origin-bottom-left cursor-pointer has-tooltip">
-                        <div class="px-3 py-1.5 rounded-xl text-[11px] font-bold text-white shadow-lg whitespace-nowrap border border-white/20 flex items-center space-x-1.5" style="background-color: ${col.hex};">
-                            <i class="fa-solid fa-play text-[9px] text-amber-300"></i>
-                            <span>${formatDisplayDate(evt.eventStart)}</span>
+                // Banderola Inicio
+                labelsHtml += `<div class="absolute bottom-16 transform -translate-x-1/2 pointer-events-auto" style="left: ${startPx}px;">
+                    <div class="w-0.5 h-10 bg-slate-400 mx-auto"></div>
+                    <div class="absolute -top-16 left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer">
+                        <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${col.hex};">
+                            <span class="text-amber-300 font-extrabold">▶ INICIO (${formatDisplayDate(evt.eventStart)})</span>
                             <span class="opacity-75">|</span>
                             <span>${abbrev} - ${evt.eventTitle}</span>
                         </div>
                     </div>
                 </div>`;
+
+                // Banderola Fin (Solo si dura más de 1 día)
+                if (endDayIdx > startDayIdx) {
+                    labelsHtml += `<div class="absolute bottom-16 transform -translate-x-1/2 pointer-events-auto" style="left: ${endPx}px;">
+                        <div class="w-0.5 h-10 bg-slate-400 mx-auto"></div>
+                        <div class="absolute -top-24 left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer">
+                            <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${col.hex};">
+                                <span class="text-rose-300 font-extrabold">⏹ FIN (${formatDisplayDate(evt.eventEnd)})</span>
+                                <span class="opacity-75">|</span>
+                                <span>${abbrev} - ${evt.eventTitle}</span>
+                            </div>
+                        </div>
+                    </div>`;
+                }
             });
 
             // Hitos Principales
-            window.milestonesList.forEach((ms, idx) => {
+            window.milestonesList.forEach((ms) => {
                 const msDate = new Date(ms.milestoneDate);
-                const msDay = (msDate - yearStart) / (1000 * 60 * 60 * 24);
-                if (msDay >= 0 && msDay <= totalDaysInYear) {
-                    const leftPct = ((msDay / totalDaysInYear) * 100).toFixed(2);
+                const dayIdx = Math.floor((msDate - yearStart) / (1000 * 60 * 60 * 24));
+                if (dayIdx >= 0 && dayIdx < totalDays) {
+                    const posX = dayIdx * pxPerDay;
                     const abbrev = (ms.abbrev || ms.milestoneTitle.substring(0, 3)).toUpperCase();
 
-                    labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 z-20 pointer-events-auto" style="left: ${leftPct}%;">
-                        <div class="w-1 h-5 bg-emerald-700 mx-auto transform -translate-y-1/2 rounded-full border border-white shadow-xs"></div>
-                        <div class="w-0.5 h-12 bg-emerald-700/70 mx-auto -mt-6"></div>
-
-                        <div class="absolute -top-24 left-1/2 transform -rotate-45 origin-bottom-left cursor-pointer has-tooltip">
-                            <div class="px-3 py-1.5 rounded-xl text-[11px] font-bold text-white shadow-lg whitespace-nowrap bg-emerald-700 border border-white/20 flex items-center space-x-1.5">
+                    labelsHtml += `<div class="absolute bottom-16 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
+                        <div class="w-0.5 h-12 bg-emerald-600 mx-auto"></div>
+                        <div class="absolute -top-20 left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer">
+                            <div class="px-3 py-1.5 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap bg-emerald-700 border border-white/20 flex items-center space-x-1.5">
                                 <span>🚩 ${formatDisplayDate(ms.milestoneDate)}</span>
                                 <span class="opacity-75">|</span>
                                 <span>${abbrev} - ${ms.milestoneTitle}</span>
