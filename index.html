@@ -55,7 +55,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 h-full flex flex-col font-sans overflow-hidden">
 
-    <!-- Top Navigation Bar (Responsive) -->
+    <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shrink-0 shadow-sm">
         <div class="flex items-center space-x-2 sm:space-x-3">
             <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 shrink-0">
@@ -68,14 +68,12 @@
         </div>
 
         <div class="flex items-center space-x-1.5 sm:space-x-3">
-            <!-- Year Selector -->
             <div class="flex items-center bg-slate-100 rounded-lg p-0.5 sm:p-1 border border-slate-200">
                 <button onclick="changeYear(-1)" class="px-2 py-1 text-xs sm:text-sm font-medium text-slate-600 hover:bg-white rounded shadow-sm transition"><i class="fa-solid fa-chevron-left"></i></button>
                 <span id="currentYearLabel" class="px-2 sm:px-3 font-semibold text-xs sm:text-sm text-slate-800">2026</span>
                 <button onclick="changeYear(1)" class="px-2 py-1 text-xs sm:text-sm font-medium text-slate-600 hover:bg-white rounded shadow-sm transition"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
-            <!-- Desktop View Tabs -->
             <div class="hidden md:flex bg-slate-100 rounded-lg p-1 border border-slate-200 text-sm font-medium">
                 <button onclick="switchTab('calendar')" id="tabBtn-calendar" class="px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-sm transition">Calendario</button>
                 <button onclick="switchTab('timeline')" id="tabBtn-timeline" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Línea de Tiempo</button>
@@ -83,7 +81,6 @@
                 <button onclick="switchTab('milestones')" id="tabBtn-milestones" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">Hitos y Notas</button>
             </div>
 
-            <!-- Action Buttons -->
             <div class="flex items-center space-x-1.5 sm:space-x-2">
                 <button id="syncStatusBtn" onclick="toggleStorageMode()" title="Estado de Sincronización" class="hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium">
                     <i class="fa-solid fa-rotate mr-1 animate-spin"></i> Conectando...
@@ -104,7 +101,7 @@
         </div>
     </header>
 
-    <!-- Mobile Tabs (Scrollable & Responsive) -->
+    <!-- Mobile Tabs -->
     <div class="md:hidden flex bg-white border-b border-slate-200 px-2 py-2 text-xs font-medium justify-around shrink-0 overflow-x-auto custom-scrollbar space-x-2">
         <button onclick="switchTab('calendar')" id="mobTabBtn-calendar" class="text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600 shrink-0 px-3 whitespace-nowrap">Calendario</button>
         <button onclick="switchTab('timeline')" id="mobTabBtn-timeline" class="text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap">Línea de Tiempo</button>
@@ -120,7 +117,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm gap-3">
                     <div>
                         <h2 class="text-sm sm:text-base font-bold text-slate-900">Vista Anual de 12 Meses</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-500">Muestra franjas de eventos concurrentes por colores, Hitos (🚩) y Mini-Hitos (📌).</p>
+                        <p class="text-[11px] sm:text-xs text-slate-500">Muestra el primer evento de cada día debajo de la fecha, Hitos (🚩) y Mini-Hitos (📌).</p>
                     </div>
                     <button onclick="sendMonthToTelegram()" class="bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center w-full sm:w-auto">
                         <i class="fa-brands fa-telegram mr-1.5 text-sm"></i> Resumen a Telegram
@@ -138,7 +135,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal Anual Unificada (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Cronología continua (Enero - Diciembre). Desliza horizontalmente en pantallas táctiles para explorar.</p>
+                            <p class="text-xs text-slate-500">Línea continua de enero a diciembre con etiquetas superiores para eventos e hitos.</p>
                         </div>
                         <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">Enero ➔ Diciembre</span>
                     </div>
@@ -150,7 +147,7 @@
                                 <div>Mayo</div><div>Junio</div><div>Julio</div><div>Agosto</div>
                                 <div>Septiembre</div><div>Octubre</div><div>Noviembre</div><div>Diciembre</div>
                             </div>
-                            <div id="ganttTimelineTracksContainer" class="relative min-h-[200px] space-y-3 pt-2"></div>
+                            <div id="ganttTimelineTracksContainer" class="relative min-h-[220px] space-y-4 pt-6"></div>
                         </div>
                     </div>
                 </div>
@@ -535,7 +532,7 @@
             return list;
         }
 
-        // --- CALENDARIO GENERAL ---
+        // --- CALENDARIO GENERAL CON PRIMER EVENTO VISIBLE ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
             grid.innerHTML = '';
@@ -559,7 +556,7 @@
                 if (startingDay === -1) startingDay = 6; 
                 const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
 
-                for (let i = 0; i < startingDay; i++) daysGrid += `<div class="h-9 sm:h-10"></div>`;
+                for (let i = 0; i < startingDay; i++) daysGrid += `<div class="h-14 sm:h-16"></div>`;
 
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateObj = new Date(window.currentYear, month, day);
@@ -574,34 +571,26 @@
                     const daySubMilestones = allSubMilestones.filter(sm => sm.date === dateStr);
 
                     let textClass = 'text-slate-700';
-                    if (isWeekend) textClass = 'text-amber-800 bg-amber-50/50';
+                    if (isWeekend) textClass = 'text-amber-800 bg-amber-50/40';
                     if (isHoliday) textClass = 'text-red-700 font-bold bg-red-50 border border-red-200';
 
-                    let colorBarsHtml = '';
+                    // Primer evento mostrado debajo del día estilo tarjeta
+                    let firstEventHtml = '';
                     if (activeEvents.length > 0) {
-                        const barWidthPercent = (100 / activeEvents.length).toFixed(1);
-                        colorBarsHtml = `<div class="absolute bottom-0 left-0 right-0 h-2 flex rounded-b-md overflow-hidden">`;
-                        activeEvents.forEach(evt => {
-                            const c = getColorObj(evt.color);
-                            colorBarsHtml += `<div style="width: ${barWidthPercent}%; background-color: ${c.hex};" class="h-full" title="${evt.eventTitle}"></div>`;
-                        });
-                        colorBarsHtml += `</div>`;
+                        const evt = activeEvents[0];
+                        const col = getColorObj(evt.color);
+                        firstEventHtml = `<div class="w-full mt-0.5 px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-medium truncate text-white shadow-xs" style="background-color: ${col.hex};" title="${evt.eventTitle}">${evt.eventTitle}</div>`;
                     }
 
                     let markers = '';
-                    if (dayMilestones.length > 0) {
-                        markers += `<span class="text-[9px]">🚩</span>`;
-                    }
-                    if (daySubMilestones.length > 0) {
-                        markers += `<span class="text-[9px]">📌</span>`;
-                    }
-
+                    if (dayMilestones.length > 0) markers += `<span class="text-[8px]">🚩</span>`;
+                    if (daySubMilestones.length > 0) markers += `<span class="text-[8px]">📌</span>`;
                     let markersOverlay = markers ? `<div class="absolute top-0.5 right-0.5 flex space-x-0.5">${markers}</div>` : '';
 
-                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-9 sm:h-10 rounded-md flex flex-col items-center justify-center relative cursor-pointer hover:bg-slate-100 transition ${textClass}">
+                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-14 sm:h-16 rounded-lg flex flex-col items-center p-1 relative cursor-pointer hover:bg-slate-100 transition border border-slate-100 ${textClass}">
                         <span class="font-semibold text-xs z-10">${day}</span>
                         ${markersOverlay}
-                        ${colorBarsHtml}
+                        ${firstEventHtml}
                     </button>`;
                 }
                 daysGrid += `</div>`;
@@ -610,7 +599,7 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL ---
+        // --- LÍNEA TEMPORAL CON ETIQUETA SUPERIOR ESTILO LÍNEA CONTINUA ---
         function renderTimelineView() {
             const container = document.getElementById('ganttTimelineTracksContainer');
             if (!container) return;
@@ -665,18 +654,22 @@
                     }
                 });
 
-                htmlTracks += `<div class="relative h-12 bg-slate-100/80 rounded-xl border border-slate-200/80 shadow-xs flex items-center">
-                    <div class="absolute h-9 rounded-lg shadow-sm flex items-center px-3 text-xs font-bold text-white transition hover:brightness-110 has-tooltip cursor-pointer" 
-                         style="left: ${leftPct}%; width: ${widthPct}%; background-color: ${col.hex};">
-                        <span class="truncate pr-4">${evt.eventTitle}</span>
-                        <div class="tooltip-content absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-40">
-                            <p class="font-bold text-amber-300">${evt.eventTitle}</p>
-                            <p class="text-[10px] opacity-90">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
+                // Etiqueta superior sobre la línea de tiempo simulando el día/etiqueta
+                htmlTracks += `<div class="relative pt-6 pb-2">
+                    <div class="absolute top-0 transform -translate-x-1/2 has-tooltip cursor-pointer z-30" style="left: ${leftPct}%;">
+                        <div class="px-2.5 py-1 rounded-md text-[10px] font-bold text-white shadow-md whitespace-nowrap" style="background-color: ${col.hex};">
+                            ${evt.eventTitle} (${formatDisplayDate(evt.eventStart)})
                         </div>
                     </div>
-                    <div class="absolute inset-0 pointer-events-none">
-                        <div class="relative w-full h-full pointer-events-auto">
-                            ${subHitosMarkers}
+                    <div class="relative h-10 bg-slate-100 rounded-xl border border-slate-200 shadow-xs flex items-center">
+                        <div class="absolute h-8 rounded-lg shadow-sm flex items-center px-3 text-xs font-bold text-white transition hover:brightness-110 has-tooltip cursor-pointer" 
+                             style="left: ${leftPct}%; width: ${widthPct}%; background-color: ${col.hex};">
+                            <span class="truncate pr-4">${evt.eventTitle}</span>
+                        </div>
+                        <div class="absolute inset-0 pointer-events-none">
+                            <div class="relative w-full h-full pointer-events-auto">
+                                ${subHitosMarkers}
+                            </div>
                         </div>
                     </div>
                 </div>`;
@@ -689,18 +682,18 @@
                     const msDay = (msDate - yearStart) / (1000 * 60 * 60 * 24);
                     if (msDay >= 0 && msDay <= totalDaysInYear) {
                         const leftPct = ((msDay / totalDaysInYear) * 100).toFixed(2);
-                        flagsHtml += `<div class="absolute transform -translate-x-1/2 has-tooltip cursor-pointer top-1.5" style="left: ${leftPct}%;">
-                            <div class="text-base">🚩</div>
-                            <div class="tooltip-content absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-40">
-                                🚩 Hito: ${ms.milestoneTitle} (${formatDisplayDate(ms.milestoneDate)})
+                        flagsHtml += `<div class="absolute transform -translate-x-1/2 has-tooltip cursor-pointer top-2" style="left: ${leftPct}%;">
+                            <div class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-700 text-white shadow-md whitespace-nowrap">
+                                🚩 ${ms.milestoneTitle} (${formatDisplayDate(ms.milestoneDate)})
                             </div>
+                            <div class="text-base text-center mt-1">🚩</div>
                         </div>`;
                     }
                 });
 
-                htmlTracks += `<div class="relative h-11 bg-emerald-50/80 rounded-xl border border-emerald-200 flex items-center">
-                    <span class="text-[10px] font-bold text-emerald-800 px-3 uppercase tracking-wider shrink-0">Hitos:</span>
-                    <div class="relative flex-1 h-full">${flagsHtml}</div>
+                htmlTracks += `<div class="relative pt-6 pb-2 bg-emerald-50/50 rounded-xl border border-emerald-200 p-3">
+                    <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider block mb-2">Hitos Principales en Línea:</span>
+                    <div class="relative h-16 w-full">${flagsHtml}</div>
                 </div>`;
             }
 
