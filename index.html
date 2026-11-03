@@ -106,7 +106,7 @@
         <button onclick="switchTab('calendar')" id="mobTabBtn-calendar" class="text-indigo-600 font-bold pb-1 border-b-2 border-indigo-600 shrink-0 px-3 whitespace-nowrap">Calendario</button>
         <button onclick="switchTab('timeline')" id="mobTabBtn-timeline" class="text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap">Línea de Tiempo</button>
         <button onclick="switchTab('repository')" id="mobTabBtn-repository" class="text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap">Repositorio</button>
-        <button onclick="switchTab('mobTabBtn-milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap">Hitos y Notas</button>
+        <button onclick="switchTab('milestones')" id="mobTabBtn-milestones" class="text-slate-500 pb-1 shrink-0 px-3 whitespace-nowrap">Hitos y Notas</button>
     </div>
 
     <!-- Main Content Area -->
@@ -131,25 +131,25 @@
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 
-                <!-- Regla Escalar Anual de Puntos -->
+                <!-- Regla Escalar Anual de Puntos con Etiquetas Superiores e Inferiores Simétricas -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal de Puntos (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Todos los días son puntos. El día 1 de cada mes se identifica con su número debajo. Etiquetas multinivel anti-solapamiento.</p>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal Simétrica (<span class="timeline-year-label">2026</span>)</h2>
+                            <p class="text-xs text-slate-500">Eventos arriba (-45°) y Hitos/Mini-hitos abajo (+45°). Líneas verticales a color idéntico al evento.</p>
                         </div>
                         <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">1 de Ene ➔ 31 de Dic</span>
                     </div>
 
-                    <!-- Contenedor con Scroll Horizontal amplio -->
-                    <div class="overflow-x-auto custom-scrollbar pt-48 pb-16 bg-slate-50/60 rounded-xl border border-slate-200 px-8">
-                        <div id="timelineDayRuleWrapper" class="relative" style="width: 3650px; min-height: 320px;">
+                    <!-- Contenedor amplio con Scroll Horizontal (3650px de ancho para máxima dispersión) -->
+                    <div class="overflow-x-auto custom-scrollbar pt-52 pb-48 bg-slate-50/60 rounded-xl border border-slate-200 px-8">
+                        <div id="timelineDayRuleWrapper" class="relative" style="width: 3650px; min-height: 480px;">
                             
-                            <!-- Banderolas / Banderines Flotantes (Anti-solapamiento por niveles) -->
+                            <!-- Contenedor General de Banderolas -->
                             <div id="dayRuleLabelsContainer" class="absolute inset-0 pointer-events-none"></div>
 
                             <!-- Barra Eje Recta Central de Puntos -->
-                            <div class="absolute bottom-12 left-0 right-0 h-3 flex items-center">
+                            <div class="absolute top-1/2 transform -translate-y-1/2 left-0 right-0 h-3 flex items-center">
                                 <div id="dayRuleTicksContainer" class="w-full relative h-full flex items-center"></div>
                             </div>
 
@@ -542,7 +542,7 @@
             window.eventsList.forEach(evt => {
                 (evt.subMilestones || []).forEach(sm => {
                     if (sm.date) {
-                        list.push({ ...sm, parentEventId: evt.id, parentTitle: evt.eventTitle });
+                        list.push({ ...sm, parentEventId: evt.id, parentTitle: evt.eventTitle, color: evt.color, abbrev: evt.abbrev });
                     }
                 });
             });
@@ -632,7 +632,7 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL DE PUNTOS + ETIQUETAS MULTINIVEL ANTI-SOLAPAMIENTO ---
+        // --- LÍNEA TEMPORAL SIMÉTRICA DE PUNTOS (EVENTOS ARRIBA -45°, HITOS ABAJO +45°, LÍNEAS GUÍA A COLOR) ---
         function renderTimelineView() {
             const ticksContainer = document.getElementById('dayRuleTicksContainer');
             const labelsContainer = document.getElementById('dayRuleLabelsContainer');
@@ -647,7 +647,7 @@
 
             const yearStart = new Date(window.currentYear, 0, 1);
 
-            // 1. Trazado uniforme de PUNTOS (Día 1 de mes muestra su número en la parte inferior)
+            // 1. Trazado de PUNTOS (Día 1 de cada mes muestra su número justo en el centro del eje)
             let ticksHtml = '';
             for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
                 const currentDate = new Date(window.currentYear, 0, dayIndex + 1);
@@ -656,9 +656,10 @@
                 const posX = dayIndex * pxPerDay;
 
                 if (isFirstOfMonth) {
-                    ticksHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 flex flex-col items-center z-10" style="left: ${posX}px;">
-                        <div class="w-3.5 h-3.5 rounded-full bg-sky-800 border-2 border-white shadow-xs"></div>
-                        <span class="text-[11px] font-extrabold text-sky-950 mt-2 bg-sky-100 border border-sky-300 px-1.5 py-0.5 rounded-md shadow-xs">${monthNumStr}</span>
+                    ticksHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 flex flex-col items-center z-30" style="left: ${posX}px;">
+                        <div class="w-4 h-4 rounded-full bg-sky-900 border-2 border-white shadow-sm flex items-center justify-center">
+                            <span class="text-[8px] font-black text-white">${monthNumStr}</span>
+                        </div>
                     </div>`;
                 } else {
                     ticksHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-sky-600/70" style="left: ${posX}px;" title="${formatDisplayDate(formatDateISO(currentDate))}"></div>`;
@@ -666,62 +667,10 @@
             }
             ticksContainer.innerHTML = ticksHtml;
 
-            // 2. Renderizado de Etiquetas con prevención de solapamientos (Escalonamiento vertical)
+            // 2. Renderizado de Eventos (Arriba, -45°) e Hitos/Mini-hitos (Abajo, +45°)
             let labelsHtml = '';
-            
-            // Recopilamos todos los marcadores y los ordenamos por fecha
-            const markers = [];
 
-            window.eventsList.forEach(evt => {
-                const start = new Date(evt.eventStart);
-                const end = new Date(evt.eventEnd);
-                const startDayIdx = Math.max(0, Math.floor((start - yearStart) / (1000 * 60 * 60 * 24)));
-                const endDayIdx = Math.min(totalDays - 1, Math.floor((end - yearStart) / (1000 * 60 * 60 * 24)));
-
-                markers.push({
-                    type: 'event-start',
-                    dayIdx: startDayIdx,
-                    event: evt,
-                    startPx: startDayIdx * pxPerDay,
-                    endPx: endDayIdx * pxPerDay
-                });
-
-                if (endDayIdx > startDayIdx) {
-                    markers.push({
-                        type: 'event-end',
-                        dayIdx: endDayIdx,
-                        event: evt,
-                        startPx: startDayIdx * pxPerDay,
-                        endPx: endDayIdx * pxPerDay
-                    });
-                }
-            });
-
-            window.milestonesList.forEach(ms => {
-                const msDate = new Date(ms.milestoneDate);
-                const dayIdx = Math.floor((msDate - yearStart) / (1000 * 60 * 60 * 24));
-                if (dayIdx >= 0 && dayIdx < totalDays) {
-                    markers.push({
-                        type: 'milestone',
-                        dayIdx: dayIdx,
-                        milestone: ms,
-                        startPx: dayIdx * pxPerDay
-                    });
-                }
-            });
-
-            // Ordenar marcadores por el día de ocurrencia
-            markers.sort((a, b) => a.dayIdx - b.dayIdx);
-
-            // Niveles de altura disponibles para evitar colisión vertical
-            const offsets = [
-                { top: '-top-20', height: 'h-10' },
-                { top: '-top-36', height: 'h-24' },
-                { top: '-top-52', height: 'h-40' },
-                { top: '-top-68', height: 'h-56' }
-            ];
-
-            // Renderizar franjas de duración de eventos en la barra base
+            // Franjas de duración de eventos sobre el eje central
             window.eventsList.forEach(evt => {
                 const start = new Date(evt.eventStart);
                 const end = new Date(evt.eventEnd);
@@ -732,71 +681,130 @@
                 const durationPx = Math.max(12, (endDayIdx - startDayIdx) * pxPerDay);
                 const col = getColorObj(evt.color);
 
-                labelsHtml += `<div class="absolute bottom-12 h-2.5 rounded-full border border-white/50 opacity-90 shadow-xs" 
+                labelsHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 h-2.5 rounded-full border border-white/60 opacity-90 shadow-xs z-20" 
                                     style="left: ${startPx}px; width: ${durationPx}px; background-color: ${col.hex};" 
                                     title="${evt.eventTitle} (${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)})"></div>`;
             });
 
-            // Asignar alturas alternadas dinámicas si la distancia en días es menor a 15
-            let lastDayIdx = -99;
-            let levelIdx = 0;
+            // --- RECOPILAR ELEMENTOS SUPERIORES (EVENTOS) ---
+            const topMarkers = [];
+            window.eventsList.forEach(evt => {
+                const start = new Date(evt.eventStart);
+                const end = new Date(evt.eventEnd);
+                const startDayIdx = Math.max(0, Math.floor((start - yearStart) / (1000 * 60 * 60 * 24)));
+                const endDayIdx = Math.min(totalDays - 1, Math.floor((end - yearStart) / (1000 * 60 * 60 * 24)));
 
-            markers.forEach((m) => {
-                if (m.dayIdx - lastDayIdx < 15) {
-                    levelIdx = (levelIdx + 1) % offsets.length;
-                } else {
-                    levelIdx = 0;
+                topMarkers.push({ type: 'start', dayIdx: startDayIdx, evt });
+                if (endDayIdx > startDayIdx) {
+                    topMarkers.push({ type: 'end', dayIdx: endDayIdx, evt });
                 }
-                lastDayIdx = m.dayIdx;
+            });
+            topMarkers.sort((a, b) => a.dayIdx - b.dayIdx);
 
-                const currentOffset = offsets[levelIdx];
+            const topLevels = [
+                { bottom: 'bottom-2', height: 'h-16', labelTop: '-top-12' },
+                { bottom: 'bottom-2', height: 'h-32', labelTop: '-top-28' },
+                { bottom: 'bottom-2', height: 'h-48', labelTop: '-top-44' }
+            ];
+
+            let lastTopDay = -99;
+            let topLvl = 0;
+
+            topMarkers.forEach(m => {
+                if (m.dayIdx - lastTopDay < 14) topLvl = (topLvl + 1) % topLevels.length;
+                else topLvl = 0;
+                lastTopDay = m.dayIdx;
+
+                const lvl = topLevels[topLvl];
                 const posX = m.dayIdx * pxPerDay;
+                const col = getColorObj(m.evt.color);
+                const abbrev = (m.evt.abbrev || m.evt.eventTitle.substring(0, 3)).toUpperCase();
+                const isStart = m.type === 'start';
 
-                if (m.type === 'event-start') {
-                    const evt = m.event;
-                    const col = getColorObj(evt.color);
-                    const abbrev = (evt.abbrev || evt.eventTitle.substring(0, 3)).toUpperCase();
-
-                    labelsHtml += `<div class="absolute bottom-14 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
-                        <div class="w-0.5 ${currentOffset.height} bg-slate-400 mx-auto"></div>
-                        <div class="absolute ${currentOffset.top} left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer">
-                            <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${col.hex};">
-                                <span class="text-amber-300 font-extrabold">▶ INICIO (${formatDisplayDate(evt.eventStart)})</span>
-                                <span class="opacity-75">|</span>
-                                <span>${abbrev} - ${evt.eventTitle}</span>
-                            </div>
+                labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
+                    <!-- Línea guía vertical con el MISMO COLOR del evento -->
+                    <div class="w-0.5 ${lvl.height} ${lvl.bottom} absolute left-1/2 transform -translate-x-1/2 rounded-full" style="background-color: ${col.hex}; opacity: 0.85;"></div>
+                    
+                    <!-- Banderola superior inclinada a -45° -->
+                    <div class="absolute ${lvl.labelTop} left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer">
+                        <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${col.hex};">
+                            <span class="${isStart ? 'text-amber-300' : 'text-rose-300'} font-extrabold">${isStart ? '▶ INICIO' : '⏹ FIN'} (${formatDisplayDate(isStart ? m.evt.eventStart : m.evt.eventEnd)})</span>
+                            <span class="opacity-75">|</span>
+                            <span>${abbrev} - ${m.evt.eventTitle}</span>
                         </div>
-                    </div>`;
-                } else if (m.type === 'event-end') {
-                    const evt = m.event;
-                    const col = getColorObj(evt.color);
-                    const abbrev = (evt.abbrev || evt.eventTitle.substring(0, 3)).toUpperCase();
+                    </div>
+                </div>`;
+            });
 
-                    labelsHtml += `<div class="absolute bottom-14 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
-                        <div class="w-0.5 ${currentOffset.height} bg-slate-400 mx-auto"></div>
-                        <div class="absolute ${currentOffset.top} left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer">
-                            <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${col.hex};">
-                                <span class="text-rose-300 font-extrabold">⏹ FIN (${formatDisplayDate(evt.eventEnd)})</span>
-                                <span class="opacity-75">|</span>
-                                <span>${abbrev} - ${evt.eventTitle}</span>
-                            </div>
-                        </div>
-                    </div>`;
-                } else if (m.type === 'milestone') {
-                    const ms = m.milestone;
-                    const abbrev = (ms.abbrev || ms.milestoneTitle.substring(0, 3)).toUpperCase();
+            // --- RECOPILAR ELEMENTOS INFERIORES (HITOS Y MINI-HITOS) ---
+            const bottomMarkers = [];
 
-                    labelsHtml += `<div class="absolute bottom-14 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
-                        <div class="w-0.5 ${currentOffset.height} bg-emerald-600 mx-auto"></div>
-                        <div class="absolute ${currentOffset.top} left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer">
-                            <div class="px-3 py-1.5 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap bg-emerald-700 border border-white/20 flex items-center space-x-1.5">
-                                <span>🚩 ${formatDisplayDate(ms.milestoneDate)}</span>
-                                <span class="opacity-75">|</span>
-                                <span>${abbrev} - ${ms.milestoneTitle}</span>
-                            </div>
-                        </div>
-                    </div>`;
+            // Hitos Principales (🚩)
+            window.milestonesList.forEach(ms => {
+                const msDate = new Date(ms.milestoneDate);
+                const dayIdx = Math.floor((msDate - yearStart) / (1000 * 60 * 60 * 24));
+                if (dayIdx >= 0 && dayIdx < totalDays) {
+                    bottomMarkers.push({
+                        type: 'main-milestone',
+                        dayIdx: dayIdx,
+                        title: ms.milestoneTitle,
+                        date: ms.milestoneDate,
+                        abbrev: (ms.abbrev || ms.milestoneTitle.substring(0, 3)).toUpperCase(),
+                        colorHex: '#059669' // Esmeralda para hitos principales
+                    });
                 }
+            });
+
+            // Mini-hitos de Eventos (📌)
+            getAllSubMilestones().forEach(sm => {
+                const smDate = new Date(sm.date);
+                const dayIdx = Math.floor((smDate - yearStart) / (1000 * 60 * 60 * 24));
+                if (dayIdx >= 0 && dayIdx < totalDays) {
+                    const col = getColorObj(sm.color);
+                    bottomMarkers.push({
+                        type: 'sub-milestone',
+                        dayIdx: dayIdx,
+                        title: sm.title,
+                        date: sm.date,
+                        abbrev: (sm.abbrev || sm.title.substring(0, 3)).toUpperCase(),
+                        colorHex: col.hex
+                    });
+                }
+            });
+
+            bottomMarkers.sort((a, b) => a.dayIdx - b.dayIdx);
+
+            const bottomLevels = [
+                { height: 'h-16', labelBottom: 'top-14' },
+                { height: 'h-32', labelBottom: 'top-30' },
+                { height: 'h-48', labelBottom: 'top-46' }
+            ];
+
+            let lastBottomDay = -99;
+            let bottomLvl = 0;
+
+            bottomMarkers.forEach(m => {
+                if (m.dayIdx - lastBottomDay < 14) bottomLvl = (bottomLvl + 1) % bottomLevels.length;
+                else bottomLvl = 0;
+                lastBottomDay = m.dayIdx;
+
+                const lvl = bottomLevels[bottomLvl];
+                const posX = m.dayIdx * pxPerDay;
+                const isMain = m.type === 'main-milestone';
+
+                labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
+                    <!-- Línea guía vertical inferior con el MISMO COLOR del hito u evento -->
+                    <div class="w-0.5 ${lvl.height} top-2 absolute left-1/2 transform -translate-x-1/2 rounded-full" style="background-color: ${m.colorHex}; opacity: 0.85;"></div>
+                    
+                    <!-- Banderola inferior inclinada a +45° (Simétrica) -->
+                    <div class="absolute ${lvl.labelBottom} left-1/2 transform rotate-45 origin-top-left has-tooltip cursor-pointer">
+                        <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${m.colorHex};">
+                            <span>${isMain ? '🚩 HITO' : '📌 MINI-HITO'} (${formatDisplayDate(m.date)})</span>
+                            <span class="opacity-75">|</span>
+                            <span>${m.abbrev} - ${m.title}</span>
+                        </div>
+                    </div>
+                </div>`;
             });
 
             labelsContainer.innerHTML = labelsHtml;
