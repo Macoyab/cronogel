@@ -116,8 +116,8 @@
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm gap-3">
                     <div>
-                        <h2 class="text-sm sm:text-base font-bold text-slate-900">Vista Anual de 12 Meses (Abreviaturas de 3 Caracteres)</h2>
-                        <p class="text-[11px] sm:text-xs text-slate-500">Cada día muestra la etiqueta de 3 letras de sus eventos/hitos configurados.</p>
+                        <h2 class="text-sm sm:text-base font-bold text-slate-900">Vista Anual de 12 Meses</h2>
+                        <p class="text-[11px] sm:text-xs text-slate-500">Muestra franjas multide color superiores por evento concurrente + abreviaturas inferiores.</p>
                     </div>
                     <button onclick="sendMonthToTelegram()" class="bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center w-full sm:w-auto">
                         <i class="fa-brands fa-telegram mr-1.5 text-sm"></i> Resumen a Telegram
@@ -131,43 +131,29 @@
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 
-                <!-- Línea Recta Estilo Referencia -->
+                <!-- Línea Temporal Continua Elegante -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Recta Anual (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Eje cronológico continuo de Enero a Diciembre con etiquetas superiores para eventos e hitos.</p>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal Anual Precisa (<span class="timeline-year-label">2026</span>)</h2>
+                            <p class="text-xs text-slate-500">Eje de Enero a Diciembre con marcadores de día y etiquetas flotantes inclinadas.</p>
                         </div>
-                        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">Enero ➔ Diciembre</span>
+                        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">Desliza para recorrer todo el año ➔</span>
                     </div>
 
-                    <!-- Contenedor con Scroll Horizontal Estilo Línea Recta -->
-                    <div class="overflow-x-auto custom-scrollbar pb-8 pt-12 bg-slate-50/50 rounded-xl border border-slate-200 p-6">
-                        <div class="min-w-[1400px] relative pt-10 pb-6">
-                            <!-- Contenedor de Etiquetas Superiores de Eventos e Hitos -->
-                            <div id="straightLineLabelsContainer" class="absolute top-0 left-0 right-0 h-16 pointer-events-none"></div>
+                    <!-- Contenedor con Scroll Horizontal (Ampliado a 2400px para máxima claridad) -->
+                    <div class="overflow-x-auto custom-scrollbar pt-28 pb-12 bg-slate-50/50 rounded-xl border border-slate-200 px-8">
+                        <div class="min-w-[2400px] relative">
+                            
+                            <!-- Contenedor de Banderolas e Inclinaciones de Eventos/Hitos -->
+                            <div id="straightLineLabelsContainer" class="absolute inset-0 pointer-events-none"></div>
 
-                            <!-- Línea Recta Central con Meses y Divisiones -->
-                            <div class="relative flex items-center">
-                                <!-- La barra recta principal -->
-                                <div class="absolute inset-x-0 h-1.5 bg-sky-700 rounded-full"></div>
-                                
-                                <!-- Divisiones de los 12 meses -->
-                                <div class="w-full grid grid-cols-12 relative z-10">
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Enero</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Febrero</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Marzo</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Abril</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Mayo</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Junio</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Julio</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Agosto</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Septiembre</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Octubre</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Noviembre</span></div>
-                                    <div class="flex flex-col items-start"><div class="h-5 w-1 bg-sky-700"></div><span class="text-[11px] font-bold text-slate-700 mt-1 uppercase -rotate-45 origin-top-left">Diciembre</span></div>
-                                </div>
+                            <!-- Barra Recta Principal -->
+                            <div class="relative h-2 bg-sky-800 rounded-full w-full my-6 flex items-center">
+                                <!-- Marcas de División de los 12 Meses -->
+                                <div id="timelineMonthMarksContainer" class="w-full relative h-full"></div>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -564,7 +550,7 @@
             return list;
         }
 
-        // --- CALENDARIO GENERAL CON ABREVIATURA DE 3 CARACTERES ---
+        // --- CALENDARIO GENERAL CON BARRAS SUPERIORES DE COLORES + ABREVIATURA INFERIOR ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
             grid.innerHTML = '';
@@ -606,26 +592,39 @@
                     if (isWeekend) textClass = 'text-amber-800 bg-amber-50/40';
                     if (isHoliday) textClass = 'text-red-700 font-bold bg-red-50 border border-red-200';
 
-                    // Mostrar abreviatura de 3 caracteres del primer evento concurrente
+                    // 1. Barras de color superiores (si hay varios eventos concurrentes)
+                    let topColorBars = '';
+                    if (activeEvents.length > 0) {
+                        const widthPct = (100 / activeEvents.length).toFixed(1);
+                        topColorBars = `<div class="absolute top-0 left-0 right-0 h-1.5 flex rounded-t-lg overflow-hidden">`;
+                        activeEvents.forEach(evt => {
+                            const col = getColorObj(evt.color);
+                            topColorBars += `<div style="width: ${widthPct}%; background-color: ${col.hex};" class="h-full" title="${evt.eventTitle}"></div>`;
+                        });
+                        topColorBars += `</div>`;
+                    }
+
+                    // 2. Abreviatura de 3 caracteres en la parte inferior
                     let abbrevBadge = '';
                     if (activeEvents.length > 0) {
                         const evt = activeEvents[0];
                         const col = getColorObj(evt.color);
                         const abbrev = (evt.abbrev || evt.eventTitle.substring(0, 3)).toUpperCase();
-                        abbrevBadge = `<div class="w-full mt-0.5 px-0.5 py-0.5 rounded text-[8px] sm:text-[9px] font-extrabold tracking-wider truncate text-white shadow-xs text-center uppercase" style="background-color: ${col.hex};" title="${evt.eventTitle}">${abbrev}</div>`;
+                        abbrevBadge = `<div class="w-full mt-auto mb-0.5 px-0.5 py-0.5 rounded text-[8px] sm:text-[9px] font-extrabold tracking-wider truncate text-white shadow-xs text-center uppercase" style="background-color: ${col.hex};" title="${evt.eventTitle}">${abbrev}</div>`;
                     } else if (dayMilestones.length > 0) {
                         const ms = dayMilestones[0];
                         const abbrev = (ms.abbrev || ms.milestoneTitle.substring(0, 3)).toUpperCase();
-                        abbrevBadge = `<div class="w-full mt-0.5 px-0.5 py-0.5 rounded text-[8px] sm:text-[9px] font-extrabold tracking-wider truncate text-white shadow-xs text-center uppercase bg-emerald-600" title="${ms.milestoneTitle}">${abbrev}</div>`;
+                        abbrevBadge = `<div class="w-full mt-auto mb-0.5 px-0.5 py-0.5 rounded text-[8px] sm:text-[9px] font-extrabold tracking-wider truncate text-white shadow-xs text-center uppercase bg-emerald-600" title="${ms.milestoneTitle}">${abbrev}</div>`;
                     }
 
                     let markers = '';
                     if (dayMilestones.length > 0) markers += `<span class="text-[8px]">🚩</span>`;
                     if (daySubMilestones.length > 0) markers += `<span class="text-[8px]">📌</span>`;
-                    let markersOverlay = markers ? `<div class="absolute top-0.5 right-0.5 flex space-x-0.5">${markers}</div>` : '';
+                    let markersOverlay = markers ? `<div class="absolute top-2 right-1 flex space-x-0.5">${markers}</div>` : '';
 
-                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-14 sm:h-16 rounded-lg flex flex-col items-center p-1 relative cursor-pointer hover:bg-slate-100 transition border border-slate-100 ${textClass}">
-                        <span class="font-semibold text-xs z-10">${day}</span>
+                    daysGrid += `<button onclick="openDayDetails('${dateStr}')" class="h-14 sm:h-16 rounded-lg flex flex-col items-center justify-between p-1 relative cursor-pointer hover:bg-slate-100 transition border border-slate-100 ${textClass}">
+                        ${topColorBars}
+                        <span class="font-semibold text-xs mt-1.5 z-10">${day}</span>
                         ${markersOverlay}
                         ${abbrevBadge}
                     </button>`;
@@ -636,50 +635,86 @@
             }
         }
 
-        // --- LÍNEA RECTA ESTILO IMAGEN DE REFERENCIA ---
+        // --- LÍNEA TEMPORAL CONTINUA EXACTA SEGÚN REFERENCIA VISUAL ---
         function renderTimelineView() {
-            const container = document.getElementById('straightLineLabelsContainer');
-            if (!container) return;
+            const marksContainer = document.getElementById('timelineMonthMarksContainer');
+            const labelsContainer = document.getElementById('straightLineLabelsContainer');
+            if (!marksContainer || !labelsContainer) return;
 
-            const totalDaysInYear = 365;
             const yearStart = new Date(window.currentYear, 0, 1);
+            const totalDaysInYear = 365;
 
-            let htmlLabels = '';
+            // Renderizar muescas y nombres de los 12 meses
+            let monthMarksHtml = '';
+            for (let m = 0; m < 12; m++) {
+                const mStart = new Date(window.currentYear, m, 1);
+                const dayOfYear = (mStart - yearStart) / (1000 * 60 * 60 * 24);
+                const leftPct = ((dayOfYear / totalDaysInYear) * 100).toFixed(2);
 
-            // Etiquetas de eventos arriba de la línea recta
-            window.eventsList.forEach(evt => {
+                monthMarksHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 flex flex-col items-start" style="left: ${leftPct}%;">
+                    <div class="h-6 w-1 bg-sky-800 rounded-full"></div>
+                    <span class="text-[11px] font-bold text-slate-700 mt-2 uppercase -rotate-45 origin-top-left whitespace-nowrap">${monthNames[m]}</span>
+                </div>`;
+            }
+            marksContainer.innerHTML = monthMarksHtml;
+
+            // Renderizar Banderolas / Banderines Inclinados (-45°) perfectamente alineados
+            let labelsHtml = '';
+
+            // Eventos
+            window.eventsList.forEach((evt, idx) => {
                 const start = new Date(evt.eventStart);
                 const startDay = Math.max(0, (start - yearStart) / (1000 * 60 * 60 * 24));
-                const leftPct = Math.max(2, Math.min(98, (startDay / totalDaysInYear) * 100));
+                const leftPct = ((startDay / totalDaysInYear) * 100).toFixed(2);
                 const col = getColorObj(evt.color);
-                const abbrev = (evt.abbrev || '').toUpperCase();
+                const abbrev = (evt.abbrev || evt.eventTitle.substring(0, 3)).toUpperCase();
 
-                htmlLabels += `<div class="absolute transform -translate-x-1/2 flex flex-col items-center has-tooltip cursor-pointer" style="left: ${leftPct}%;">
-                    <div class="px-2 py-1 rounded text-[10px] font-bold text-white shadow-md whitespace-nowrap -rotate-45 origin-bottom-left mb-2" style="background-color: ${col.hex};">
-                        ${formatDisplayDate(evt.eventStart)}<br>${abbrev} - ${evt.eventTitle}
+                // Altura escalonada para evitar colisión si hay fechas cercanas
+                const verticalOffset = (idx % 2 === 0) ? '-top-20' : '-top-28';
+
+                labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 z-20 pointer-events-auto" style="left: ${leftPct}%;">
+                    <!-- Muesca exacta sobre la línea -->
+                    <div class="w-1 h-5 bg-emerald-600 mx-auto transform -translate-y-1/2 rounded-full border border-white shadow-xs"></div>
+                    
+                    <!-- Línea guía vertical que sube a la etiqueta -->
+                    <div class="w-0.5 h-12 bg-emerald-600/70 mx-auto -mt-6"></div>
+
+                    <!-- Banderola estilo tarjeta inclinada -->
+                    <div class="absolute ${verticalOffset} left-1/2 transform -rotate-45 origin-bottom-left cursor-pointer has-tooltip">
+                        <div class="px-3 py-1.5 rounded-xl text-[11px] font-bold text-white shadow-lg whitespace-nowrap border border-white/20 flex items-center space-x-1.5" style="background-color: ${col.hex};">
+                            <i class="fa-solid fa-play text-[9px] text-amber-300"></i>
+                            <span>${formatDisplayDate(evt.eventStart)}</span>
+                            <span class="opacity-75">|</span>
+                            <span>${abbrev} - ${evt.eventTitle}</span>
+                        </div>
                     </div>
-                    <div class="w-0.5 h-6 bg-slate-400"></div>
                 </div>`;
             });
 
-            // Etiquetas de hitos principales arriba de la línea recta
-            window.milestonesList.forEach(ms => {
+            // Hitos Principales
+            window.milestonesList.forEach((ms, idx) => {
                 const msDate = new Date(ms.milestoneDate);
                 const msDay = (msDate - yearStart) / (1000 * 60 * 60 * 24);
                 if (msDay >= 0 && msDay <= totalDaysInYear) {
-                    const leftPct = Math.max(2, Math.min(98, (msDay / totalDaysInYear) * 100));
-                    const abbrev = (ms.abbrev || '').toUpperCase();
+                    const leftPct = ((msDay / totalDaysInYear) * 100).toFixed(2);
+                    const abbrev = (ms.abbrev || ms.milestoneTitle.substring(0, 3)).toUpperCase();
 
-                    htmlLabels += `<div class="absolute transform -translate-x-1/2 flex flex-col items-center has-tooltip cursor-pointer" style="left: ${leftPct}%;">
-                        <div class="px-2 py-1 rounded text-[10px] font-bold bg-emerald-700 text-white shadow-md whitespace-nowrap -rotate-45 origin-bottom-left mb-2">
-                            🚩 ${formatDisplayDate(ms.milestoneDate)}<br>${abbrev} - ${ms.milestoneTitle}
+                    labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 z-20 pointer-events-auto" style="left: ${leftPct}%;">
+                        <div class="w-1 h-5 bg-emerald-700 mx-auto transform -translate-y-1/2 rounded-full border border-white shadow-xs"></div>
+                        <div class="w-0.5 h-12 bg-emerald-700/70 mx-auto -mt-6"></div>
+
+                        <div class="absolute -top-24 left-1/2 transform -rotate-45 origin-bottom-left cursor-pointer has-tooltip">
+                            <div class="px-3 py-1.5 rounded-xl text-[11px] font-bold text-white shadow-lg whitespace-nowrap bg-emerald-700 border border-white/20 flex items-center space-x-1.5">
+                                <span>🚩 ${formatDisplayDate(ms.milestoneDate)}</span>
+                                <span class="opacity-75">|</span>
+                                <span>${abbrev} - ${ms.milestoneTitle}</span>
+                            </div>
                         </div>
-                        <div class="w-0.5 h-6 bg-emerald-600"></div>
                     </div>`;
                 }
             });
 
-            container.innerHTML = htmlLabels;
+            labelsContainer.innerHTML = labelsHtml;
             renderQuarterSelectorUI();
             renderCurrentQuarterDetail();
         }
