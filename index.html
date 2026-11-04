@@ -63,6 +63,43 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-full flex flex-col font-sans overflow-hidden">
+    
+    <!-- AUTH GATE: ACCESO A CRONOGEL -->
+    <div id="authGate" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 text-center">
+            <div class="mx-auto w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mb-5">
+                <i class="fa-solid fa-calendar-days text-3xl"></i>
+            </div>
+
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">Cronogel</h2>
+            <p class="text-sm text-slate-500 mb-7">
+                Planificación anual colaborativa. Identifícate para continuar.
+            </p>
+
+            <button id="googleSignInBtn" type="button"
+                class="w-full flex items-center justify-center gap-3 border border-slate-300 rounded-xl px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50 transition">
+                <i class="fa-brands fa-google text-lg"></i>
+                Continuar con Google
+            </button>
+
+            <p id="authStatus" class="text-sm text-slate-500 mt-5" aria-live="polite">
+                Comprobando acceso...
+            </p>
+
+            <div id="authUserInfo" class="hidden mt-5 p-4 rounded-xl bg-amber-50 border border-amber-200 text-left">
+                <p class="text-sm font-semibold text-amber-900 mb-2">
+                    Cuenta todavía no autorizada
+                </p>
+                <p class="text-xs text-amber-800 mb-2">
+                    Facilita estos datos al propietario para solicitar acceso:
+                </p>
+                <p id="authUserEmail" class="text-xs text-slate-700 break-all"></p>
+                <p id="authUserUid" class="text-xs text-slate-700 break-all mt-1"></p>
+            </div>
+        </div>
+    </div>
+    <!-- FIN AUTH GATE -->
+
 
     <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-200 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shrink-0 shadow-sm">
