@@ -1,90 +1,92 @@
 # CRONOGEL - GUÍA DE USUARIO
-📅 Cronograma Anual Colaborativo
+📖 Guía de Usuario Detallada: Cronograma Anual Colaborativo
+¡Bienvenido al cronograma! Esta guía explica de forma muy sencilla y paso a paso para qué sirve cada botón, cada pantalla y cómo puedes sacarle el máximo partido a la aplicación, tanto si estás en el ordenador del trabajo como en tu tablet o móvil.
 
-Sistema visual interactivo para la planificación, seguimiento y gestión de eventos, hitos y mini-hitos anuales. Diseñado para funcionar en ordenadores de escritorio, tablets y dispositivos móviles.
+☁️ 1. El Botón de Estado de Sincronización (Arriba a la derecha)
+En la parte superior derecha verás una etiqueta ovalada que te dice cómo estás guardando los datos:
 
-🛠️ 1. Modos de Funcionamiento (Nube / Local)
+🟢 "Firebase Conectado": Significa que tienes acceso a internet y estás conectado a la nube del equipo. Todo lo que escribas, modifiques o borres se actualiza al instante para ti y para tus compañeros.
 
-En la esquina superior derecha del encabezado se muestra el estado actual del almacenamiento:
+🟠 "Modo Local": Significa que estás trabajando sin conexión (por ejemplo, en un ordenador de una red restringida). Los cambios se guardan solo en la memoria de ese navegador web en concreto.
 
-Modo Nube (Firebase ☁️): Cuando el botón indica "Firebase Conectado" (en verde), todos los cambios realizados se sincronizan en tiempo real con el resto del equipo.
+¿Cómo cambiarlo?: Si haces clic directamente sobre ese botón, la aplicación cambiará de forma manual entre el modo nube y el modo local según te interese.
 
-Modo Local (Offline 💾): Si estás en un equipo sin conexión o con restricciones de red corporativa, el sistema cambia a "Modo Local" (en amarillo). Los datos se guardan en el navegador de ese equipo.
+📥 2. Copias de Seguridad Manuales (Exportar e Importar JSON)
+Si estás en un sitio sin internet y necesitas llevarte los datos a otro dispositivo (o viceversa):
 
-Alternar modo: Puedes forzar el cambio entre el modo en la nube y el modo local haciendo clic sobre la etiqueta de estado.
+Botón "Exportar": Descarga un pequeño archivo con extensión .json en tu ordenador o móvil. Este archivo contiene absolutamente todos tus eventos, hitos y notas actuales ordenados por fecha. Es como hacer una "fotografía" de tu agenda.
 
-🔄 2. Sincronización Manual y Copias de Seguridad
+Botón "Importar": Si seleccionas un archivo .json que hayas exportado antes, la aplicación leerá su contenido y actualizará toda tu pantalla al instante con esos datos. Es perfecto para pasar la planificación del PC del trabajo al iPad o móvil personal de forma rápida y segura.
 
-Para transferir información entre equipos de la red corporativa y dispositivos externos (iPad, móvil) sin depender de internet:
+🗂️ 3. Las 4 Vistas Principales (Pestañas)
+Puedes moverte por la aplicación usando las pestañas superiores (o inferiores si estás en el móvil). Cada pestaña te muestra la información de una forma distinta:
 
-Exportar JSON (Descargar copia): Haz clic en Exportar (icono de descarga) en el encabezado. Se descargará un archivo .json con todos los eventos e hitos guardados hasta la fecha.
+📅 Pestaña 1: Calendario Anual (Los 12 Meses)
+¿Qué veo aquí?: Los 12 meses del año en formato de cuadrícula clásica (de lunes a domingo).
 
-Importar JSON (Cargar copia): Haz clic en Importar (icono de subida) y selecciona el archivo .json. La línea temporal del equipo actual se actualizará al instante.
+Franjas de colores superiores: Si hay uno o varios eventos en un día, verás unas líneas de colores en la parte de arriba de esa casilla. Cada color representa un evento distinto.
 
-👁️ 3. Vistas de la Aplicación
+Abreviaturas: En cada día con actividad verás un código de 3 letras (por ejemplo, ALF o FIN) para que sepas de qué proyecto se trata de un solo vistazo.
 
-Puedes alternar entre las 4 vistas principales usando las pestañas de navegación:
+Días especiales: Los fines de semana y los festivos nacionales aparecen automáticamente resaltados con colores suaves para que no te los saltes.
 
-1. 📅 Calendario Anual (12 Meses)
+¿Cómo interactuar?: Si haces clic en cualquier número de día, se abrirá una ventana emergente ("Detalle del Día") que te dirá exactamente qué ocurre en esa fecha y te dará dos botones rápidos para Añadir un evento o Añadir un hito justo en ese día.
 
-Muestra la distribución del año mes a mes.
+📈 Pestaña 2: Línea de Tiempo (Timeline Vertical)
+¿Qué veo aquí?: Una barra horizontal infinita que representa los 365 días del año de enero a diciembre. Te puedes desplazar hacia los lados para ver todo el año.
 
-Cada día muestra franjas de color superiores según los eventos activos.
+Bloques verticales de 180px: Los eventos e hitos se levantan como pequeñas fichas rectangulares verticales con texto en vertical para que quepan títulos largos sin amontonarse.
 
-Muestra la abreviatura de 3 letras (INI, FIN o abreviatura personalizada).
+Bifurcaciones (Ramas): Cuando dos o más eventos o hitos coinciden en la misma fecha, la línea traza unas ramificaciones automáticas hacia los lados para que los bloques no se monten unos encima de otros y se lean perfectamente.
 
-Los días festivos nacionales y fines de semana aparecen destacados en color.
+Leyenda emergente (Tooltip): Si pasas el ratón por encima (en PC) o tocas con el dedo un bloque (en móviles/iPad), se abrirá una tarjeta flotante oscura con toda la información detallada (nombre completo, fechas de inicio y fin, categoría y descripción o notas).
 
-Clic en cualquier día: Abre el desglose completo del día y accesos directos para añadir registros en esa fecha.
+Filtro de Trimestres (Q1 a Q4): Abajo del todo tienes los botones para elegir trimestre (Q1: Ene-Mar, Q2: Abr-Jun, etc.). Al pulsar uno, la parte inferior te mostrará una lista limpia y detallada de todo lo que ocurre en ese periodo exacto.
 
-2. 📈 Línea de Tiempo (Timeline Vertical)
+🗄️ Pestaña 3: Repositorio General
+¿Qué veo aquí?: Una tabla o listado estilo "inventario" con absolutamente todos los eventos e hitos creados en la aplicación.
 
-Eje temporal continuo de los 365 días del año con desplazamiento horizontal.
+Buscador en tiempo real: Arriba hay una barra de búsqueda. Escribe cualquier letra, palabra o abreviatura y la lista se filtrará al vuelo para mostrarte solo lo que buscas.
 
-Bloques verticales de 180px: Eventos e hitos representados con barras rectangulares de color y texto vertical.
+Botones de control: Al lado de cada registro tienes botones directos para Editar (si quieres cambiar fechas o nombres) o Borrar (si ya no sirve).
 
-Bifurcación automática: Si coinciden varios eventos o hitos en fechas cercanas, la línea se bifurca en ramas paralelas para evitar solapamientos.
+🚩 Pestaña 4: Hitos y Notas
+¿Qué veo aquí?: Una línea del tiempo cronológica centrada únicamente en los puntos de control críticos.
 
-Leyenda emergente (Tooltip): Al pasar el ratón (hover) o pulsar sobre un bloque en pantallas táctiles (touch), se despliega una tarjeta con la información completa.
+Hitos Principales (🚩): Eventos puntuales de un solo día (como entregas o reuniones clave).
 
-Filtro por Trimestres (Q1 - Q4): En la parte inferior se puede seleccionar un trimestre para consultar su resumen ampliado.
+Mini-Hitos (📌): Pequeños pasos o subtareas que hayas añadido dentro de tus eventos grandes. Te permite ver qué subtareas hay pendientes sin necesidad de entrar a editar el evento principal.
 
-3. 🗄️ Repositorio General
+➕ 4. ¿Cómo Crear y Editar Contenido?
+🔷 Crear un Evento (+ Evento)
+Haz clic en el botón + Evento arriba a la derecha.
 
-Listado completo de todos los eventos e hitos creados.
+Título del Evento: Escribe el nombre completo (ej. "Auditoría de Sistemas").
 
-Incluye un buscador en tiempo real para filtrar por nombre o abreviatura.
+Abreviatura (3 Caracteres): Pon un código corto en mayúsculas (ej. "AUD"). Si lo dejas en blanco, la app cogerá las 3 primeras letras sola.
 
-Opciones rápidas para Editar o Eliminar registros.
+Fechas: Selecciona la fecha de inicio y la fecha de fin.
 
-4. 🚩 Hitos y Notas
+Color: Pincha sobre una de las burbujas de colores para identificarlo visualmente.
 
-Panel exclusivo para revisar hitos principales (🚩) y mini-hitos asociados a eventos (📌).
+Categoría y Descripción: Campos opcionales para clasificarlo o añadir notas internas.
 
-➕ 4. Creación y Edición de Registros
+Mini Hitos: Si lo deseas, pulsa "Añadir Sub-hito" para meter fechas intermedias importantes dentro de ese mismo evento.
 
-🔹 Crear un Evento (＋ Evento)
+Dale a Guardar Evento ¡y listo!
 
-Título: Nombre completo de la tarea o proyecto.
+🚩 Crear un Hito Puntual (+ Hito)
+Haz clic en el botón + Hito arriba a la derecha.
 
-Abreviatura (3 caracteres): Código corto (ej: ALF, CTR) que se mostrará en las barras del calendario y la línea de tiempo.
+Rellena el Título, la Abreviatura (3 letras), la Fecha específica en la que ocurre y un Comentario explicativo.
 
-Fechas: Rango de inicio y fin.
+Dale a Guardar Hito.
 
-Color: Selección del color distintivo visual.
+🤖 5. Integración con Telegram
+Si tu equipo utiliza un grupo de Telegram para avisos:
 
-Categoría y Descripción: Información adicional de servicio.
+Haz clic en el botón azul con el icono de Telegram (Telegram) en la barra superior.
 
-Mini Hitos (Sub-hitos): Permite añadir fechas clave intermedias dentro del evento con su propia casilla de verificación.
+Introduce el Token de tu Bot de Telegram y el Chat ID de vuestro grupo.
 
-🔹 Crear un Hito Puntual (🚩 Hito)
-
-Para fechas clave de un solo día (entregas, inspecciones, reuniones).
-
-Requiere Título, Abreviatura de 3 letras, Fecha y Comentario/Nota.
-
-📱 5. Dispositivos Táctiles y Móviles
-
-La interfaz es adaptativa. Desplázate horizontalmente por la línea de tiempo arrastrando con el dedo.
-
-Pulsa una sola vez sobre cualquier bloque vertical para abrir o cerrar la leyenda emergente.
+Guarda la configuración. Con esto podrás enviar resúmenes automáticos del mes o de la planificación directamente al chat del grupo para que todos estén al día.
