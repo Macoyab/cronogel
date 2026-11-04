@@ -131,19 +131,19 @@
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 
-                <!-- Línea Temporal Fija con Scroll Dual -->
+                <!-- Línea Temporal Fija con Bifurcación y Altura Fija de Líneas -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal de Puntos (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Banderas exactas al final de cada línea guía. Contenedor fijo con scroll horizontal y vertical.</p>
+                            <p class="text-xs text-slate-500">Líneas verticales de altura constante. Bifurcación lateral en caso de coincidencias de fechas.</p>
                         </div>
                         <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">1 de Ene ➔ 31 de Dic</span>
                     </div>
 
                     <!-- Contenedor Fijo con Scroll Dual (Horizontal y Vertical) -->
-                    <div class="overflow-auto custom-scrollbar h-[420px] bg-slate-50/60 rounded-xl border border-slate-200 p-6 relative">
-                        <div id="timelineDayRuleWrapper" class="relative my-36" style="width: 3650px; min-height: 160px;">
+                    <div class="overflow-auto custom-scrollbar h-[360px] bg-slate-50/60 rounded-xl border border-slate-200 p-6 relative">
+                        <div id="timelineDayRuleWrapper" class="relative my-24" style="width: 3650px; min-height: 140px;">
                             
                             <!-- Banderas / Banderolas -->
                             <div id="dayRuleLabelsContainer" class="absolute inset-0 pointer-events-none"></div>
@@ -632,7 +632,7 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL FIJA CON BANDERAS EN EXTREMO DE LÍNEAS VERTICALES ---
+        // --- LÍNEA TEMPORAL FIJA CON BIFURCACIÓN Y ALTURA CONSTANTE DE LÍNEAS VERTICALES ---
         function renderTimelineView() {
             const ticksContainer = document.getElementById('dayRuleTicksContainer');
             const labelsContainer = document.getElementById('dayRuleLabelsContainer');
@@ -647,7 +647,7 @@
 
             const yearStart = new Date(window.currentYear, 0, 1);
 
-            // 1. Trazado de PUNTOS (Día 1 de cada mes muestra su número idéntico a las versiones previas favoritas)
+            // 1. Trazado de PUNTOS (Día 1 de cada mes muestra su número con la barra de corte original)
             let ticksHtml = '';
             for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
                 const currentDate = new Date(window.currentYear, 0, dayIndex + 1);
@@ -684,7 +684,7 @@
                                     title="${evt.eventTitle} (${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)})"></div>`;
             });
 
-            // --- EVENTOS SUPERIORES (-45° en la cúspide de las líneas verticales) ---
+            // --- EVENTOS SUPERIORES (ALTURA CONSTANTE DE LÍNEA = 56px, BIFURCACIÓN HORIZONTAL SI HAY COINCIDENCIA) ---
             const topMarkers = [];
             window.eventsList.forEach(evt => {
                 const start = new Date(evt.eventStart);
@@ -699,32 +699,36 @@
             });
             topMarkers.sort((a, b) => a.dayIdx - b.dayIdx);
 
-            const topLevels = [
-                { height: 'h-14', topPos: '-top-14' },
-                { height: 'h-28', topPos: '-top-28' },
-                { height: 'h-42', topPos: '-top-42' }
-            ];
-
+            // Desplazamientos laterales (bifurcación) en píxeles cuando hay superposición
+            const horizontalOffsets = [0, 140, -140, 280, -280];
             let lastTopDay = -99;
-            let topLvl = 0;
+            let offsetIdx = 0;
 
             topMarkers.forEach(m => {
-                if (m.dayIdx - lastTopDay < 14) topLvl = (topLvl + 1) % topLevels.length;
-                else topLvl = 0;
+                if (Math.abs(m.dayIdx - lastTopDay) < 14) {
+                    offsetIdx = (offsetIdx + 1) % horizontalOffsets.length;
+                } else {
+                    offsetIdx = 0;
+                }
                 lastTopDay = m.dayIdx;
 
-                const lvl = topLevels[topLvl];
                 const posX = m.dayIdx * pxPerDay;
+                const hOffset = horizontalOffsets[offsetIdx];
                 const col = getColorObj(m.evt.color);
                 const abbrev = (m.evt.abbrev || m.evt.eventTitle.substring(0, 3)).toUpperCase();
                 const isStart = m.type === 'start';
 
                 labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
-                    <!-- Línea guía vertical con altura fija que termina exactamente bajo la bandera -->
-                    <div class="w-0.5 ${lvl.height} absolute bottom-0 left-1/2 transform -translate-x-1/2 rounded-full" style="background-color: ${col.hex}; opacity: 0.9;"></div>
+                    <!-- Línea vertical recta de ALTURA SIEMPRE CONSTANTE (h-14 / 56px) -->
+                    <div class="w-0.5 h-14 absolute bottom-0 left-1/2 transform -translate-x-1/2 rounded-full z-10" style="background-color: ${col.hex}; opacity: 0.9;"></div>
                     
-                    <!-- Bandera exacta en el extremo superior de la línea -->
-                    <div class="absolute ${lvl.topPos} left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer">
+                    ${hOffset !== 0 ? `
+                        <!-- Línea horizontal de bifurcación visual para conectar el origen con la bandera desplazada -->
+                        <div class="h-0.5 absolute -top-14 border-t-2 border-dashed z-0" style="left: 50%; width: ${Math.abs(hOffset)}px; transform: translateX(${hOffset < 0 ? -Math.abs(hOffset) : 0}px); border-color: ${col.hex};"></div>
+                    ` : ''}
+
+                    <!-- Bandera colocada con desplazamiento lateral si coincide con otra -->
+                    <div class="absolute -top-14 left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer z-20" style="transform: translateX(${hOffset}px) rotate(-45deg);">
                         <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${col.hex};">
                             <span class="${isStart ? 'text-amber-300' : 'text-rose-300'} font-extrabold">${isStart ? '▶ INICIO' : '⏹ FIN'} (${formatDisplayDate(isStart ? m.evt.eventStart : m.evt.eventEnd)})</span>
                             <span class="opacity-75">|</span>
@@ -734,7 +738,7 @@
                 </div>`;
             });
 
-            // --- HITOS Y MINI-HITOS INFERIORES (+45° en la cúspide inferior de las líneas verticales) ---
+            // --- HITOS INFERIORES (ALTURA CONSTANTE DE LÍNEA = 56px, BIFURCACIÓN HORIZONTAL SI HAY COINCIDENCIA) ---
             const bottomMarkers = [];
 
             window.milestonesList.forEach(ms => {
@@ -770,30 +774,32 @@
 
             bottomMarkers.sort((a, b) => a.dayIdx - b.dayIdx);
 
-            const bottomLevels = [
-                { height: 'h-14', bottomPos: 'top-14' },
-                { height: 'h-28', bottomPos: 'top-28' },
-                { height: 'h-42', bottomPos: 'top-42' }
-            ];
-
             let lastBottomDay = -99;
-            let bottomLvl = 0;
+            let bottomOffsetIdx = 0;
 
             bottomMarkers.forEach(m => {
-                if (m.dayIdx - lastBottomDay < 14) bottomLvl = (bottomLvl + 1) % bottomLevels.length;
-                else bottomLvl = 0;
+                if (Math.abs(m.dayIdx - lastBottomDay) < 14) {
+                    bottomOffsetIdx = (bottomOffsetIdx + 1) % horizontalOffsets.length;
+                } else {
+                    bottomOffsetIdx = 0;
+                }
                 lastBottomDay = m.dayIdx;
 
-                const lvl = bottomLevels[bottomLvl];
                 const posX = m.dayIdx * pxPerDay;
+                const hOffset = horizontalOffsets[bottomOffsetIdx];
                 const isMain = m.type === 'main-milestone';
 
                 labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
-                    <!-- Línea guía vertical inferior que termina exactamente bajo la bandera inferior -->
-                    <div class="w-0.5 ${lvl.height} absolute top-0 left-1/2 transform -translate-x-1/2 rounded-full" style="background-color: ${m.colorHex}; opacity: 0.9;"></div>
+                    <!-- Línea vertical recta inferior de ALTURA SIEMPRE CONSTANTE (h-14 / 56px) -->
+                    <div class="w-0.5 h-14 absolute top-0 left-1/2 transform -translate-x-1/2 rounded-full z-10" style="background-color: ${m.colorHex}; opacity: 0.9;"></div>
                     
-                    <!-- Bandera inferior exacta orientada a +45° -->
-                    <div class="absolute ${lvl.bottomPos} left-1/2 transform rotate-45 origin-top-left has-tooltip cursor-pointer">
+                    ${hOffset !== 0 ? `
+                        <!-- Línea horizontal de bifurcación visual inferior -->
+                        <div class="h-0.5 absolute top-14 border-b-2 border-dashed z-0" style="left: 50%; width: ${Math.abs(hOffset)}px; transform: translateX(${hOffset < 0 ? -Math.abs(hOffset) : 0}px); border-color: ${m.colorHex};"></div>
+                    ` : ''}
+
+                    <!-- Bandera inferior colocada con desplazamiento lateral (+45°) -->
+                    <div class="absolute top-14 left-1/2 has-tooltip cursor-pointer z-20" style="transform: translateX(${hOffset}px) rotate(45deg); transform-origin: top left;">
                         <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${m.colorHex};">
                             <span>${isMain ? '🚩 HITO' : '📌 MINI-HITO'} (${formatDisplayDate(m.date)})</span>
                             <span class="opacity-75">|</span>
