@@ -53,9 +53,12 @@
             transition: opacity 0.2s ease, visibility 0.2s ease;
             pointer-events: none;
         }
-        .has-tooltip:hover .tooltip-content {
+        .has-tooltip:hover .tooltip-content,
+        .has-tooltip:focus .tooltip-content,
+        .has-tooltip.active-touch .tooltip-content {
             visibility: visible;
             opacity: 1;
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -91,6 +94,15 @@
                 <button id="syncStatusBtn" onclick="toggleStorageMode()" title="Estado de Sincronización" class="hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium">
                     <i class="fa-solid fa-rotate mr-1 animate-spin"></i> Conectando...
                 </button>
+                <button onclick="exportJSONData()" class="bg-slate-600 hover:bg-slate-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1" title="Exportar JSON">
+                    <i class="fa-solid fa-download text-xs sm:text-sm"></i>
+                    <span class="hidden lg:inline text-xs">Exportar</span>
+                </button>
+                <button onclick="triggerImportJSON()" class="bg-slate-600 hover:bg-slate-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1" title="Importar JSON">
+                    <i class="fa-solid fa-upload text-xs sm:text-sm"></i>
+                    <span class="hidden lg:inline text-xs">Importar</span>
+                </button>
+                <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSONData(event)">
                 <button onclick="openConfigModal()" class="bg-sky-600 hover:bg-sky-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1" title="Integración Telegram">
                     <i class="fa-brands fa-telegram text-base sm:text-lg"></i>
                     <span class="hidden lg:inline text-xs">Telegram</span>
@@ -137,28 +149,22 @@
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 
-                <!-- Línea Temporal con Bloques Verticales 90° y Bifurcación Esquema -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal Vertical (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Bloques rectangulares verticales. Bifurcación en rama central al coincidir eventos.</p>
+                            <p class="text-xs text-slate-500">Bloques rectangulares extendidos (180px) con leyenda emergente en toque/hover.</p>
                         </div>
                         <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">1 de Ene ➔ 31 de Dic</span>
                     </div>
 
-                    <!-- Contenedor Fijo con Scroll Dual (Horizontal y Vertical) -->
-                    <div class="overflow-auto custom-scrollbar h-[500px] bg-slate-50/60 rounded-xl border border-slate-200 p-6 relative">
-                        <div id="timelineDayRuleWrapper" class="relative my-44" style="width: 3650px; min-height: 180px;">
-                            
-                            <!-- Banderas / Banderolas -->
+                    <!-- Contenedor Fijo con Scroll Dual -->
+                    <div class="overflow-auto custom-scrollbar h-[620px] bg-slate-50/60 rounded-xl border border-slate-200 p-6 relative">
+                        <div id="timelineDayRuleWrapper" class="relative my-60" style="width: 3650px; min-height: 260px;">
                             <div id="dayRuleLabelsContainer" class="absolute inset-0 pointer-events-none"></div>
-
-                            <!-- Barra Eje Recta Central de Puntos -->
                             <div class="absolute top-1/2 transform -translate-y-1/2 left-0 right-0 h-3 flex items-center">
                                 <div id="dayRuleTicksContainer" class="w-full relative h-full flex items-center"></div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -483,6 +489,58 @@
             renderAll();
         }
 
+        window.exportJSONData = function() {
+            const data = {
+                events: window.eventsList,
+                milestones: window.milestonesList,
+                exportDate: new Date().toISOString()
+            };
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cronograma_backup_${window.currentYear}_${formatDateISO(new Date())}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Backup JSON exportado', 'success');
+        }
+
+        window.triggerImportJSON = function() {
+            document.getElementById('jsonFileInput').click();
+        }
+
+        window.importJSONData = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.events && Array.isArray(data.events)) {
+                        window.eventsList = data.events;
+                        localStorage.setItem('local_events', JSON.stringify(data.events));
+                    }
+                    if (data.milestones && Array.isArray(data.milestones)) {
+                        window.milestonesList = data.milestones;
+                        localStorage.setItem('local_milestones', JSON.stringify(data.milestones));
+                    }
+                    renderAll();
+                    showToast('Datos importados correctamente', 'success');
+                } catch(err) {
+                    showToast('Error al leer el archivo JSON', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        window.toggleTouchTooltip = function(el) {
+            document.querySelectorAll('.has-tooltip.active-touch').forEach(item => {
+                if (item !== el) item.classList.remove('active-touch');
+            });
+            el.classList.toggle('active-touch');
+        }
+
         window.renderAll = function() {
             document.getElementById('currentYearLabel').textContent = window.currentYear;
             document.querySelectorAll('.timeline-year-label').forEach(el => el.textContent = window.currentYear);
@@ -492,7 +550,6 @@
             renderTimelineView();
             renderRepositoryView();
             renderMilestonesView();
-
             const botToken = localStorage.getItem('tg_bot_token') || '';
             const chatId = localStorage.getItem('tg_chat_id') || '';
             if (document.getElementById('tgBotToken')) document.getElementById('tgBotToken').value = botToken;
@@ -555,9 +612,9 @@
             return list;
         }
 
-        // --- CALENDARIO GENERAL ---
         function renderCalendarGrid() {
             const grid = document.getElementById('monthsGrid');
+            if (!grid) return;
             grid.innerHTML = '';
             const allSubMilestones = getAllSubMilestones();
 
@@ -638,7 +695,7 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL CON ETIQUETAS RECTANGULARES 100% VERTICALES Y BIFURCACIÓN SEGÚN BOTELLO ---
+        // --- LÍNEA TEMPORAL CON BLOQUES EXTENDIDOS 180PX Y TOOLTIP FLOTANTE (HOVER/TOUCH) ---
         function renderTimelineView() {
             const ticksContainer = document.getElementById('dayRuleTicksContainer');
             const labelsContainer = document.getElementById('dayRuleLabelsContainer');
@@ -653,7 +710,6 @@
 
             const yearStart = new Date(window.currentYear, 0, 1);
 
-            // 1. Trazado de PUNTOS (Puntos e indicadores de corte mensual originales)
             let ticksHtml = '';
             for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
                 const currentDate = new Date(window.currentYear, 0, dayIndex + 1);
@@ -674,7 +730,6 @@
 
             let labelsHtml = '';
 
-            // Franjas de duración de eventos sobre el eje central
             window.eventsList.forEach(evt => {
                 const start = new Date(evt.eventStart);
                 const end = new Date(evt.eventEnd);
@@ -690,7 +745,6 @@
                                     title="${evt.eventTitle} (${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)})"></div>`;
             });
 
-            // Agrupación por días para detectar coincidencias exactas o cercanas
             const topGroups = {};
             window.eventsList.forEach(evt => {
                 const start = new Date(evt.eventStart);
@@ -707,28 +761,25 @@
                 }
             });
 
-            // --- RENDERIZADO EVENTOS SUPERIORES (RECTÁNGULOS 100% VERTICALES + BIFURCACIÓN SEGÚN BOCETO) ---
+            // --- EVENTOS SUPERIORES (ALTURA AMPLIADA 180PX + LEYENDA EMERGENTE TOOLTIP) ---
             Object.keys(topGroups).forEach(dayIdxStr => {
                 const dayIdx = parseInt(dayIdxStr);
                 const items = topGroups[dayIdxStr];
                 const posX = dayIdx * pxPerDay;
                 const count = items.length;
-                const blockWidth = 32; // Ancho del bloque vertical
+                const blockWidth = 34;
                 const gap = 8;
                 const totalGroupWidth = (count * blockWidth) + ((count - 1) * gap);
                 const startXOffset = -totalGroupWidth / 2 + blockWidth / 2;
 
-                // Trazado de la raíz vertical principal
                 const firstCol = getColorObj(items[0].evt.color);
                 labelsHtml += `<div class="absolute top-1/2 pointer-events-auto" style="left: ${posX}px;">
-                    <!-- Línea vertical principal que sube desde el eje -->
-                    <div class="w-0.5 h-10 absolute bottom-0 left-0 transform -translate-x-1/2 z-10" style="background-color: ${firstCol.hex};"></div>`;
+                    <div class="w-0.5 h-12 absolute bottom-0 left-0 transform -translate-x-1/2 z-10" style="background-color: ${firstCol.hex};"></div>`;
 
                 if (count > 1) {
-                    // Línea horizontal colectora de bifurcación (Tal cual la imagen de referencia)
                     const minOffset = startXOffset;
                     const maxOffset = startXOffset + (count - 1) * (blockWidth + gap);
-                    labelsHtml += `<div class="h-0.5 absolute -top-10 z-10" style="left: ${minOffset}px; width: ${maxOffset - minOffset}px; background-color: ${firstCol.hex};"></div>`;
+                    labelsHtml += `<div class="h-0.5 absolute -top-12 z-10" style="left: ${minOffset}px; width: ${maxOffset - minOffset}px; background-color: ${firstCol.hex};"></div>`;
                 }
 
                 items.forEach((item, idx) => {
@@ -738,23 +789,35 @@
                     const isStart = item.type === 'start';
 
                     labelsHtml += `
-                        <!-- Sub-rama vertical que conecta la bifurcación con la etiqueta -->
-                        ${count > 1 ? `<div class="w-0.5 h-4 absolute -top-14 transform -translate-x-1/2 z-10" style="left: ${offset}px; background-color: ${col.hex};"></div>` : ''}
+                        ${count > 1 ? `<div class="w-0.5 h-4 absolute -top-16 transform -translate-x-1/2 z-10" style="left: ${offset}px; background-color: ${col.hex};"></div>` : ''}
 
-                        <!-- Bloque Rectangular Vertical (0° rotación, texto vertical) -->
-                        <div class="absolute ${count > 1 ? '-top-48' : '-top-44'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20" 
-                             style="left: ${offset}px; width: ${blockWidth}px; height: 130px; background-color: ${col.hex};">
+                        <!-- Bloque Rectangular Vertical (180px alto) -->
+                        <div onclick="toggleTouchTooltip(this)" tabIndex="0"
+                             class="absolute ${count > 1 ? '-top-[250px]' : '-top-[230px]'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20" 
+                             style="left: ${offset}px; width: ${blockWidth}px; height: 180px; background-color: ${col.hex};">
                             
                             <span class="text-[9px] font-black uppercase tracking-tighter bg-white/20 px-1 py-0.5 rounded text-center w-full">
                                 ${isStart ? 'INI' : 'FIN'}
                             </span>
                             
-                            <!-- Texto Vertical -->
-                            <div class="vertical-text text-xs font-bold tracking-wider my-auto text-center overflow-hidden max-h-[80px]">
+                            <!-- Texto Vertical Ampliado -->
+                            <div class="vertical-text text-xs font-bold tracking-wider my-auto text-center overflow-hidden max-h-[125px]">
                                 ${abbrev} - ${item.evt.eventTitle}
                             </div>
 
                             <span class="text-[8px] font-extrabold opacity-90">${formatDisplayDate(isStart ? item.evt.eventStart : item.evt.eventEnd).substring(0, 5)}</span>
+
+                            <!-- Tooltip / Leyenda Flotante Completa -->
+                            <div class="tooltip-content absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 w-64 bg-slate-900 text-white rounded-xl p-3 shadow-2xl z-50 text-left border border-slate-700">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style="background-color: ${col.hex}">${abbrev}</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold">${isStart ? 'Inicio de Evento' : 'Fin de Evento'}</span>
+                                </div>
+                                <h4 class="font-bold text-xs text-white mb-1">${item.evt.eventTitle}</h4>
+                                <p class="text-[10px] text-slate-300 mb-1"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(item.evt.eventStart)} al ${formatDisplayDate(item.evt.eventEnd)}</p>
+                                ${item.evt.category ? `<p class="text-[10px] text-slate-400 font-medium">Categoría: ${item.evt.category}</p>` : ''}
+                                ${item.evt.description ? `<p class="text-[10px] text-slate-300 italic border-t border-slate-800 pt-1 mt-1">${item.evt.description}</p>` : ''}
+                            </div>
                         </div>
                     `;
                 });
@@ -762,7 +825,7 @@
                 labelsHtml += `</div>`;
             });
 
-            // --- HITOS Y MINI-HITOS INFERIORES (RECTÁNGULOS 100% VERTICALES HACIA ABAJO + BIFURCACIÓN) ---
+            // --- HITOS Y MINI-HITOS INFERIORES (ALTURA AMPLIADA 180PX + LEYENDA EMERGENTE) ---
             const bottomGroups = {};
 
             window.milestonesList.forEach(ms => {
@@ -774,6 +837,7 @@
                         type: 'main-milestone',
                         title: ms.milestoneTitle,
                         date: ms.milestoneDate,
+                        comment: ms.milestoneComment,
                         abbrev: (ms.abbrev || ms.milestoneTitle.substring(0, 3)).toUpperCase(),
                         colorHex: '#059669'
                     });
@@ -790,6 +854,7 @@
                         type: 'sub-milestone',
                         title: sm.title,
                         date: sm.date,
+                        comment: `Mini-hito del evento: "${sm.parentTitle}"`,
                         abbrev: (sm.abbrev || sm.title.substring(0, 3)).toUpperCase(),
                         colorHex: col.hex
                     });
@@ -801,21 +866,19 @@
                 const items = bottomGroups[dayIdxStr];
                 const posX = dayIdx * pxPerDay;
                 const count = items.length;
-                const blockWidth = 32;
+                const blockWidth = 34;
                 const gap = 8;
                 const totalGroupWidth = (count * blockWidth) + ((count - 1) * gap);
                 const startXOffset = -totalGroupWidth / 2 + blockWidth / 2;
 
                 const firstColHex = items[0].colorHex;
                 labelsHtml += `<div class="absolute top-1/2 pointer-events-auto" style="left: ${posX}px;">
-                    <!-- Línea vertical principal inferior -->
-                    <div class="w-0.5 h-10 absolute top-0 left-0 transform -translate-x-1/2 z-10" style="background-color: ${firstColHex};"></div>`;
+                    <div class="w-0.5 h-12 absolute top-0 left-0 transform -translate-x-1/2 z-10" style="background-color: ${firstColHex};"></div>`;
 
                 if (count > 1) {
-                    // Bifurcación horizontal inferior
                     const minOffset = startXOffset;
                     const maxOffset = startXOffset + (count - 1) * (blockWidth + gap);
-                    labelsHtml += `<div class="h-0.5 absolute top-10 z-10" style="left: ${minOffset}px; width: ${maxOffset - minOffset}px; background-color: ${firstColHex};"></div>`;
+                    labelsHtml += `<div class="h-0.5 absolute top-12 z-10" style="left: ${minOffset}px; width: ${maxOffset - minOffset}px; background-color: ${firstColHex};"></div>`;
                 }
 
                 items.forEach((item, idx) => {
@@ -823,21 +886,33 @@
                     const isMain = item.type === 'main-milestone';
 
                     labelsHtml += `
-                        ${count > 1 ? `<div class="w-0.5 h-4 absolute top-10 transform -translate-x-1/2 z-10" style="left: ${offset}px; background-color: ${item.colorHex};"></div>` : ''}
+                        ${count > 1 ? `<div class="w-0.5 h-4 absolute top-12 transform -translate-x-1/2 z-10" style="left: ${offset}px; background-color: ${item.colorHex};"></div>` : ''}
 
-                        <!-- Bloque Rectangular Vertical Inferior -->
-                        <div class="absolute ${count > 1 ? 'top-14' : 'top-10'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20" 
-                             style="left: ${offset}px; width: ${blockWidth}px; height: 130px; background-color: ${item.colorHex};">
+                        <!-- Bloque Rectangular Vertical Inferior (180px alto) -->
+                        <div onclick="toggleTouchTooltip(this)" tabIndex="0"
+                             class="absolute ${count > 1 ? 'top-16' : 'top-12'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20" 
+                             style="left: ${offset}px; width: ${blockWidth}px; height: 180px; background-color: ${item.colorHex};">
                             
                             <span class="text-[9px] font-black uppercase tracking-tighter bg-white/20 px-1 py-0.5 rounded text-center w-full">
                                 ${isMain ? '🚩' : '📌'}
                             </span>
                             
-                            <div class="vertical-text text-xs font-bold tracking-wider my-auto text-center overflow-hidden max-h-[80px]">
+                            <div class="vertical-text text-xs font-bold tracking-wider my-auto text-center overflow-hidden max-h-[125px]">
                                 ${item.abbrev} - ${item.title}
                             </div>
 
                             <span class="text-[8px] font-extrabold opacity-90">${formatDisplayDate(item.date).substring(0, 5)}</span>
+
+                            <!-- Tooltip / Leyenda Flotante Completa -->
+                            <div class="tooltip-content absolute top-full mt-2 left-1/2 transform -translate-x-1/2 w-64 bg-slate-900 text-white rounded-xl p-3 shadow-2xl z-50 text-left border border-slate-700">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-600 text-white">${item.abbrev}</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold">${isMain ? 'Hito Principal 🚩' : 'Mini-Hito 📌'}</span>
+                                </div>
+                                <h4 class="font-bold text-xs text-white mb-1">${item.title}</h4>
+                                <p class="text-[10px] text-slate-300 mb-1"><i class="fa-regular fa-calendar mr-1"></i> Fecha: ${formatDisplayDate(item.date)}</p>
+                                ${item.comment ? `<p class="text-[10px] text-slate-300 italic border-t border-slate-800 pt-1 mt-1">${item.comment}</p>` : ''}
+                            </div>
                         </div>
                     `;
                 });
@@ -943,7 +1018,6 @@
             container.innerHTML = html;
         }
 
-        // --- REPOSITORIO GENERAL ---
         function renderRepositoryView() {
             const container = document.getElementById('repositoryListContainer');
             if (!container) return;
@@ -996,7 +1070,6 @@
             container.innerHTML = html;
         }
 
-        // --- HITOS Y NOTAS ---
         function renderMilestonesView() {
             const container = document.getElementById('milestonesListContainer');
             if (!container) return;
@@ -1064,7 +1137,6 @@
             }).join('');
         }
 
-        // --- MINI HITOS EN FORMULARIO ---
         window.addSubMilestoneInput = function(title = '', date = '', completed = false) {
             const container = document.getElementById('subMilestonesContainer');
             const div = document.createElement('div');
@@ -1090,7 +1162,6 @@
             return subMilestones;
         }
 
-        // --- FIRESTORE MODIFIERS ---
         window.saveEventToStore = async function(eventData) {
             try {
                 const id = eventData.id || 'evt_' + Date.now();
@@ -1153,7 +1224,6 @@
             renderAll();
         }
 
-        // --- MODALES ---
         window.openConfigModal = () => document.getElementById('configModal').classList.remove('hidden');
         window.closeConfigModal = () => document.getElementById('configModal').classList.add('hidden');
 
@@ -1343,6 +1413,7 @@
 
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toastContainer');
+            if(!container) return;
             const toast = document.createElement('div');
             toast.className = `bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center space-x-2`;
             toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
