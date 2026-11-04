@@ -40,6 +40,12 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
 
+        .vertical-text {
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            white-space: nowrap;
+        }
+
         .has-tooltip { position: relative; }
         .tooltip-content {
             visibility: hidden;
@@ -131,19 +137,19 @@
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 
-                <!-- Línea Temporal Fija con Bifurcación y Altura Fija de Líneas -->
+                <!-- Línea Temporal con Bloques Verticales 90° y Bifurcación Esquema -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal de Puntos (<span class="timeline-year-label">2026</span>)</h2>
-                            <p class="text-xs text-slate-500">Líneas verticales de altura constante. Bifurcación lateral en caso de coincidencias de fechas.</p>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900">Línea Temporal Vertical (<span class="timeline-year-label">2026</span>)</h2>
+                            <p class="text-xs text-slate-500">Bloques rectangulares verticales. Bifurcación en rama central al coincidir eventos.</p>
                         </div>
                         <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs w-fit">1 de Ene ➔ 31 de Dic</span>
                     </div>
 
                     <!-- Contenedor Fijo con Scroll Dual (Horizontal y Vertical) -->
-                    <div class="overflow-auto custom-scrollbar h-[360px] bg-slate-50/60 rounded-xl border border-slate-200 p-6 relative">
-                        <div id="timelineDayRuleWrapper" class="relative my-24" style="width: 3650px; min-height: 140px;">
+                    <div class="overflow-auto custom-scrollbar h-[500px] bg-slate-50/60 rounded-xl border border-slate-200 p-6 relative">
+                        <div id="timelineDayRuleWrapper" class="relative my-44" style="width: 3650px; min-height: 180px;">
                             
                             <!-- Banderas / Banderolas -->
                             <div id="dayRuleLabelsContainer" class="absolute inset-0 pointer-events-none"></div>
@@ -632,7 +638,7 @@
             }
         }
 
-        // --- LÍNEA TEMPORAL FIJA CON BIFURCACIÓN Y ALTURA CONSTANTE DE LÍNEAS VERTICALES ---
+        // --- LÍNEA TEMPORAL CON ETIQUETAS RECTANGULARES 100% VERTICALES Y BIFURCACIÓN SEGÚN BOTELLO ---
         function renderTimelineView() {
             const ticksContainer = document.getElementById('dayRuleTicksContainer');
             const labelsContainer = document.getElementById('dayRuleLabelsContainer');
@@ -647,7 +653,7 @@
 
             const yearStart = new Date(window.currentYear, 0, 1);
 
-            // 1. Trazado de PUNTOS (Día 1 de cada mes muestra su número con la barra de corte original)
+            // 1. Trazado de PUNTOS (Puntos e indicadores de corte mensual originales)
             let ticksHtml = '';
             for (let dayIndex = 0; dayIndex < totalDays; dayIndex++) {
                 const currentDate = new Date(window.currentYear, 0, dayIndex + 1);
@@ -684,70 +690,88 @@
                                     title="${evt.eventTitle} (${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)})"></div>`;
             });
 
-            // --- EVENTOS SUPERIORES (ALTURA CONSTANTE DE LÍNEA = 56px, BIFURCACIÓN HORIZONTAL SI HAY COINCIDENCIA) ---
-            const topMarkers = [];
+            // Agrupación por días para detectar coincidencias exactas o cercanas
+            const topGroups = {};
             window.eventsList.forEach(evt => {
                 const start = new Date(evt.eventStart);
                 const end = new Date(evt.eventEnd);
                 const startDayIdx = Math.max(0, Math.floor((start - yearStart) / (1000 * 60 * 60 * 24)));
                 const endDayIdx = Math.min(totalDays - 1, Math.floor((end - yearStart) / (1000 * 60 * 60 * 24)));
 
-                topMarkers.push({ type: 'start', dayIdx: startDayIdx, evt });
+                if (!topGroups[startDayIdx]) topGroups[startDayIdx] = [];
+                topGroups[startDayIdx].push({ type: 'start', evt });
+
                 if (endDayIdx > startDayIdx) {
-                    topMarkers.push({ type: 'end', dayIdx: endDayIdx, evt });
+                    if (!topGroups[endDayIdx]) topGroups[endDayIdx] = [];
+                    topGroups[endDayIdx].push({ type: 'end', evt });
                 }
             });
-            topMarkers.sort((a, b) => a.dayIdx - b.dayIdx);
 
-            // Desplazamientos laterales (bifurcación) en píxeles cuando hay superposición
-            const horizontalOffsets = [0, 140, -140, 280, -280];
-            let lastTopDay = -99;
-            let offsetIdx = 0;
+            // --- RENDERIZADO EVENTOS SUPERIORES (RECTÁNGULOS 100% VERTICALES + BIFURCACIÓN SEGÚN BOCETO) ---
+            Object.keys(topGroups).forEach(dayIdxStr => {
+                const dayIdx = parseInt(dayIdxStr);
+                const items = topGroups[dayIdxStr];
+                const posX = dayIdx * pxPerDay;
+                const count = items.length;
+                const blockWidth = 32; // Ancho del bloque vertical
+                const gap = 8;
+                const totalGroupWidth = (count * blockWidth) + ((count - 1) * gap);
+                const startXOffset = -totalGroupWidth / 2 + blockWidth / 2;
 
-            topMarkers.forEach(m => {
-                if (Math.abs(m.dayIdx - lastTopDay) < 14) {
-                    offsetIdx = (offsetIdx + 1) % horizontalOffsets.length;
-                } else {
-                    offsetIdx = 0;
+                // Trazado de la raíz vertical principal
+                const firstCol = getColorObj(items[0].evt.color);
+                labelsHtml += `<div class="absolute top-1/2 pointer-events-auto" style="left: ${posX}px;">
+                    <!-- Línea vertical principal que sube desde el eje -->
+                    <div class="w-0.5 h-10 absolute bottom-0 left-0 transform -translate-x-1/2 z-10" style="background-color: ${firstCol.hex};"></div>`;
+
+                if (count > 1) {
+                    // Línea horizontal colectora de bifurcación (Tal cual la imagen de referencia)
+                    const minOffset = startXOffset;
+                    const maxOffset = startXOffset + (count - 1) * (blockWidth + gap);
+                    labelsHtml += `<div class="h-0.5 absolute -top-10 z-10" style="left: ${minOffset}px; width: ${maxOffset - minOffset}px; background-color: ${firstCol.hex};"></div>`;
                 }
-                lastTopDay = m.dayIdx;
 
-                const posX = m.dayIdx * pxPerDay;
-                const hOffset = horizontalOffsets[offsetIdx];
-                const col = getColorObj(m.evt.color);
-                const abbrev = (m.evt.abbrev || m.evt.eventTitle.substring(0, 3)).toUpperCase();
-                const isStart = m.type === 'start';
+                items.forEach((item, idx) => {
+                    const offset = startXOffset + idx * (blockWidth + gap);
+                    const col = getColorObj(item.evt.color);
+                    const abbrev = (item.evt.abbrev || item.evt.eventTitle.substring(0, 3)).toUpperCase();
+                    const isStart = item.type === 'start';
 
-                labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
-                    <!-- Línea vertical recta de ALTURA SIEMPRE CONSTANTE (h-14 / 56px) -->
-                    <div class="w-0.5 h-14 absolute bottom-0 left-1/2 transform -translate-x-1/2 rounded-full z-10" style="background-color: ${col.hex}; opacity: 0.9;"></div>
-                    
-                    ${hOffset !== 0 ? `
-                        <!-- Línea horizontal de bifurcación visual para conectar el origen con la bandera desplazada -->
-                        <div class="h-0.5 absolute -top-14 border-t-2 border-dashed z-0" style="left: 50%; width: ${Math.abs(hOffset)}px; transform: translateX(${hOffset < 0 ? -Math.abs(hOffset) : 0}px); border-color: ${col.hex};"></div>
-                    ` : ''}
+                    labelsHtml += `
+                        <!-- Sub-rama vertical que conecta la bifurcación con la etiqueta -->
+                        ${count > 1 ? `<div class="w-0.5 h-4 absolute -top-14 transform -translate-x-1/2 z-10" style="left: ${offset}px; background-color: ${col.hex};"></div>` : ''}
 
-                    <!-- Bandera colocada con desplazamiento lateral si coincide con otra -->
-                    <div class="absolute -top-14 left-1/2 transform -rotate-45 origin-bottom-left has-tooltip cursor-pointer z-20" style="transform: translateX(${hOffset}px) rotate(-45deg);">
-                        <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${col.hex};">
-                            <span class="${isStart ? 'text-amber-300' : 'text-rose-300'} font-extrabold">${isStart ? '▶ INICIO' : '⏹ FIN'} (${formatDisplayDate(isStart ? m.evt.eventStart : m.evt.eventEnd)})</span>
-                            <span class="opacity-75">|</span>
-                            <span>${abbrev} - ${m.evt.eventTitle}</span>
+                        <!-- Bloque Rectangular Vertical (0° rotación, texto vertical) -->
+                        <div class="absolute ${count > 1 ? '-top-48' : '-top-44'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20" 
+                             style="left: ${offset}px; width: ${blockWidth}px; height: 130px; background-color: ${col.hex};">
+                            
+                            <span class="text-[9px] font-black uppercase tracking-tighter bg-white/20 px-1 py-0.5 rounded text-center w-full">
+                                ${isStart ? 'INI' : 'FIN'}
+                            </span>
+                            
+                            <!-- Texto Vertical -->
+                            <div class="vertical-text text-xs font-bold tracking-wider my-auto text-center overflow-hidden max-h-[80px]">
+                                ${abbrev} - ${item.evt.eventTitle}
+                            </div>
+
+                            <span class="text-[8px] font-extrabold opacity-90">${formatDisplayDate(isStart ? item.evt.eventStart : item.evt.eventEnd).substring(0, 5)}</span>
                         </div>
-                    </div>
-                </div>`;
+                    `;
+                });
+
+                labelsHtml += `</div>`;
             });
 
-            // --- HITOS INFERIORES (ALTURA CONSTANTE DE LÍNEA = 56px, BIFURCACIÓN HORIZONTAL SI HAY COINCIDENCIA) ---
-            const bottomMarkers = [];
+            // --- HITOS Y MINI-HITOS INFERIORES (RECTÁNGULOS 100% VERTICALES HACIA ABAJO + BIFURCACIÓN) ---
+            const bottomGroups = {};
 
             window.milestonesList.forEach(ms => {
                 const msDate = new Date(ms.milestoneDate);
                 const dayIdx = Math.floor((msDate - yearStart) / (1000 * 60 * 60 * 24));
                 if (dayIdx >= 0 && dayIdx < totalDays) {
-                    bottomMarkers.push({
+                    if (!bottomGroups[dayIdx]) bottomGroups[dayIdx] = [];
+                    bottomGroups[dayIdx].push({
                         type: 'main-milestone',
-                        dayIdx: dayIdx,
                         title: ms.milestoneTitle,
                         date: ms.milestoneDate,
                         abbrev: (ms.abbrev || ms.milestoneTitle.substring(0, 3)).toUpperCase(),
@@ -761,9 +785,9 @@
                 const dayIdx = Math.floor((smDate - yearStart) / (1000 * 60 * 60 * 24));
                 if (dayIdx >= 0 && dayIdx < totalDays) {
                     const col = getColorObj(sm.color);
-                    bottomMarkers.push({
+                    if (!bottomGroups[dayIdx]) bottomGroups[dayIdx] = [];
+                    bottomGroups[dayIdx].push({
                         type: 'sub-milestone',
-                        dayIdx: dayIdx,
                         title: sm.title,
                         date: sm.date,
                         abbrev: (sm.abbrev || sm.title.substring(0, 3)).toUpperCase(),
@@ -772,41 +796,53 @@
                 }
             });
 
-            bottomMarkers.sort((a, b) => a.dayIdx - b.dayIdx);
+            Object.keys(bottomGroups).forEach(dayIdxStr => {
+                const dayIdx = parseInt(dayIdxStr);
+                const items = bottomGroups[dayIdxStr];
+                const posX = dayIdx * pxPerDay;
+                const count = items.length;
+                const blockWidth = 32;
+                const gap = 8;
+                const totalGroupWidth = (count * blockWidth) + ((count - 1) * gap);
+                const startXOffset = -totalGroupWidth / 2 + blockWidth / 2;
 
-            let lastBottomDay = -99;
-            let bottomOffsetIdx = 0;
+                const firstColHex = items[0].colorHex;
+                labelsHtml += `<div class="absolute top-1/2 pointer-events-auto" style="left: ${posX}px;">
+                    <!-- Línea vertical principal inferior -->
+                    <div class="w-0.5 h-10 absolute top-0 left-0 transform -translate-x-1/2 z-10" style="background-color: ${firstColHex};"></div>`;
 
-            bottomMarkers.forEach(m => {
-                if (Math.abs(m.dayIdx - lastBottomDay) < 14) {
-                    bottomOffsetIdx = (bottomOffsetIdx + 1) % horizontalOffsets.length;
-                } else {
-                    bottomOffsetIdx = 0;
+                if (count > 1) {
+                    // Bifurcación horizontal inferior
+                    const minOffset = startXOffset;
+                    const maxOffset = startXOffset + (count - 1) * (blockWidth + gap);
+                    labelsHtml += `<div class="h-0.5 absolute top-10 z-10" style="left: ${minOffset}px; width: ${maxOffset - minOffset}px; background-color: ${firstColHex};"></div>`;
                 }
-                lastBottomDay = m.dayIdx;
 
-                const posX = m.dayIdx * pxPerDay;
-                const hOffset = horizontalOffsets[bottomOffsetIdx];
-                const isMain = m.type === 'main-milestone';
+                items.forEach((item, idx) => {
+                    const offset = startXOffset + idx * (blockWidth + gap);
+                    const isMain = item.type === 'main-milestone';
 
-                labelsHtml += `<div class="absolute top-1/2 transform -translate-x-1/2 pointer-events-auto" style="left: ${posX}px;">
-                    <!-- Línea vertical recta inferior de ALTURA SIEMPRE CONSTANTE (h-14 / 56px) -->
-                    <div class="w-0.5 h-14 absolute top-0 left-1/2 transform -translate-x-1/2 rounded-full z-10" style="background-color: ${m.colorHex}; opacity: 0.9;"></div>
-                    
-                    ${hOffset !== 0 ? `
-                        <!-- Línea horizontal de bifurcación visual inferior -->
-                        <div class="h-0.5 absolute top-14 border-b-2 border-dashed z-0" style="left: 50%; width: ${Math.abs(hOffset)}px; transform: translateX(${hOffset < 0 ? -Math.abs(hOffset) : 0}px); border-color: ${m.colorHex};"></div>
-                    ` : ''}
+                    labelsHtml += `
+                        ${count > 1 ? `<div class="w-0.5 h-4 absolute top-10 transform -translate-x-1/2 z-10" style="left: ${offset}px; background-color: ${item.colorHex};"></div>` : ''}
 
-                    <!-- Bandera inferior colocada con desplazamiento lateral (+45°) -->
-                    <div class="absolute top-14 left-1/2 has-tooltip cursor-pointer z-20" style="transform: translateX(${hOffset}px) rotate(45deg); transform-origin: top left;">
-                        <div class="px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg whitespace-nowrap flex items-center space-x-1.5 border border-white/20" style="background-color: ${m.colorHex};">
-                            <span>${isMain ? '🚩 HITO' : '📌 MINI-HITO'} (${formatDisplayDate(m.date)})</span>
-                            <span class="opacity-75">|</span>
-                            <span>${m.abbrev} - ${m.title}</span>
+                        <!-- Bloque Rectangular Vertical Inferior -->
+                        <div class="absolute ${count > 1 ? 'top-14' : 'top-10'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20" 
+                             style="left: ${offset}px; width: ${blockWidth}px; height: 130px; background-color: ${item.colorHex};">
+                            
+                            <span class="text-[9px] font-black uppercase tracking-tighter bg-white/20 px-1 py-0.5 rounded text-center w-full">
+                                ${isMain ? '🚩' : '📌'}
+                            </span>
+                            
+                            <div class="vertical-text text-xs font-bold tracking-wider my-auto text-center overflow-hidden max-h-[80px]">
+                                ${item.abbrev} - ${item.title}
+                            </div>
+
+                            <span class="text-[8px] font-extrabold opacity-90">${formatDisplayDate(item.date).substring(0, 5)}</span>
                         </div>
-                    </div>
-                </div>`;
+                    `;
+                });
+
+                labelsHtml += `</div>`;
             });
 
             labelsContainer.innerHTML = labelsHtml;
