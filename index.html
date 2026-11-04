@@ -422,10 +422,28 @@
 
     <!-- FIREBASE AND APP LOGIC -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { 
-            getFirestore, collection, onSnapshot, setDoc, doc, deleteDoc 
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithRedirect,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import {
+    getFirestore,
+    collection,
+    onSnapshot,
+    setDoc,
+    doc,
+    deleteDoc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 
         const firebaseConfig = {
             apiKey: "AIzaSyCSDRlF43dv-WC5msPtpG2brnMCzNkmfYk",
@@ -467,26 +485,166 @@
         const dayNamesMin = ["L", "M", "X", "J", "V", "S", "D"];
 
         let db = null;
-        let forceLocalMode = localStorage.getItem('force_local_mode') === 'true';
+        let auth = null;
+        let currentUser = null;
+        let currentRole = null;
+        let forceLocalMode = false;
 
         function getCurrentQuarterIndex() {
             const m = new Date().getMonth();
             return Math.floor(m / 3);
         }
+        
+function showAuthStatus(message) {
+    const status = document.getElementById('authStatus');
+    if (status) status.textContent = message;
+}
 
-        function initFirebase() {
-            loadLocalData();
-            if (forceLocalMode) { setLocalModeUI(); return; }
+function showUnauthorizedUser(user) {
+    const info = document.getElementById('authUserInfo');
+    const email = document.getElementById('authUserEmail');
+    const uid = document.getElementById('authUserUid');
+
+    info.classList.remove('hidden');
+    email.textContent = 'Correo: ' + (user.email || 'No disponible');
+    uid.textContent = 'UID: ' + user.uid;
+
+    let logoutButton = document.getElementById('authSignOutBtn');
+
+    if (!logoutButton) {
+        logoutButton = document.createElement('button');
+        logoutButton.id = 'authSignOutBtn';
+        logoutButton.type = 'button';
+        logoutButton.textContent = 'Cerrar sesión';
+        logoutButton.className =
+            'mt-4 w-full rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300';
+
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                showAuthStatus('No se pudo cerrar la sesión.');
+            }
+        });
+
+        info.appendChild(logoutButton);
+    }
+}
+
+async function checkUserMembership(user) {
+    currentUser = user;
+
+    showAuthStatus('Comprobando autorización...');
+
+    const memberRef = doc(db, 'members', user.uid);
+    const memberSnapshot = await getDoc(memberRef);
+
+    if (!memberSnapshot.exists()) {
+        currentRole = null;
+        showAuthStatus('Tu cuenta todavía no está autorizada.');
+        showUnauthorizedUser(user);
+        return;
+    }
+
+    const memberData = memberSnapshot.data();
+    const validRoles = ['owner', 'editor', 'viewer'];
+
+    if (
+        memberData.active !== true ||
+        !validRoles.includes(memberData.role)
+    ) {
+        currentRole = null;
+        showAuthStatus('Tu cuenta no tiene permisos de acceso.');
+        showUnauthorizedUser(user);
+        return;
+    }
+
+    currentRole = memberData.role;
+
+    document.getElementById('authUserInfo').classList.add('hidden');
+    document.getElementById('authGate').classList.add('hidden');
+
+    loadLocalData();
+
+    updateSyncUI('cloud', 'Firebase Conectado');
+    setupFirestoreListeners();
+
+    console.info(
+        'Cronogel: sesión autorizada con rol',
+        currentRole
+    );
+}
+
+function initFirebase() {
+    try {
+        const app = initializeApp(firebaseConfig);
+
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        const loginButton = document.getElementById('googleSignInBtn');
+
+        loginButton.addEventListener('click', async () => {
+            loginButton.disabled = true;
+            showAuthStatus('Conectando con Google...');
 
             try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                updateSyncUI('cloud', 'Firebase Conectado');
-                setupFirestoreListeners();
-            } catch (err) {
-                setLocalModeUI();
+                await signInWithPopup(auth, googleProvider);
+            } catch (error) {
+                if (
+                    error.code === 'auth/popup-blocked' ||
+                    error.code === 'auth/operation-not-supported-in-this-environment'
+                ) {
+                    try {
+                        await signInWithRedirect(auth, googleProvider);
+                        return;
+                    } catch (redirectError) {
+                        console.error(redirectError);
+                        showAuthStatus('No se pudo iniciar sesión. Comprueba el navegador.');
+                    }
+                } else {
+                    console.error(error);
+                    showAuthStatus('Error al iniciar sesión con Google.');
+                }
+            } finally {
+                loginButton.disabled = false;
             }
-        }
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            currentRole = null;
+
+            if (!user) {
+                document.getElementById('authGate').classList.remove('hidden');
+                document.getElementById('authUserInfo').classList.add('hidden');
+                showAuthStatus('Identifícate con tu cuenta de Google.');
+                return;
+            }
+
+            try {
+                await checkUserMembership(user);
+            } catch (error) {
+                console.error('Error verificando membresía:', error);
+                document.getElementById('authGate').classList.remove('hidden');
+                showAuthStatus(
+                    'No se pudo verificar tu autorización. Inténtalo de nuevo.'
+                );
+            }
+        });
+
+    } catch (error) {
+        console.error('Error inicializando Firebase:', error);
+        showAuthStatus('No se pudo conectar con Firebase.');
+    }
+}
+
+       
 
         window.toggleStorageMode = function() {
             forceLocalMode = !forceLocalMode;
