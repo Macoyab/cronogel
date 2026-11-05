@@ -1364,67 +1364,106 @@ function initFirebase() {
             return subMilestones;
         }
 
-        window.saveEventToStore = async function(eventData) {
-            try {
-                const id = eventData.id || 'evt_' + Date.now();
-                eventData.id = id;
-                if (db) { await setDoc(doc(db, 'events', id), eventData); } else { saveEventLocal(eventData); }
-                showToast('Evento guardado correctamente', 'success');
-            } catch (err) { saveEventLocal(eventData); }
-        }
 
-        function saveEventLocal(eventData) {
-            if (!eventData.id) eventData.id = 'evt_' + Date.now();
-            const idx = window.eventsList.findIndex(e => e.id === eventData.id);
-            if (idx !== -1) window.eventsList[idx] = eventData;
-            else window.eventsList.push(eventData);
-            localStorage.setItem('local_events', JSON.stringify(window.eventsList));
-            renderAll();
-        }
+window.saveEventToStore = async function(eventData) {
+    if (!db || !currentUser || !currentRole) {
+        showToast('No hay una sesión colaborativa válida.', 'error');
+        return;
+    }
 
-        window.deleteEventStore = async function(id) {
-            try {
-                if (db) await deleteDoc(doc(db, 'events', id)); else deleteEventLocal(id);
-                showToast('Evento eliminado', 'info');
-            } catch (err) { deleteEventLocal(id); }
-        }
+    try {
+        const id = eventData.id || 'evt_' + Date.now();
+        const dataToSave = { ...eventData, id };
 
-        function deleteEventLocal(id) {
-            window.eventsList = window.eventsList.filter(e => e.id !== id);
-            localStorage.setItem('local_events', JSON.stringify(window.eventsList));
-            renderAll();
-        }
+        await setDoc(doc(db, 'events', id), dataToSave);
 
-        window.saveMilestoneStore = async function(milestoneData) {
-            try {
-                const id = milestoneData.id || 'ms_' + Date.now();
-                milestoneData.id = id;
-                if (db) { await setDoc(doc(db, 'milestones', id), milestoneData); } else { saveMilestoneLocal(milestoneData); }
-                showToast('Hito guardado correctamente', 'success');
-            } catch (err) { saveMilestoneLocal(milestoneData); }
-        }
+        showToast('Evento guardado correctamente', 'success');
+    } catch (err) {
+        console.error('Error guardando evento:', err);
+        showToast('No se pudo guardar el evento en la nube.', 'error');
+    }
+}
 
-        function saveMilestoneLocal(milestoneData) {
-            if (!milestoneData.id) milestoneData.id = 'ms_' + Date.now();
-            const idx = window.milestonesList.findIndex(m => m.id === milestoneData.id);
-            if (idx !== -1) window.milestonesList[idx] = milestoneData;
-            else window.milestonesList.push(milestoneData);
-            localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
-            renderAll();
-        }
+function saveEventLocal(eventData) {
+    if (!eventData.id) eventData.id = 'evt_' + Date.now();
+    const idx = window.eventsList.findIndex(e => e.id === eventData.id);
+    if (idx !== -1) window.eventsList[idx] = eventData;
+    else window.eventsList.push(eventData);
+    localStorage.setItem('local_events', JSON.stringify(window.eventsList));
+    renderAll();
+}
 
-        window.deleteMilestoneStore = async function(id) {
-            try {
-                if (db) await deleteDoc(doc(db, 'milestones', id)); else deleteMilestoneLocal(id);
-                showToast('Hito eliminado', 'info');
-            } catch (err) { deleteMilestoneLocal(id); }
-        }
+window.deleteEventStore = async function(id) {
+    if (!db || !currentUser || !currentRole) {
+        showToast('No hay una sesión colaborativa válida.', 'error');
+        return;
+    }
 
-        function deleteMilestoneLocal(id) {
-            window.milestonesList = window.milestonesList.filter(m => m.id !== id);
-            localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
-            renderAll();
-        }
+    try {
+        await deleteDoc(doc(db, 'events', id));
+        showToast('Evento eliminado', 'info');
+    } catch (err) {
+        console.error('Error eliminando evento:', err);
+        showToast('No se pudo eliminar el evento de la nube.', 'error');
+    }
+}
+
+function deleteEventLocal(id) {
+    window.eventsList = window.eventsList.filter(e => e.id !== id);
+    localStorage.setItem('local_events', JSON.stringify(window.eventsList));
+    renderAll();
+}
+
+window.saveMilestoneStore = async function(milestoneData) {
+    if (!db || !currentUser || !currentRole) {
+        showToast('No hay una sesión colaborativa válida.', 'error');
+        return;
+    }
+
+    try {
+        const id = milestoneData.id || 'ms_' + Date.now();
+        const dataToSave = { ...milestoneData, id };
+
+        await setDoc(doc(db, 'milestones', id), dataToSave);
+
+        showToast('Hito guardado correctamente', 'success');
+    } catch (err) {
+        console.error('Error guardando hito:', err);
+        showToast('No se pudo guardar el hito en la nube.', 'error');
+    }
+}
+
+function saveMilestoneLocal(milestoneData) {
+    if (!milestoneData.id) milestoneData.id = 'ms_' + Date.now();
+    const idx = window.milestonesList.findIndex(m => m.id === milestoneData.id);
+    if (idx !== -1) window.milestonesList[idx] = milestoneData;
+    else window.milestonesList.push(milestoneData);
+    localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
+    renderAll();
+}
+
+window.deleteMilestoneStore = async function(id) {
+    if (!db || !currentUser || !currentRole) {
+        showToast('No hay una sesión colaborativa válida.', 'error');
+        return;
+    }
+
+    try {
+        await deleteDoc(doc(db, 'milestones', id));
+        showToast('Hito eliminado', 'info');
+    } catch (err) {
+        console.error('Error eliminando hito:', err);
+        showToast('No se pudo eliminar el hito de la nube.', 'error');
+    }
+}
+
+function deleteMilestoneLocal(id) {
+    window.milestonesList = window.milestonesList.filter(m => m.id !== id);
+    localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
+    renderAll();
+}
+
+
 
         window.openConfigModal = () => document.getElementById('configModal').classList.remove('hidden');
         window.closeConfigModal = () => document.getElementById('configModal').classList.add('hidden');
