@@ -27,7 +27,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
+
         input[type="date"]::-webkit-calendar-picker-indicator {
             cursor: pointer;
             filter: invert(0.4);
@@ -63,7 +63,7 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-full flex flex-col font-sans overflow-hidden">
-    
+
     <!-- AUTH GATE: ACCESO A CRONOGEL -->
     <div id="authGate" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 text-center">
@@ -140,7 +140,7 @@
                     <span class="hidden lg:inline text-xs">Importar</span>
                 </button>
                 <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSONData(event)">
-                
+
                 <!-- NUEVO BOTÓN DE AYUDA / GUÍA -->
                 <a href="guia.html" target="_blank" class="bg-slate-600 hover:bg-slate-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1" title="Ver Guía de Usuario">
                     <i class="fa-solid fa-circle-question text-xs sm:text-sm"></i>
@@ -155,10 +155,15 @@
                     <i class="fa-solid fa-plus text-xs sm:text-sm"></i>
                     <span class="hidden sm:inline text-xs">Evento</span>
                 </button>
-                <button onclick="openMilestoneModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white p-2 sm:px-3.5 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1.5" title="Nuevo Hito">
-                    <i class="fa-solid fa-flag text-xs sm:text-sm"></i>
-                    <span class="hidden sm:inline text-xs">Hito</span>
-                </button>
+                <button
+    data-permission="canEdit"
+    onclick="openMilestoneModal()"
+    class="bg-emerald-600 hover:bg-emerald-700 text-white p-2 sm:px-3.5 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1.5"
+    title="Nuevo Hito"
+>
+    <i class="fa-solid fa-flag text-xs sm:text-sm"></i>
+    <span class="hidden sm:inline text-xs">Hito</span>
+</button>
             </div>
         </div>
     </header>
@@ -192,7 +197,7 @@
         <!-- TAB 2: TIMELINE VIEW -->
         <div id="tab-timeline" class="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar hidden">
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-                
+
                 <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
@@ -257,9 +262,14 @@
                         <h2 class="text-base sm:text-lg font-bold text-slate-900">Hitos y Notas Registrados</h2>
                         <p class="text-xs text-slate-500">Muestra hitos independientes (🚩) y mini-hitos creados dentro de eventos (📌).</p>
                     </div>
-                    <button onclick="openMilestoneModal()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center">
-                        <i class="fa-solid fa-flag mr-1"></i> Añadir Hito Principal
-                    </button>
+                    <button
+    data-permission="canEdit"
+    onclick="openMilestoneModal()"
+    class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center"
+>
+    <i class="fa-solid fa-flag mr-1"></i>
+    Añadir Hito Principal
+</button>
                 </div>
                 <div id="milestonesListContainer" class="space-y-3"></div>
             </div>
@@ -350,7 +360,7 @@
                 <div class="border-t border-slate-200 pt-3 space-y-2">
                     <div class="flex items-center justify-between">
                         <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Mini Hitos del Evento</label>
-                        <button type="button" onclick="addSubMilestoneInput()" class="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold px-2.5 py-1 rounded-lg transition">
+                        <button id="eventAddSubMilestoneBtn" type="button" onclick="addSubMilestoneInput()" class="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold px-2.5 py-1 rounded-lg transition">
                             <i class="fa-solid fa-plus mr-1"></i> Añadir Sub-hito
                         </button>
                     </div>
@@ -359,7 +369,7 @@
 
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
                     <button type="button" onclick="closeEventModal()" class="px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Guardar Evento</button>
+                    <button id="eventSaveBtn" type="submit" class="px-4 py-2 text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Guardar Evento</button>
                 </div>
             </form>
         </div>
@@ -411,9 +421,16 @@
                 <button onclick="closeDayModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-4 sm:p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar" id="dayModalContent"></div>
-            <div class="px-5 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
-                <button onclick="quickAddEventOnDate()" class="text-indigo-600 hover:text-indigo-800 font-semibold"><i class="fa-solid fa-plus mr-1"></i> Añadir evento</button>
-                <button onclick="quickAddMilestoneOnDate()" class="text-emerald-600 hover:text-emerald-800 font-semibold"><i class="fa-solid fa-flag mr-1"></i> Añadir hito</button>
+                        <div
+                data-permission="canEdit"
+                class="hidden px-5 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
+                <button onclick="quickAddEventOnDate()" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+                    <i class="fa-solid fa-plus mr-1"></i> Añadir evento
+                </button>
+
+                <button onclick="quickAddMilestoneOnDate()" class="text-emerald-600 hover:text-emerald-800 font-semibold">
+                    <i class="fa-solid fa-flag mr-1"></i> Añadir hito
+                </button>
             </div>
         </div>
     </div>
@@ -422,7 +439,7 @@
 
     <!-- FIREBASE AND APP LOGIC -->
     <script type="module">
-        
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 import {
@@ -489,12 +506,83 @@ import {
         let currentUser = null;
         let currentRole = null;
         let forceLocalMode = false;
+        // ==========================================
+// CONTROL DE LISTENERS FIRESTORE
+// ==========================================
+
+let unsubscribeMemberListener = null;
+let unsubscribeEventsListener = null;
+let unsubscribeMilestonesListener = null;
+
+function stopDataListeners() {
+    if (unsubscribeEventsListener) {
+        unsubscribeEventsListener();
+        unsubscribeEventsListener = null;
+    }
+
+    if (unsubscribeMilestonesListener) {
+        unsubscribeMilestonesListener();
+        unsubscribeMilestonesListener = null;
+    }
+}
+
+function stopFirestoreListeners() {
+    if (unsubscribeMemberListener) {
+        unsubscribeMemberListener();
+        unsubscribeMemberListener = null;
+    }
+
+    stopDataListeners();
+}
+
+        // ==========================================
+// SISTEMA CENTRAL DE PERMISOS
+// ==========================================
+
+function hasPermission(permission) {
+    const permissions = {
+        owner: ['canRead', 'canEdit', 'canManageMembers'],
+        editor: ['canRead', 'canEdit'],
+        viewer: ['canRead']
+    };
+
+    return permissions[currentRole]?.includes(permission) === true;
+}
+
+function requirePermission(permission) {
+    if (!hasPermission(permission)) {
+        showToast(
+            'No tienes permisos para realizar esta operación.',
+            'error'
+        );
+        return false;
+    }
+
+    return true;
+}
+
+function updateRoleUI() {
+    const canEdit = hasPermission('canEdit');
+
+    document.querySelectorAll('[data-permission="canEdit"]')
+        .forEach(element => {
+            element.classList.toggle('hidden', !canEdit);
+        });
+
+    document.querySelectorAll('[data-permission="canManageMembers"]')
+        .forEach(element => {
+            element.classList.toggle(
+                'hidden',
+                !hasPermission('canManageMembers')
+            );
+        });
+}
 
         function getCurrentQuarterIndex() {
             const m = new Date().getMonth();
             return Math.floor(m / 3);
         }
-        
+
 function showAuthStatus(message) {
     const status = document.getElementById('authStatus');
     if (status) status.textContent = message;
@@ -541,6 +629,8 @@ async function checkUserMembership(user) {
 
     if (!memberSnapshot.exists()) {
         currentRole = null;
+        updateRoleUI();
+
         showAuthStatus('Tu cuenta todavía no está autorizada.');
         showUnauthorizedUser(user);
         return;
@@ -554,12 +644,17 @@ async function checkUserMembership(user) {
         !validRoles.includes(memberData.role)
     ) {
         currentRole = null;
+        updateRoleUI();
+
         showAuthStatus('Tu cuenta no tiene permisos de acceso.');
         showUnauthorizedUser(user);
         return;
     }
 
     currentRole = memberData.role;
+
+    // Aplicar los permisos correspondientes al rol confirmado.
+    updateRoleUI();
 
     document.getElementById('authUserInfo').classList.add('hidden');
     document.getElementById('authGate').classList.add('hidden');
@@ -574,7 +669,6 @@ async function checkUserMembership(user) {
         currentRole
     );
 }
-
 function initFirebase() {
     try {
         const app = initializeApp(firebaseConfig);
@@ -616,27 +710,36 @@ function initFirebase() {
             }
         });
 
-        onAuthStateChanged(auth, async (user) => {
-            currentUser = user;
-            currentRole = null;
+onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    currentRole = null;
 
-            if (!user) {
-                document.getElementById('authGate').classList.remove('hidden');
-                document.getElementById('authUserInfo').classList.add('hidden');
-                showAuthStatus('Identifícate con tu cuenta de Google.');
-                return;
-            }
+    // Restablecer inmediatamente los permisos visuales.
+    updateRoleUI();
 
-            try {
-                await checkUserMembership(user);
-            } catch (error) {
-                console.error('Error verificando membresía:', error);
-                document.getElementById('authGate').classList.remove('hidden');
-                showAuthStatus(
-                    'No se pudo verificar tu autorización. Inténtalo de nuevo.'
-                );
-            }
-        });
+    if (!user) {
+        document.getElementById('authGate').classList.remove('hidden');
+        document.getElementById('authUserInfo').classList.add('hidden');
+
+        showAuthStatus('Identifícate con tu cuenta de Google.');
+        return;
+    }
+
+    try {
+        await checkUserMembership(user);
+    } catch (error) {
+        console.error('Error verificando membresía:', error);
+
+        currentRole = null;
+        updateRoleUI();
+
+        document.getElementById('authGate').classList.remove('hidden');
+
+        showAuthStatus(
+            'No se pudo verificar tu autorización. Inténtalo de nuevo.'
+        );
+    }
+});
 
     } catch (error) {
         console.error('Error inicializando Firebase:', error);
@@ -644,7 +747,7 @@ function initFirebase() {
     }
 }
 
-       
+
 
         window.toggleStorageMode = function() {
             forceLocalMode = !forceLocalMode;
@@ -670,20 +773,85 @@ function initFirebase() {
             }
         }
 
-        function setupFirestoreListeners() {
-            if (!db) return;
-            onSnapshot(collection(db, 'events'), (snapshot) => {
-                window.eventsList = [];
-                snapshot.forEach(docSnap => window.eventsList.push({ id: docSnap.id, ...docSnap.data() }));
-                renderAll();
+  function setupFirestoreListeners() {
+    if (!db || !currentUser || !currentRole) return;
+
+    // Evitar listeners duplicados.
+    stopFirestoreListeners();
+
+    function handleListenerError(error, source) {
+        console.error(
+            `Error en listener de ${source}:`,
+            error
+        );
+
+        if (error.code === 'permission-denied') {
+            stopFirestoreListeners();
+
+            currentRole = null;
+            currentUser = null;
+
+            window.eventsList = [];
+            window.milestonesList = [];
+
+            updateRoleUI();
+            renderAll();
+
+            document.getElementById('authGate').classList.remove('hidden');
+            document.getElementById('authUserInfo').classList.add('hidden');
+
+            showAuthStatus(
+                'Se ha perdido la autorización para acceder a los datos.'
+            );
+
+            updateSyncUI('cloud', 'Acceso denegado');
+            return;
+        }
+
+        updateSyncUI('cloud', 'Error de sincronización');
+
+        showToast(
+            `Error al sincronizar ${source}.`,
+            'error'
+        );
+    }
+
+    // Escuchar eventos.
+    unsubscribeEventsListener = onSnapshot(
+        collection(db, 'events'),
+        (snapshot) => {
+            window.eventsList = [];
+
+            snapshot.forEach(docSnap => {
+                window.eventsList.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                });
             });
 
-            onSnapshot(collection(db, 'milestones'), (snapshot) => {
-                window.milestonesList = [];
-                snapshot.forEach(docSnap => window.milestonesList.push({ id: docSnap.id, ...docSnap.data() }));
-                renderAll();
+            renderAll();
+        },
+        (error) => handleListenerError(error, 'eventos')
+    );
+
+    // Escuchar hitos.
+    unsubscribeMilestonesListener = onSnapshot(
+        collection(db, 'milestones'),
+        (snapshot) => {
+            window.milestonesList = [];
+
+            snapshot.forEach(docSnap => {
+                window.milestonesList.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                });
             });
-        }
+
+            renderAll();
+        },
+        (error) => handleListenerError(error, 'hitos')
+    );
+}
 
         function loadLocalData() {
             window.eventsList = JSON.parse(localStorage.getItem('local_events') || '[]');
@@ -746,7 +914,7 @@ function initFirebase() {
         window.renderAll = function() {
             document.getElementById('currentYearLabel').textContent = window.currentYear;
             document.querySelectorAll('.timeline-year-label').forEach(el => el.textContent = window.currentYear);
-            
+
             renderColorPaletteUI();
             renderCalendarGrid();
             renderTimelineView();
@@ -772,8 +940,8 @@ function initFirebase() {
                 const mobBtn = document.getElementById(`mobTabBtn-${t}`);
                 if (el) el.classList.toggle('hidden', t !== tabName);
                 if (btn) {
-                    btn.className = t === tabName 
-                        ? 'px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-sm transition font-medium' 
+                    btn.className = t === tabName
+                        ? 'px-3 py-1.5 rounded-md bg-white text-indigo-600 shadow-sm transition font-medium'
                         : 'px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition font-medium';
                 }
                 if (mobBtn) {
@@ -787,11 +955,14 @@ function initFirebase() {
         function renderColorPaletteUI() {
             const container = document.getElementById('colorPaletteContainer');
             if (!container) return;
+
             const currentSelected = document.getElementById('eventColor').value || 'indigo';
-            
+
             container.innerHTML = window.colorPalette.map(c => `
-                <button type="button" onclick="selectPaletteColor('${c.id}')" 
-                        class="w-7 h-7 rounded-full flex items-center justify-center transition ${c.bg} ${currentSelected === c.id ? 'ring-4 ring-offset-2 ring-indigo-500 scale-110' : 'opacity-80 hover:opacity-100'}">
+                <button
+                    type="button"
+                    ${eventModalReadOnly ? 'disabled' : `onclick="selectPaletteColor('${c.id}')"` }
+                    class="w-7 h-7 rounded-full flex items-center justify-center transition ${c.bg} ${currentSelected === c.id ? 'ring-4 ring-offset-2 ring-indigo-500 scale-110' : 'opacity-80'} ${eventModalReadOnly ? 'cursor-default' : 'hover:opacity-100'}">
                     ${currentSelected === c.id ? '<i class="fa-solid fa-check text-white text-xs"></i>' : ''}
                 </button>
             `).join('');
@@ -835,7 +1006,7 @@ function initFirebase() {
 
                 const firstDay = new Date(window.currentYear, month, 1);
                 let startingDay = firstDay.getDay() - 1;
-                if (startingDay === -1) startingDay = 6; 
+                if (startingDay === -1) startingDay = 6;
                 const daysInMonth = new Date(window.currentYear, month + 1, 0).getDate();
 
                 for (let i = 0; i < startingDay; i++) daysGrid += `<div class="h-14 sm:h-16"></div>`;
@@ -905,7 +1076,7 @@ function initFirebase() {
 
             const isLeap = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
             const totalDays = isLeap(window.currentYear) ? 366 : 365;
-            const pxPerDay = 10; 
+            const pxPerDay = 10;
             const totalWidthPx = totalDays * pxPerDay;
 
             document.getElementById('timelineDayRuleWrapper').style.width = `${totalWidthPx}px`;
@@ -942,8 +1113,8 @@ function initFirebase() {
                 const durationPx = Math.max(12, (endDayIdx - startDayIdx) * pxPerDay);
                 const col = getColorObj(evt.color);
 
-                labelsHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 h-2.5 rounded-full border border-white/60 opacity-90 shadow-xs z-20" 
-                                    style="left: ${startPx}px; width: ${durationPx}px; background-color: ${col.hex};" 
+                labelsHtml += `<div class="absolute top-1/2 transform -translate-y-1/2 h-2.5 rounded-full border border-white/60 opacity-90 shadow-xs z-20"
+                                    style="left: ${startPx}px; width: ${durationPx}px; background-color: ${col.hex};"
                                     title="${evt.eventTitle} (${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)})"></div>`;
             });
 
@@ -995,13 +1166,13 @@ function initFirebase() {
 
                         <!-- Bloque Rectangular Vertical (180px alto) -->
                         <div onclick="toggleTouchTooltip(this)" tabIndex="0"
-                             class="absolute ${count > 1 ? '-top-[250px]' : '-top-[230px]'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20" 
+                             class="absolute ${count > 1 ? '-top-[250px]' : '-top-[230px]'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20"
                              style="left: ${offset}px; width: ${blockWidth}px; height: 180px; background-color: ${col.hex};">
-                            
+
                             <span class="text-[9px] font-black uppercase tracking-tighter bg-white/20 px-1 py-0.5 rounded text-center w-full">
                                 ${isStart ? 'INI' : 'FIN'}
                             </span>
-                            
+
                             <!-- Texto Vertical Ampliado -->
                             <div class="vertical-text text-xs font-bold tracking-wider my-auto text-center overflow-hidden max-h-[125px]">
                                 ${abbrev} - ${item.evt.eventTitle}
@@ -1092,13 +1263,13 @@ function initFirebase() {
 
                         <!-- Bloque Rectangular Vertical Inferior (180px alto) -->
                         <div onclick="toggleTouchTooltip(this)" tabIndex="0"
-                             class="absolute ${count > 1 ? 'top-16' : 'top-12'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20" 
+                             class="absolute ${count > 1 ? 'top-16' : 'top-12'} transform -translate-x-1/2 has-tooltip cursor-pointer z-20 flex flex-col items-center justify-between p-2 rounded-xl text-white shadow-md border border-white/20"
                              style="left: ${offset}px; width: ${blockWidth}px; height: 180px; background-color: ${item.colorHex};">
-                            
+
                             <span class="text-[9px] font-black uppercase tracking-tighter bg-white/20 px-1 py-0.5 rounded text-center w-full">
                                 ${isMain ? '🚩' : '📌'}
                             </span>
-                            
+
                             <div class="vertical-text text-xs font-bold tracking-wider my-auto text-center overflow-hidden max-h-[125px]">
                                 ${item.abbrev} - ${item.title}
                             </div>
@@ -1131,9 +1302,9 @@ function initFirebase() {
             const container = document.getElementById('quarterSelectorButtons');
             if (!container) return;
             const qNames = ['Q1 (Ene-Mar)', 'Q2 (Abr-Jun)', 'Q3 (Jul-Sep)', 'Q4 (Oct-Dic)'];
-            
+
             container.innerHTML = qNames.map((name, idx) => `
-                <button onclick="setQuarter(${idx})" 
+                <button onclick="setQuarter(${idx})"
                         class="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition ${window.selectedQuarter === idx ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
                     ${name}
                 </button>
@@ -1171,7 +1342,7 @@ function initFirebase() {
             activeEventsInQ.forEach(evt => {
                 const col = getColorObj(evt.color);
                 const subHitosInQ = (evt.subMilestones || []).filter(sm => sm.date >= qStartStr && sm.date <= qEndStr);
-                
+
                 let subHitosListHtml = '';
                 if (subHitosInQ.length > 0) {
                     subHitosListHtml = `<div class="mt-3 pt-3 border-t border-slate-200/80 space-y-1.5">
@@ -1225,8 +1396,16 @@ function initFirebase() {
             if (!container) return;
 
             const searchTerm = (document.getElementById('repoSearchInput')?.value || '').toLowerCase();
-            const filteredEvents = window.eventsList.filter(e => (e.eventTitle || '').toLowerCase().includes(searchTerm) || (e.abbrev || '').toLowerCase().includes(searchTerm));
-            const filteredMilestones = window.milestonesList.filter(m => (m.milestoneTitle || '').toLowerCase().includes(searchTerm) || (m.abbrev || '').toLowerCase().includes(searchTerm));
+
+            const filteredEvents = window.eventsList.filter(e =>
+                (e.eventTitle || '').toLowerCase().includes(searchTerm) ||
+                (e.abbrev || '').toLowerCase().includes(searchTerm)
+            );
+
+            const filteredMilestones = window.milestonesList.filter(m =>
+                (m.milestoneTitle || '').toLowerCase().includes(searchTerm) ||
+                (m.abbrev || '').toLowerCase().includes(searchTerm)
+            );
 
             if (filteredEvents.length === 0 && filteredMilestones.length === 0) {
                 container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No se encontraron registros.</div>`;
@@ -1234,8 +1413,10 @@ function initFirebase() {
             }
 
             let html = '';
+
             filteredEvents.forEach(evt => {
                 const col = getColorObj(evt.color);
+
                 html += `<div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div class="space-y-1">
                         <div class="flex items-center space-x-2">
@@ -1245,9 +1426,20 @@ function initFirebase() {
                         </div>
                         <p class="text-xs text-slate-500"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
                     </div>
+
                     <div class="flex items-center space-x-2 self-end sm:self-auto">
-                        <button onclick="editEvent('${evt.id}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-pen mr-1"></i> Editar</button>
-                        <button onclick="deleteEventStore('${evt.id}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
+                        ${hasPermission('canEdit') ? `
+                            <button onclick="editEvent('${evt.id}')" class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition">
+                                <i class="fa-solid fa-pen mr-1"></i> Editar
+                            </button>
+                            <button onclick="deleteEventStore('${evt.id}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition">
+                                <i class="fa-solid fa-trash mr-1"></i> Borrar
+                            </button>
+                        ` : `
+                            <button onclick="viewEvent('${evt.id}')" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-semibold transition">
+                                <i class="fa-solid fa-eye mr-1"></i> Consultar
+                            </button>
+                        `}
                     </div>
                 </div>`;
             });
@@ -1262,10 +1454,17 @@ function initFirebase() {
                         </div>
                         <p class="text-xs text-slate-600"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(ms.milestoneDate)} - ${ms.milestoneComment}</p>
                     </div>
-                    <div class="flex items-center space-x-2 self-end sm:self-auto">
-                        <button onclick="editMilestone('${ms.id}')" class="px-2.5 py-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-pen mr-1"></i> Editar</button>
-                        <button onclick="deleteMilestoneStore('${ms.id}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
-                    </div>
+
+                    ${hasPermission('canEdit') ? `
+                        <div class="flex items-center space-x-2 self-end sm:self-auto">
+                            <button onclick="editMilestone('${ms.id}')" class="px-2.5 py-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded-lg text-xs font-semibold transition">
+                                <i class="fa-solid fa-pen mr-1"></i> Editar
+                            </button>
+                            <button onclick="deleteMilestoneStore('${ms.id}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition">
+                                <i class="fa-solid fa-trash mr-1"></i> Borrar
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>`;
             });
 
@@ -1277,22 +1476,35 @@ function initFirebase() {
             if (!container) return;
 
             const mainMilestones = window.milestonesList.map(m => ({
-                id: m.id, type: 'main', title: m.milestoneTitle, date: m.milestoneDate, comment: m.milestoneComment, abbrev: m.abbrev
+                id: m.id,
+                type: 'main',
+                title: m.milestoneTitle,
+                date: m.milestoneDate,
+                comment: m.milestoneComment,
+                abbrev: m.abbrev
             }));
 
             const eventSubMilestones = [];
+
             window.eventsList.forEach(evt => {
                 (evt.subMilestones || []).forEach(sm => {
                     if (sm.title && sm.date) {
                         eventSubMilestones.push({
-                            id: evt.id, type: 'sub', title: sm.title, date: sm.date,
-                            comment: `Mini-hito dentro del evento: "${evt.eventTitle}"`, parentEventId: evt.id, completed: sm.completed, abbrev: evt.abbrev
+                            id: evt.id,
+                            type: 'sub',
+                            title: sm.title,
+                            date: sm.date,
+                            comment: `Mini-hito dentro del evento: "${evt.eventTitle}"`,
+                            parentEventId: evt.id,
+                            completed: sm.completed,
+                            abbrev: evt.abbrev
                         });
                     }
                 });
             });
 
-            const combined = [...mainMilestones, ...eventSubMilestones].sort((a, b) => a.date.localeCompare(b.date));
+            const combined = [...mainMilestones, ...eventSubMilestones]
+                .sort((a, b) => a.date.localeCompare(b.date));
 
             if (combined.length === 0) {
                 container.innerHTML = `<div class="text-center py-12 text-slate-400 text-sm">No hay hitos ni notas registradas.</div>`;
@@ -1313,10 +1525,17 @@ function initFirebase() {
                                 <p class="text-xs text-slate-600 mt-0.5">${item.comment}</p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-1 self-end sm:self-auto">
-                            <button onclick="editMilestone('${item.id}')" class="p-2 text-slate-400 hover:text-emerald-600"><i class="fa-solid fa-pen text-xs"></i></button>
-                            <button onclick="deleteMilestoneStore('${item.id}')" class="p-2 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>
+
+                        ${hasPermission('canEdit') ? `
+                            <div class="flex items-center space-x-1 self-end sm:self-auto">
+                                <button onclick="editMilestone('${item.id}')" class="p-2 text-slate-400 hover:text-emerald-600">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteMilestoneStore('${item.id}')" class="p-2 text-slate-400 hover:text-red-600">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>`;
                 } else {
                     return `<div class="flex flex-col sm:flex-row sm:items-start justify-between p-4 rounded-xl border border-amber-200 wooden-badge shadow-xs gap-3">
@@ -1331,26 +1550,50 @@ function initFirebase() {
                                 <p class="text-xs text-amber-900/80 mt-0.5">${item.comment}</p>
                             </div>
                         </div>
+
                         <div class="flex items-center space-x-1 self-end sm:self-auto">
-                            <button onclick="editEvent('${item.parentEventId}')" class="px-3 py-1.5 bg-amber-200/90 text-amber-950 rounded-lg text-xs font-bold hover:bg-amber-300 transition">Ver Evento</button>
+                            <button onclick="viewEvent('${item.parentEventId}')" class="px-3 py-1.5 bg-amber-200/90 text-amber-950 rounded-lg text-xs font-bold hover:bg-amber-300 transition">
+                                Ver Evento
+                            </button>
                         </div>
                     </div>`;
                 }
             }).join('');
         }
-
-        window.addSubMilestoneInput = function(title = '', date = '', completed = false) {
+        window.addSubMilestoneInput = function(title = '', date = '', completed = false, readOnly = false) {
             const container = document.getElementById('subMilestonesContainer');
             const div = document.createElement('div');
+
             div.className = 'flex items-center space-x-2 bg-slate-50 p-2 rounded-lg border border-slate-200 sub-milestone-row';
+
             div.innerHTML = `
-                <input type="checkbox" ${completed ? 'checked' : ''} class="sub-ms-complete rounded text-indigo-600 shrink-0">
-                <input type="text" value="${title}" placeholder="Título del mini hito" class="sub-ms-title flex-1 px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none min-w-0">
-                <input type="date" value="${date}" class="sub-ms-date text-xs border border-slate-300 rounded px-1 py-1 focus:outline-none shrink-0">
-                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 px-1 text-xs shrink-0"><i class="fa-solid fa-xmark"></i></button>
-            `;
-            container.appendChild(div);
-        }
+                <input type="checkbox"
+                ${completed ? 'checked' : ''}
+                ${readOnly ? 'disabled' : ''}
+                class="sub-ms-complete rounded text-indigo-600 shrink-0">
+
+            <input type="text"
+                value="${title}"
+                placeholder="Título del mini hito"
+                ${readOnly ? 'disabled' : ''}
+                class="sub-ms-title flex-1 px-2 py-1 text-xs border border-slate-300 rounded focus:outline-none min-w-0">
+
+            <input type="date"
+                value="${date}"
+                ${readOnly ? 'disabled' : ''}
+                class="sub-ms-date text-xs border border-slate-300 rounded px-1 py-1 focus:outline-none shrink-0">
+
+            ${readOnly ? '' : `
+                <button type="button"
+                    onclick="this.parentElement.remove()"
+                    class="text-red-500 hover:text-red-700 px-1 text-xs shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `}
+        `;
+
+        container.appendChild(div);
+    }
 
         function getSubMilestonesFromForm() {
             const rows = document.querySelectorAll('.sub-milestone-row');
@@ -1366,9 +1609,10 @@ function initFirebase() {
 
 
 window.saveEventToStore = async function(eventData) {
+    if (!requirePermission('canEdit')) return false;
     if (!db || !currentUser || !currentRole) {
         showToast('No hay una sesión colaborativa válida.', 'error');
-        return;
+        return false;
     }
 
     try {
@@ -1378,9 +1622,11 @@ window.saveEventToStore = async function(eventData) {
         await setDoc(doc(db, 'events', id), dataToSave);
 
         showToast('Evento guardado correctamente', 'success');
+        return true;
     } catch (err) {
         console.error('Error guardando evento:', err);
         showToast('No se pudo guardar el evento en la nube.', 'error');
+        return false;
     }
 }
 
@@ -1394,17 +1640,20 @@ function saveEventLocal(eventData) {
 }
 
 window.deleteEventStore = async function(id) {
+    if (!requirePermission('canEdit')) return false;
     if (!db || !currentUser || !currentRole) {
         showToast('No hay una sesión colaborativa válida.', 'error');
-        return;
+        return false;
     }
 
     try {
         await deleteDoc(doc(db, 'events', id));
         showToast('Evento eliminado', 'info');
+        return true;
     } catch (err) {
         console.error('Error eliminando evento:', err);
         showToast('No se pudo eliminar el evento de la nube.', 'error');
+        return false;
     }
 }
 
@@ -1415,9 +1664,10 @@ function deleteEventLocal(id) {
 }
 
 window.saveMilestoneStore = async function(milestoneData) {
+    if (!requirePermission('canEdit')) return false;
     if (!db || !currentUser || !currentRole) {
         showToast('No hay una sesión colaborativa válida.', 'error');
-        return;
+        return false;
     }
 
     try {
@@ -1427,9 +1677,11 @@ window.saveMilestoneStore = async function(milestoneData) {
         await setDoc(doc(db, 'milestones', id), dataToSave);
 
         showToast('Hito guardado correctamente', 'success');
+        return true;
     } catch (err) {
         console.error('Error guardando hito:', err);
         showToast('No se pudo guardar el hito en la nube.', 'error');
+        return false;
     }
 }
 
@@ -1443,17 +1695,20 @@ function saveMilestoneLocal(milestoneData) {
 }
 
 window.deleteMilestoneStore = async function(id) {
+    if (!requirePermission('canEdit')) return false;
     if (!db || !currentUser || !currentRole) {
         showToast('No hay una sesión colaborativa válida.', 'error');
-        return;
+        return false;
     }
 
     try {
         await deleteDoc(doc(db, 'milestones', id));
         showToast('Hito eliminado', 'info');
+        return true;
     } catch (err) {
         console.error('Error eliminando hito:', err);
         showToast('No se pudo eliminar el hito de la nube.', 'error');
+        return false;
     }
 }
 
@@ -1462,13 +1717,51 @@ function deleteMilestoneLocal(id) {
     localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
     renderAll();
 }
+        window.closeEventModal = () => {
+            document.getElementById('eventModal').classList.add('hidden');
+            eventModalReadOnly = false;
+        };
+        let eventModalReadOnly = false;
 
+function setEventModalReadOnly(readOnly) {
+    eventModalReadOnly = readOnly;
 
+    const form = document.getElementById('eventForm');
+    if (!form) return;
 
-        window.openConfigModal = () => document.getElementById('configModal').classList.remove('hidden');
-        window.closeConfigModal = () => document.getElementById('configModal').classList.add('hidden');
+    // Bloquear todos los campos editables del formulario.
+    form.querySelectorAll(
+        'input:not([type="hidden"]), textarea, select'
+    ).forEach(control => {
+        control.disabled = readOnly;
+    });
 
+    // Ocultar las acciones para añadir mini-hitos.
+    const addSubMilestoneBtn = document.getElementById('eventAddSubMilestoneBtn');
+    if (addSubMilestoneBtn) {
+        addSubMilestoneBtn.classList.toggle('hidden', readOnly);
+    }
+
+    // Ocultar el botón de guardar.
+    const saveBtn = document.getElementById('eventSaveBtn');
+    if (saveBtn) {
+        saveBtn.classList.toggle('hidden', readOnly);
+    }
+
+    // Actualizar el título.
+    const modalTitle = document.getElementById('eventModalTitle');
+    if (modalTitle) {
+        modalTitle.textContent = readOnly
+            ? 'Consultar Evento'
+            : 'Editar Evento';
+    }
+
+    // Actualizar la paleta de colores.
+    renderColorPaletteUI();
+}
         window.openEventModal = function(presetDate = null) {
+            if (!requirePermission('canEdit')) return;
+            setEventModalReadOnly(false);
             document.getElementById('eventId').value = '';
             document.getElementById('eventTitle').value = '';
             document.getElementById('eventAbbrev').value = '';
@@ -1482,11 +1775,17 @@ function deleteMilestoneLocal(id) {
             renderColorPaletteUI();
             document.getElementById('eventModal').classList.remove('hidden');
         }
-        window.closeEventModal = () => document.getElementById('eventModal').classList.add('hidden');
 
-        window.editEvent = function(id) {
+        function openEventDetails(id, readOnly) {
+            const permission = readOnly ? 'canRead' : 'canEdit';
+
+            if (!requirePermission(permission)) return;
+
             const evt = window.eventsList.find(e => e.id === id);
             if (!evt) return;
+
+            setEventModalReadOnly(readOnly);
+
             document.getElementById('eventId').value = evt.id;
             document.getElementById('eventTitle').value = evt.eventTitle;
             document.getElementById('eventAbbrev').value = evt.abbrev || '';
@@ -1495,37 +1794,63 @@ function deleteMilestoneLocal(id) {
             document.getElementById('eventColor').value = evt.color || 'indigo';
             document.getElementById('eventCategory').value = evt.category || '';
             document.getElementById('eventDesc').value = evt.description || '';
-            
+
             const container = document.getElementById('subMilestonesContainer');
             container.innerHTML = '';
-            (evt.subMilestones || []).forEach(sm => addSubMilestoneInput(sm.title, sm.date, sm.completed));
 
-            document.getElementById('eventModalTitle').textContent = 'Editar Evento';
+            (evt.subMilestones || []).forEach(sm => {
+                addSubMilestoneInput(
+                    sm.title,
+                    sm.date,
+                    sm.completed,
+                    readOnly
+                );
+            });
+
+            document.getElementById('eventModalTitle').textContent =
+                readOnly ? 'Consultar Evento' : 'Editar Evento';
+
             renderColorPaletteUI();
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        window.handleEventSubmit = function(e) {
-            e.preventDefault();
-            const title = document.getElementById('eventTitle').value;
-            let abbrev = document.getElementById('eventAbbrev').value.trim().toUpperCase();
-            if (!abbrev) abbrev = title.substring(0, 3).toUpperCase();
+        window.editEvent = function(id) {
+            openEventDetails(id, false);
+        };
 
-            saveEventToStore({
-                id: document.getElementById('eventId').value || undefined,
-                eventTitle: title,
-                abbrev: abbrev,
-                eventStart: document.getElementById('eventStart').value,
-                eventEnd: document.getElementById('eventEnd').value,
-                color: document.getElementById('eventColor').value,
-                category: document.getElementById('eventCategory').value,
-                description: document.getElementById('eventDesc').value,
-                subMilestones: getSubMilestonesFromForm()
-            });
+        window.viewEvent = function(id) {
+            openEventDetails(id, true);
+        };
+
+        window.handleEventSubmit = async function(e) {
+        if (!requirePermission('canEdit')) return;
+
+        e.preventDefault();
+
+        const title = document.getElementById('eventTitle').value;
+        let abbrev = document.getElementById('eventAbbrev').value.trim().toUpperCase();
+
+        if (!abbrev) abbrev = title.substring(0, 3).toUpperCase();
+
+        const saved = await saveEventToStore({
+            id: document.getElementById('eventId').value || undefined,
+            eventTitle: title,
+            abbrev: abbrev,
+            eventStart: document.getElementById('eventStart').value,
+            eventEnd: document.getElementById('eventEnd').value,
+            color: document.getElementById('eventColor').value,
+            category: document.getElementById('eventCategory').value,
+            description: document.getElementById('eventDesc').value,
+            subMilestones: getSubMilestonesFromForm()
+        });
+
+        if (saved) {
             closeEventModal();
         }
+    }
 
         window.openMilestoneModal = function(presetDate = null) {
+            if (!requirePermission('canEdit')) return;
             document.getElementById('milestoneId').value = '';
             document.getElementById('milestoneTitle').value = '';
             document.getElementById('milestoneAbbrev').value = '';
@@ -1537,6 +1862,7 @@ function deleteMilestoneLocal(id) {
         window.closeMilestoneModal = () => document.getElementById('milestoneModal').classList.add('hidden');
 
         window.editMilestone = function(id) {
+            if (!requirePermission('canEdit')) return;
             const ms = window.milestonesList.find(m => m.id === id);
             if (!ms) return;
             document.getElementById('milestoneId').value = ms.id;
@@ -1547,22 +1873,28 @@ function deleteMilestoneLocal(id) {
             document.getElementById('milestoneModalTitle').textContent = 'Editar Hito';
             document.getElementById('milestoneModal').classList.remove('hidden');
         }
+    window.handleMilestoneSubmit = async function(e) {
+        if (!requirePermission('canEdit')) return;
 
-        window.handleMilestoneSubmit = function(e) {
-            e.preventDefault();
-            const title = document.getElementById('milestoneTitle').value;
-            let abbrev = document.getElementById('milestoneAbbrev').value.trim().toUpperCase();
-            if (!abbrev) abbrev = title.substring(0, 3).toUpperCase();
+        e.preventDefault();
 
-            saveMilestoneStore({
-                id: document.getElementById('milestoneId').value || undefined,
-                milestoneTitle: title,
-                abbrev: abbrev,
-                milestoneDate: document.getElementById('milestoneDate').value,
-                milestoneComment: document.getElementById('milestoneComment').value
-            });
+        const title = document.getElementById('milestoneTitle').value;
+        let abbrev = document.getElementById('milestoneAbbrev').value.trim().toUpperCase();
+
+        if (!abbrev) abbrev = title.substring(0, 3).toUpperCase();
+
+        const saved = await saveMilestoneStore({
+            id: document.getElementById('milestoneId').value || undefined,
+            milestoneTitle: title,
+            abbrev: abbrev,
+            milestoneDate: document.getElementById('milestoneDate').value,
+            milestoneComment: document.getElementById('milestoneComment').value
+        });
+
+        if (saved) {
             closeMilestoneModal();
         }
+    };
 
         window.openDayDetails = function(dateStr) {
             window.selectedDateForModal = dateStr;
@@ -1593,10 +1925,12 @@ function deleteMilestoneLocal(id) {
                         <span class="text-[10px] px-2 py-0.5 rounded font-bold ${col.badge}">${evt.category || 'Evento'}</span>
                     </div>
                     <p class="text-xs text-slate-500">${formatDisplayDate(evt.eventStart)} al ${formatDisplayDate(evt.eventEnd)}</p>
+                    ${hasPermission('canEdit') ? `
                     <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
                         <button onclick="closeDayModal(); editEvent('${evt.id}');" class="text-xs text-indigo-600 font-semibold"><i class="fa-solid fa-pen mr-1"></i>Editar</button>
                         <button onclick="closeDayModal(); deleteEventStore('${evt.id}');" class="text-xs text-red-500 font-semibold"><i class="fa-solid fa-trash mr-1"></i>Borrar</button>
                     </div>
+                    ` : ''}
                 </div>`;
             });
 
@@ -1607,10 +1941,12 @@ function deleteMilestoneLocal(id) {
                             <span class="px-2 py-0.5 rounded text-[10px] font-extrabold text-white uppercase bg-emerald-700">${ms.abbrev || 'HIT'}</span>
                             <span class="font-bold text-emerald-900 text-sm">🚩 ${ms.milestoneTitle}</span>
                         </div>
+                        ${hasPermission('canEdit') ? `
                         <div class="space-x-1">
                             <button onclick="closeDayModal(); editMilestone('${ms.id}');" class="text-xs text-slate-600"><i class="fa-solid fa-pen"></i></button>
                             <button onclick="closeDayModal(); deleteMilestoneStore('${ms.id}');" class="text-xs text-red-500"><i class="fa-solid fa-trash"></i></button>
                         </div>
+                        ` : ''}
                     </div>
                     <p class="text-xs text-slate-600">${ms.milestoneComment}</p>
                 </div>`;
@@ -1620,7 +1956,7 @@ function deleteMilestoneLocal(id) {
                 contentHtml += `<div class="p-3 rounded-xl border border-amber-200 wooden-badge space-y-1 mb-2">
                     <div class="flex justify-between items-center">
                         <span class="font-bold text-amber-950 text-sm">📌 Mini-Hito: ${sm.title}</span>
-                        <button onclick="closeDayModal(); editEvent('${sm.parentEventId}');" class="text-xs font-bold text-amber-900">Ver Evento</button>
+                        <button onclick="closeDayModal(); viewEvent('${sm.parentEventId}');" class="text-xs font-bold text-amber-900">Ver Evento</button>
                     </div>
                     <p class="text-xs text-amber-900/80">Pertenece al evento: <strong>${sm.parentTitle}</strong></p>
                 </div>`;
