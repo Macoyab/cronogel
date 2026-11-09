@@ -128,18 +128,13 @@
             </div>
 
             <div class="flex items-center space-x-1.5 sm:space-x-2">
-                <button id="syncStatusBtn" onclick="toggleStorageMode()" title="Estado de Sincronización" class="hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium">
+                <span id="syncStatusBtn" title="Estado de sincronización" aria-live="polite" class="hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium">
                     <i class="fa-solid fa-rotate mr-1 animate-spin"></i> Conectando...
-                </button>
+                </span>
                 <button onclick="exportJSONData()" class="bg-slate-600 hover:bg-slate-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1" title="Exportar JSON">
                     <i class="fa-solid fa-download text-xs sm:text-sm"></i>
                     <span class="hidden lg:inline text-xs">Exportar</span>
                 </button>
-                <button onclick="triggerImportJSON()" class="bg-slate-600 hover:bg-slate-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1" title="Importar JSON">
-                    <i class="fa-solid fa-upload text-xs sm:text-sm"></i>
-                    <span class="hidden lg:inline text-xs">Importar</span>
-                </button>
-                <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSONData(event)">
 
                 <!-- NUEVO BOTÓN DE AYUDA / GUÍA -->
                 <a href="guia.html" target="_blank" class="bg-slate-600 hover:bg-slate-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1" title="Ver Guía de Usuario">
@@ -505,7 +500,10 @@ import {
         let auth = null;
         let currentUser = null;
         let currentRole = null;
-        let forceLocalMode = false;
+
+        // Estado de carga inicial de los datos de Firestore.
+        let firestoreEventsReady = false;
+        let firestoreMilestonesReady = false;
         // ==========================================
 // CONTROL DE LISTENERS FIRESTORE
 // ==========================================
@@ -524,6 +522,9 @@ function stopDataListeners() {
         unsubscribeMilestonesListener();
         unsubscribeMilestonesListener = null;
     }
+
+    firestoreEventsReady = false;
+    firestoreMilestonesReady = false;
 }
 
 function stopFirestoreListeners() {
@@ -659,7 +660,6 @@ async function checkUserMembership(user) {
     document.getElementById('authUserInfo').classList.add('hidden');
     document.getElementById('authGate').classList.add('hidden');
 
-    loadLocalData();
 
     updateSyncUI('cloud', 'Firebase Conectado');
     setupFirestoreListeners();
@@ -711,17 +711,23 @@ function initFirebase() {
         });
 
 onAuthStateChanged(auth, async (user) => {
+    // Evitar conservar datos o listeners de una sesión anterior.
+    stopFirestoreListeners();
+    window.eventsList = [];
+    window.milestonesList = [];
+
     currentUser = user;
     currentRole = null;
 
-    // Restablecer inmediatamente los permisos visuales.
     updateRoleUI();
+    renderAll();
 
     if (!user) {
         document.getElementById('authGate').classList.remove('hidden');
         document.getElementById('authUserInfo').classList.add('hidden');
 
         showAuthStatus('Identifícate con tu cuenta de Google.');
+        updateSyncUI('cloud', 'Sin sesión');
         return;
     }
 
@@ -730,14 +736,21 @@ onAuthStateChanged(auth, async (user) => {
     } catch (error) {
         console.error('Error verificando membresía:', error);
 
+        stopFirestoreListeners();
+        window.eventsList = [];
+        window.milestonesList = [];
+
         currentRole = null;
         updateRoleUI();
+        renderAll();
 
         document.getElementById('authGate').classList.remove('hidden');
+        document.getElementById('authUserInfo').classList.add('hidden');
 
         showAuthStatus(
             'No se pudo verificar tu autorización. Inténtalo de nuevo.'
         );
+        updateSyncUI('cloud', 'Error de autorización');
     }
 });
 
@@ -746,38 +759,28 @@ onAuthStateChanged(auth, async (user) => {
         showAuthStatus('No se pudo conectar con Firebase.');
     }
 }
-
-
-
-        window.toggleStorageMode = function() {
-            forceLocalMode = !forceLocalMode;
-            localStorage.setItem('force_local_mode', forceLocalMode);
-            showToast(forceLocalMode ? 'Modo Local activado' : 'Conectando a Firebase...', 'info');
-            setTimeout(() => location.reload(), 400);
-        }
-
-        function setLocalModeUI() {
-            db = null;
-            updateSyncUI('local', 'Modo Local');
-        }
-
         function updateSyncUI(mode, label) {
             const btn = document.getElementById('syncStatusBtn');
             if (!btn) return;
-            if (mode === 'cloud') {
-                btn.innerHTML = `<i class="fa-solid fa-circle text-emerald-500 mr-1.5 text-[8px]"></i> ${label}`;
-                btn.className = "hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium cursor-pointer";
-            } else {
-                btn.innerHTML = `<i class="fa-solid fa-hard-drive text-amber-500 mr-1.5 text-xs"></i> ${label}`;
-                btn.className = "hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium cursor-pointer";
-            }
+
+            const isConnected = mode === 'cloud' && label === 'Firebase Conectado';
+            const color = isConnected
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200';
+
+            const icon = isConnected
+                ? 'fa-circle text-emerald-500'
+                : 'fa-triangle-exclamation text-amber-500';
+
+            btn.innerHTML = `<i class="fa-solid ${icon} mr-1.5 text-[8px]"></i> ${label}`;
+            btn.className = `hidden xl:inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-medium ${color}`;
         }
 
   function setupFirestoreListeners() {
     if (!db || !currentUser || !currentRole) return;
 
     // Evitar listeners duplicados.
-    stopFirestoreListeners();
+    stopDataListeners();
 
     function handleListenerError(error, source) {
         console.error(
@@ -786,10 +789,10 @@ onAuthStateChanged(auth, async (user) => {
         );
 
         if (error.code === 'permission-denied') {
-            stopFirestoreListeners();
+            stopDataListeners();
 
+            // La identidad Firebase sigue autenticada; solo se pierde la autorización.
             currentRole = null;
-            currentUser = null;
 
             window.eventsList = [];
             window.milestonesList = [];
@@ -808,6 +811,16 @@ onAuthStateChanged(auth, async (user) => {
             return;
         }
 
+        // Invalidar la exportación si cualquiera de los listeners falla.
+        if (source === 'eventos') {
+            firestoreEventsReady = false;
+            window.eventsList = [];
+        } else if (source === 'hitos') {
+            firestoreMilestonesReady = false;
+            window.milestonesList = [];
+        }
+
+        renderAll();
         updateSyncUI('cloud', 'Error de sincronización');
 
         showToast(
@@ -829,6 +842,7 @@ onAuthStateChanged(auth, async (user) => {
                 });
             });
 
+            firestoreEventsReady = true;
             renderAll();
         },
         (error) => handleListenerError(error, 'eventos')
@@ -847,19 +861,27 @@ onAuthStateChanged(auth, async (user) => {
                 });
             });
 
+            firestoreMilestonesReady = true;
             renderAll();
         },
         (error) => handleListenerError(error, 'hitos')
     );
 }
 
-        function loadLocalData() {
-            window.eventsList = JSON.parse(localStorage.getItem('local_events') || '[]');
-            window.milestonesList = JSON.parse(localStorage.getItem('local_milestones') || '[]');
-            renderAll();
-        }
-
         window.exportJSONData = function() {
+            if (
+                !currentUser ||
+                !currentRole ||
+                !firestoreEventsReady ||
+                !firestoreMilestonesReady
+            ) {
+                showToast(
+                    'No se puede exportar: la sesión o la carga de datos no está lista.',
+                    'error'
+                );
+                return;
+            }
+
             const data = {
                 events: window.eventsList,
                 milestones: window.milestonesList,
@@ -874,34 +896,6 @@ onAuthStateChanged(auth, async (user) => {
             a.click();
             URL.revokeObjectURL(url);
             showToast('Backup JSON exportado', 'success');
-        }
-
-        window.triggerImportJSON = function() {
-            document.getElementById('jsonFileInput').click();
-        }
-
-        window.importJSONData = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.events && Array.isArray(data.events)) {
-                        window.eventsList = data.events;
-                        localStorage.setItem('local_events', JSON.stringify(data.events));
-                    }
-                    if (data.milestones && Array.isArray(data.milestones)) {
-                        window.milestonesList = data.milestones;
-                        localStorage.setItem('local_milestones', JSON.stringify(data.milestones));
-                    }
-                    renderAll();
-                    showToast('Datos importados correctamente', 'success');
-                } catch(err) {
-                    showToast('Error al leer el archivo JSON', 'error');
-                }
-            };
-            reader.readAsText(file);
         }
 
         window.toggleTouchTooltip = function(el) {
@@ -1630,14 +1624,6 @@ window.saveEventToStore = async function(eventData) {
     }
 }
 
-function saveEventLocal(eventData) {
-    if (!eventData.id) eventData.id = 'evt_' + Date.now();
-    const idx = window.eventsList.findIndex(e => e.id === eventData.id);
-    if (idx !== -1) window.eventsList[idx] = eventData;
-    else window.eventsList.push(eventData);
-    localStorage.setItem('local_events', JSON.stringify(window.eventsList));
-    renderAll();
-}
 
 window.deleteEventStore = async function(id) {
     if (!requirePermission('canEdit')) return false;
@@ -1657,11 +1643,6 @@ window.deleteEventStore = async function(id) {
     }
 }
 
-function deleteEventLocal(id) {
-    window.eventsList = window.eventsList.filter(e => e.id !== id);
-    localStorage.setItem('local_events', JSON.stringify(window.eventsList));
-    renderAll();
-}
 
 window.saveMilestoneStore = async function(milestoneData) {
     if (!requirePermission('canEdit')) return false;
@@ -1685,14 +1666,6 @@ window.saveMilestoneStore = async function(milestoneData) {
     }
 }
 
-function saveMilestoneLocal(milestoneData) {
-    if (!milestoneData.id) milestoneData.id = 'ms_' + Date.now();
-    const idx = window.milestonesList.findIndex(m => m.id === milestoneData.id);
-    if (idx !== -1) window.milestonesList[idx] = milestoneData;
-    else window.milestonesList.push(milestoneData);
-    localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
-    renderAll();
-}
 
 window.deleteMilestoneStore = async function(id) {
     if (!requirePermission('canEdit')) return false;
@@ -1712,11 +1685,6 @@ window.deleteMilestoneStore = async function(id) {
     }
 }
 
-function deleteMilestoneLocal(id) {
-    window.milestonesList = window.milestonesList.filter(m => m.id !== id);
-    localStorage.setItem('local_milestones', JSON.stringify(window.milestonesList));
-    renderAll();
-}
         window.closeEventModal = () => {
             document.getElementById('eventModal').classList.add('hidden');
             eventModalReadOnly = false;
