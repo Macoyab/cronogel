@@ -987,6 +987,207 @@ headerSignOutBtn.addEventListener('click', async () => {
             }
         });
 
+        // CONFIGURACIÓN DE CONTRASEÑA DEL PROPIETARIO
+        const ownerPasswordSetupBtn = document.getElementById('ownerPasswordSetupBtn');
+        const ownerPasswordSetupModal = document.getElementById('ownerPasswordSetupModal');
+        const ownerPasswordSetupForm = document.getElementById('ownerPasswordSetupForm');
+        const ownerPasswordSetupCloseBtn = document.getElementById('ownerPasswordSetupCloseBtn');
+        const ownerPasswordSetupCancelBtn = document.getElementById('ownerPasswordSetupCancelBtn');
+        const ownerPasswordSetupSubmitBtn = document.getElementById('ownerPasswordSetupSubmitBtn');
+        const ownerPasswordSetupStatus = document.getElementById('ownerPasswordSetupStatus');
+
+        const OWNER_UID = '7iq1TKUIdaO6n5V1IXz8TL3VovyV1';
+        const OWNER_EMAIL = 'javicancas83@gmail.com';
+
+        function showOwnerPasswordStatus(message, type = 'error') {
+            ownerPasswordSetupStatus.textContent = message;
+            ownerPasswordSetupStatus.classList.remove(
+                'hidden',
+                'bg-rose-50',
+                'text-rose-700',
+                'bg-emerald-50',
+                'text-emerald-700'
+            );
+
+            ownerPasswordSetupStatus.classList.add(
+                type === 'success' ? 'bg-emerald-50' : 'bg-rose-50',
+                type === 'success' ? 'text-emerald-700' : 'text-rose-700'
+            );
+        }
+
+        function closeOwnerPasswordModal() {
+            ownerPasswordSetupModal.classList.add('hidden');
+            ownerPasswordSetupForm.reset();
+            ownerPasswordSetupStatus.classList.add('hidden');
+            ownerPasswordSetupSubmitBtn.disabled = false;
+        }
+
+        ownerPasswordSetupBtn.addEventListener('click', () => {
+            const user = auth.currentUser;
+
+            if (
+                !user ||
+                user.uid !== OWNER_UID ||
+                currentRole !== 'owner'
+            ) {
+                showAuthStatus('No tienes autorización para realizar esta operación.');
+                return;
+            }
+
+            ownerPasswordSetupModal.classList.remove('hidden');
+        });
+
+        ownerPasswordSetupCloseBtn.addEventListener('click', closeOwnerPasswordModal);
+        ownerPasswordSetupCancelBtn.addEventListener('click', closeOwnerPasswordModal);
+
+ownerPasswordSetupForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const user = auth.currentUser;
+    const password = document.getElementById('ownerNewPassword').value;
+    const confirmPassword = document.getElementById('ownerConfirmPassword').value;
+
+    if (!user || user.uid !== OWNER_UID || currentRole !== 'owner') {
+        showOwnerPasswordStatus('Sesión no autorizada.');
+        return;
+    }
+
+    if (user.email !== OWNER_EMAIL || user.emailVerified !== true) {
+        showOwnerPasswordStatus('La cuenta del propietario no coincide o no está verificada.');
+        return;
+    }
+
+    if (password.length < 6) {
+        showOwnerPasswordStatus('La contraseña debe tener al menos 6 caracteres.');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showOwnerPasswordStatus('Las contraseñas no coinciden.');
+        return;
+    }
+
+    const hasGoogle = user.providerData.some(
+        provider => provider.providerId === 'google.com'
+    );
+
+    const hasPassword = user.providerData.some(
+        provider => provider.providerId === 'password'
+    );
+
+    if (!hasGoogle || hasPassword) {
+        showOwnerPasswordStatus(
+            hasPassword
+                ? 'Esta cuenta ya tiene una contraseña vinculada.'
+                : 'No se ha encontrado el proveedor Google esperado.'
+        );
+        return;
+    }
+
+    ownerPasswordSetupSubmitBtn.disabled = true;
+    showOwnerPasswordStatus('Comprobando autorización...', 'success');
+
+    try {
+        // Confirmar nuevamente la membresía en Firestore.
+        const memberRef = doc(db, 'members', user.uid);
+        const memberSnapshot = await getDoc(memberRef);
+
+        if (!memberSnapshot.exists()) {
+            throw new Error('owner-membership-not-found');
+        }
+
+        const memberData = memberSnapshot.data();
+
+        if (
+            memberData.active !== true ||
+            memberData.role !== 'owner'
+        ) {
+            throw new Error('owner-membership-invalid');
+        }
+
+        // Crear la credencial sin crear un usuario nuevo.
+        const credential = EmailAuthProvider.credential(
+            OWNER_EMAIL,
+            password
+        );
+
+        const originalUid = user.uid;
+
+        // Vincular contraseña a la cuenta Google existente.
+        const linkResult = await linkWithCredential(user, credential);
+        const updatedUser = linkResult.user;
+
+        // Recargar los datos del usuario devuelto por Firebase.
+        await updatedUser.reload();
+
+        if (updatedUser.uid !== originalUid) {
+            throw new Error('uid-verification-failed');
+        }
+
+        const passwordLinked = updatedUser.providerData.some(
+            provider => provider.providerId === 'password'
+        );
+
+        if (!passwordLinked) {
+            throw new Error('password-provider-not-confirmed');
+        }
+
+        currentUser = updatedUser;
+
+        ownerPasswordSetupBtn.classList.add('hidden');
+
+        showOwnerPasswordStatus(
+            'Contraseña vinculada correctamente. Se conserva tu cuenta original.',
+            'success'
+        );
+
+        ownerPasswordSetupSubmitBtn.textContent = 'Contraseña vinculada';
+        ownerPasswordSetupSubmitBtn.disabled = true;
+
+        console.info(
+            'Cronogel: contraseña vinculada. UID original conservado.'
+        );
+
+    } catch (error) {
+        console.error('Error vinculando contraseña:', error);
+
+        const messages = {
+            'owner-membership-not-found':
+                'No se ha encontrado la membresía del propietario.',
+            'owner-membership-invalid':
+                'La membresía del propietario no está activa o no tiene el rol correcto.',
+            'uid-verification-failed':
+                'No se ha podido confirmar la identidad original. Contacta con soporte.',
+            'password-provider-not-confirmed':
+                'Firebase no ha confirmado la vinculación de la contraseña.',
+            'auth/credential-already-in-use':
+                'Este correo ya está vinculado a otra cuenta. No se ha realizado ninguna fusión.',
+            'auth/email-already-in-use':
+                'Este correo ya está asociado a otra cuenta.',
+            'auth/provider-already-linked':
+                'La cuenta ya tiene este método de acceso vinculado.',
+            'auth/weak-password':
+                'La contraseña no cumple los requisitos de seguridad.',
+            'auth/requires-recent-login':
+                'Por seguridad, cierra sesión y vuelve a entrar con Google antes de intentarlo.',
+            'auth/network-request-failed':
+                'Error de conexión. Inténtalo de nuevo.'
+        };
+
+        showOwnerPasswordStatus(
+            messages[error.code || error.message] ||
+            'No se pudo vincular la contraseña. No se ha creado otra cuenta.'
+        );
+
+    } finally {
+        const passwordIsLinked = auth.currentUser?.providerData.some(
+            provider => provider.providerId === 'password'
+        );
+
+        ownerPasswordSetupSubmitBtn.disabled = Boolean(passwordIsLinked);
+    }
+});
+
         // VERIFICACIÓN DEL CORREO ELECTRÓNICO
         const resendVerificationBtn = document.getElementById('resendVerificationBtn');
         const confirmVerificationBtn = document.getElementById('confirmVerificationBtn');
@@ -1055,6 +1256,7 @@ headerSignOutBtn.addEventListener('click', async () => {
 
     // Ocultar siempre hasta confirmar la identidad y el rol.
     ownerPasswordSetupBtn.classList.add('hidden');
+
 
     currentRole = null;
 
