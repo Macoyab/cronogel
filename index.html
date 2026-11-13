@@ -196,14 +196,25 @@
             </div>
 
             <div class="flex items-center space-x-1.5 sm:space-x-2">
-                <button
-    id="headerSignOutBtn"
-    type="button"
-    class="hidden bg-rose-600 hover:bg-rose-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1"
-    title="Cerrar sesión">
-    <i class="fa-solid fa-right-from-bracket text-xs sm:text-sm"></i>
-    <span class="hidden lg:inline text-xs">Salir</span>
+                
+<button
+id="headerSignOutBtn"
+type="button"
+class="hidden bg-rose-600 hover:bg-rose-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-1"
+title="Cerrar sesión">
+<i class="fa-solid fa-right-from-bracket text-xs sm:text-sm"></i>
+<span class="hidden lg:inline text-xs">Salir</span>
 </button>
+
+<button
+id="ownerPasswordSetupBtn"
+type="button"
+class="hidden bg-amber-500 hover:bg-amber-600 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium shadow-sm transition items-center space-x-1"
+title="Configurar acceso con contraseña">
+<i class="fa-solid fa-key text-xs sm:text-sm"></i>
+<span class="hidden lg:inline text-xs">Configurar acceso</span>
+</button>
+
                 <span id="syncStatusBtn" title="Estado de sincronización" aria-live="polite" class="hidden xl:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium">
                     <i class="fa-solid fa-rotate mr-1 animate-spin"></i> Conectando...
                 </span>
@@ -387,7 +398,69 @@
         </div>
     </div>
 
-    <!-- MODAL: EVENT FORM -->
+    
+<!-- MODAL: OWNER PASSWORD SETUP -->
+<div id="ownerPasswordSetupModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center hidden p-3 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-100">
+        <div class="px-5 sm:px-6 py-4 bg-amber-500 text-white flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-shield-halved text-lg"></i>
+                <h3 class="font-bold text-base">Seguridad de la cuenta</h3>
+            </div>
+            <button id="ownerPasswordSetupCloseBtn" type="button" class="text-amber-100 hover:text-white p-1" title="Cerrar">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form id="ownerPasswordSetupForm" class="p-5 sm:p-6 space-y-4">
+            <p class="text-sm text-slate-600">
+                Vincula una contraseña a tu cuenta actual de Google para disponer de un método alternativo de acceso.
+            </p>
+
+            <div>
+                <label for="ownerNewPassword" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Nueva contraseña
+                </label>
+                <input
+                    type="password"
+                    id="ownerNewPassword"
+                    autocomplete="new-password"
+                    minlength="6"
+                    required
+                    placeholder="Mínimo 6 caracteres"
+                    class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            </div>
+
+            <div>
+                <label for="ownerConfirmPassword" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Confirmar contraseña
+                </label>
+                <input
+                    type="password"
+                    id="ownerConfirmPassword"
+                    autocomplete="new-password"
+                    minlength="6"
+                    required
+                    placeholder="Repite la contraseña"
+                    class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            </div>
+
+            <div id="ownerPasswordSetupStatus" class="hidden text-sm rounded-lg p-3" role="status" aria-live="polite"></div>
+
+            <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                <button id="ownerPasswordSetupCancelBtn" type="button" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">
+                    Cancelar
+                </button>
+                <button id="ownerPasswordSetupSubmitBtn" type="submit" class="px-4 py-2 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-lg shadow-sm transition">
+                    Vincular contraseña
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: EVENT FORM -->
+
     <div id="eventModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-100 transform transition-all">
             <div class="px-5 sm:px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
@@ -528,6 +601,8 @@ import {
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
     sendEmailVerification,
+    EmailAuthProvider,
+    linkWithCredential,
     onAuthStateChanged,
     signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -757,6 +832,28 @@ async function checkUserMembership(user) {
 
     currentRole = memberData.role;
 
+// Mostrar configuración de contraseña solo al propietario
+// que todavía utiliza exclusivamente Google.
+const ownerPasswordSetupBtn = document.getElementById('ownerPasswordSetupBtn');
+
+const hasGoogleProvider = user.providerData.some(
+    provider => provider.providerId === 'google.com'
+);
+
+const hasPasswordProvider = user.providerData.some(
+    provider => provider.providerId === 'password'
+);
+
+if (
+    currentRole === 'owner' &&
+    hasGoogleProvider &&
+    !hasPasswordProvider
+) {
+    ownerPasswordSetupBtn.classList.remove('hidden');
+} else {
+    ownerPasswordSetupBtn.classList.add('hidden');
+}
+
     // Aplicar los permisos correspondientes al rol confirmado.
     updateRoleUI();
 
@@ -942,15 +1039,23 @@ headerSignOutBtn.addEventListener('click', async () => {
             }
         });
 
-onAuthStateChanged(auth, async (user) => {
+
+        onAuthStateChanged(auth, async (user) => {
     // Evitar conservar datos o listeners de una sesión anterior.
     stopFirestoreListeners();
     window.eventsList = [];
     window.milestonesList = [];
 
     currentUser = user;
+
     const headerSignOutBtn = document.getElementById('headerSignOutBtn');
+    const ownerPasswordSetupBtn = document.getElementById('ownerPasswordSetupBtn');
+
     headerSignOutBtn.classList.toggle('hidden', !user);
+
+    // Ocultar siempre hasta confirmar la identidad y el rol.
+    ownerPasswordSetupBtn.classList.add('hidden');
+
     currentRole = null;
 
     updateRoleUI();
@@ -975,6 +1080,8 @@ onAuthStateChanged(auth, async (user) => {
         window.milestonesList = [];
 
         currentRole = null;
+        ownerPasswordSetupBtn.classList.add('hidden');
+
         updateRoleUI();
         renderAll();
 
@@ -987,6 +1094,7 @@ onAuthStateChanged(auth, async (user) => {
         updateSyncUI('cloud', 'Error de autorización');
     }
 });
+
 
     } catch (error) {
         console.error('Error inicializando Firebase:', error);
