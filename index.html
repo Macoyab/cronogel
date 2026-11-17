@@ -663,6 +663,9 @@ import {
         let currentUser = null;
         let currentRole = null;
 
+        // Evita que consultas de membresía antiguas alteren la sesión actual.
+        let membershipCheckId = 0;
+
         // Estado de carga inicial de los datos de Firestore.
         let firestoreEventsReady = false;
         let firestoreMilestonesReady = false;
@@ -783,13 +786,18 @@ function showUnauthorizedUser(user) {
 }
 
 
+
 async function checkUserMembership(user) {
+    const checkId = ++membershipCheckId;
     currentUser = user;
 
     // BLOQUEAR CUENTAS CON CORREO NO VERIFICADO
     if (user.emailVerified !== true) {
+        if (checkId !== membershipCheckId) return;
+
         currentRole = null;
         updateRoleUI();
+
         document.getElementById('emailVerificationActions').classList.remove('hidden');
         document.getElementById('authGate').classList.remove('hidden');
         document.getElementById('authUserInfo').classList.add('hidden');
@@ -799,12 +807,37 @@ async function checkUserMembership(user) {
         );
         return;
     }
+
     document.getElementById('emailVerificationActions').classList.add('hidden');
     showAuthStatus('Comprobando autorización...');
 
-
     const memberRef = doc(db, 'members', user.uid);
-    const memberSnapshot = await getDoc(memberRef);
+    let memberSnapshot;
+
+    try {
+        memberSnapshot = await getDoc(memberRef);
+    } catch (error) {
+        // Ignorar errores de consultas pertenecientes a sesiones antiguas.
+        if (
+            checkId !== membershipCheckId ||
+            currentUser?.uid !== user.uid ||
+            auth.currentUser?.uid !== user.uid
+        ) {
+            return;
+        }
+
+        // Los errores de la sesión vigente siguen su curso normal.
+        throw error;
+    }
+
+    // Descartar resultados de consultas pertenecientes a sesiones antiguas.
+    if (
+        checkId !== membershipCheckId ||
+        currentUser?.uid !== user.uid ||
+        auth.currentUser?.uid !== user.uid
+    ) {
+        return;
+    }
 
     if (!memberSnapshot.exists()) {
         currentRole = null;
@@ -832,34 +865,33 @@ async function checkUserMembership(user) {
 
     currentRole = memberData.role;
 
-// Mostrar configuración de contraseña solo al propietario
-// que todavía utiliza exclusivamente Google.
-const ownerPasswordSetupBtn = document.getElementById('ownerPasswordSetupBtn');
+    // Mostrar configuración de contraseña solo al propietario
+    // que todavía utiliza exclusivamente Google.
+    const ownerPasswordSetupBtn = document.getElementById('ownerPasswordSetupBtn');
 
-const hasGoogleProvider = user.providerData.some(
-    provider => provider.providerId === 'google.com'
-);
+    const hasGoogleProvider = user.providerData.some(
+        provider => provider.providerId === 'google.com'
+    );
 
-const hasPasswordProvider = user.providerData.some(
-    provider => provider.providerId === 'password'
-);
+    const hasPasswordProvider = user.providerData.some(
+        provider => provider.providerId === 'password'
+    );
 
-if (
-    currentRole === 'owner' &&
-    hasGoogleProvider &&
-    !hasPasswordProvider
-) {
-    ownerPasswordSetupBtn.classList.remove('hidden');
-} else {
-    ownerPasswordSetupBtn.classList.add('hidden');
-}
+    if (
+        currentRole === 'owner' &&
+        hasGoogleProvider &&
+        !hasPasswordProvider
+    ) {
+        ownerPasswordSetupBtn.classList.remove('hidden');
+    } else {
+        ownerPasswordSetupBtn.classList.add('hidden');
+    }
 
     // Aplicar los permisos correspondientes al rol confirmado.
     updateRoleUI();
 
     document.getElementById('authUserInfo').classList.add('hidden');
     document.getElementById('authGate').classList.add('hidden');
-
 
     updateSyncUI('cloud', 'Firebase Conectado');
     setupFirestoreListeners();
@@ -869,6 +901,7 @@ if (
         currentRole
     );
 }
+
 function initFirebase() {
     try {
         const app = initializeApp(firebaseConfig);
@@ -1241,36 +1274,41 @@ ownerPasswordSetupForm.addEventListener('submit', async (event) => {
         });
 
 
+
         onAuthStateChanged(auth, async (user) => {
-    // Evitar conservar datos o listeners de una sesión anterior.
-    stopFirestoreListeners();
-    window.eventsList = [];
-    window.milestonesList = [];
+            // Invalidar consultas de membresía de sesiones anteriores.
+            membershipCheckId++;
 
-    currentUser = user;
+            // Evitar conservar datos o listeners de una sesión anterior.
+            stopFirestoreListeners();
+            window.eventsList = [];
+            window.milestonesList = [];
 
-    const headerSignOutBtn = document.getElementById('headerSignOutBtn');
-    const ownerPasswordSetupBtn = document.getElementById('ownerPasswordSetupBtn');
+            currentUser = user;
 
-    headerSignOutBtn.classList.toggle('hidden', !user);
+            const headerSignOutBtn = document.getElementById('headerSignOutBtn');
+            const ownerPasswordSetupBtn = document.getElementById('ownerPasswordSetupBtn');
 
-    // Ocultar siempre hasta confirmar la identidad y el rol.
-    ownerPasswordSetupBtn.classList.add('hidden');
+            headerSignOutBtn.classList.toggle('hidden', !user);
+            ownerPasswordSetupBtn.classList.add('hidden');
 
+            currentRole = null;
 
-    currentRole = null;
+            updateRoleUI();
+            renderAll();
 
-    updateRoleUI();
-    renderAll();
+            if (!user) {
+                // Conservar el correo, pero limpiar siempre la contraseña.
+                document.getElementById('loginPassword').value = '';
 
-    if (!user) {
-        document.getElementById('authGate').classList.remove('hidden');
-        document.getElementById('authUserInfo').classList.add('hidden');
+                document.getElementById('authGate').classList.remove('hidden');
+                document.getElementById('authUserInfo').classList.add('hidden');
 
-        showAuthStatus('Identifícate con tu cuenta de Google.');
-        updateSyncUI('cloud', 'Sin sesión');
-        return;
-    }
+                showAuthStatus('Identifícate con tu cuenta de Google.');
+                updateSyncUI('cloud', 'Sin sesión');
+                return;
+            }
+
 
     try {
         await checkUserMembership(user);
