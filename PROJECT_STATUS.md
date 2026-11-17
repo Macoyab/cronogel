@@ -1,11 +1,11 @@
 # CRONOGEL — Estado del proyecto
 
-**Fecha:** 11 de noviembre de 2026
+**Fecha:** 17 de noviembre de 2026
 **Repositorio:** Macoyab/cronogel
 **Rama:** security/google-signin-p0
-**Último commit de código:** 49019f8
+**Último commit sincronizado antes de los cambios actuales:** 4e9894a
 
-## Objetivo y arquitectura
+## 1. Objetivo y arquitectura
 
 - Aplicación colaborativa y multidispositivo.
 - Firestore es la fuente única de verdad para eventos e hitos.
@@ -13,71 +13,121 @@
 - Preferencias de Telegram permanecen en LocalStorage.
 - Roles: owner, editor y viewer.
 - Desarrollo desde MODO CASA y MODO TRABAJO.
-- Ejecución independiente del entorno desde el que se desarrolla.
+- GitHub es la fuente única de verdad para iniciar cada jornada.
 - Presupuesto: 0 €.
-- No modificar main ni desplegar sin autorización.
+- No modificar main ni desplegar sin autorización explícita.
 
-## Autenticación y permisos
+## 2. Autenticación e identidad del propietario
 
 - Acceso mediante correo y contraseña: probado.
 - Verificación obligatoria del correo: probada.
 - Bloqueo de cuentas no verificadas: probado.
 - Recuperación de contraseña mediante Gmail: probada.
 - Cierre de sesión desde la barra superior: probado.
-- Viewer: lectura y ocultación de controles de escritura comprobadas.
-- Editor: creación, modificación y eliminación de eventos e hitos comprobadas.
-- Las reglas Firestore protegen las operaciones de escritura. Falta probar deliberadamente una escritura directa denegada para viewer.
+- Google y Email/Password vinculados a la identidad original del propietario.
+- Vinculación realizada mediante linkWithCredential().
+- UID original conservado.
+- Acceso del propietario mediante correo y contraseña: probado el 16/11/2026.
+- Calendario, eventos e hitos cargados correctamente tras el acceso.
+- El botón «Configurar acceso» desaparece cuando Password ya está vinculado.
+- Prueba del acceso alternativo mediante Google pendiente en MODO CASA.
+- MFA real del propietario sigue pendiente. No implementar MFA casera.
 
-## Identidad del propietario
+## 3. Roles y autorización
 
-- La cuenta owner actual utiliza exclusivamente Google.
-- Email/Password y Google están habilitados en Firebase, pero el owner todavía no tiene vinculado el proveedor password.
-- Google OAuth no funciona en el navegador corporativo; sí desde el móvil.
-- La vinculación queda aplazada para MODO CASA.
-- Objetivo: conservar el UID y el documento members/{uid}.
-- No crear una cuenta owner duplicada ni modificar la membresía a ciegas.
-- Primero vincular Email/Password a la identidad existente y comprobar UID, rol y acceso.
-- Retirar Google Sign-In solo después de validar el acceso del owner por contraseña.
-- MFA obligatoria del owner sigue pendiente. No está resuelta y no se implementará una MFA casera.
+- Owner: lectura y escritura.
+- Editor: lectura y escritura de eventos e hitos.
+- Viewer: lectura, sin permisos de escritura.
+- Las reglas Firestore comprueban autenticación, correo verificado y membresía activa.
+- Solo owner puede listar y gestionar miembros.
+- Editor y viewer pueden consultar únicamente su propio perfil.
 
-## Código y Git
+## 4. Reglas Firestore y pruebas automatizadas
 
-- Commit 49019f8: feat: add email authentication and verification.
-- Push realizado a origin/security/google-signin-p0.
-- Cambios de autenticación guardados en index.html.
-- No se ha hecho merge a main ni despliegue.
-- Se detectaron cinco archivos auxiliares sin seguimiento. No borrarlos ni incorporarlos accidentalmente:
-  - cronogel-checkpoint.patch
-  - index.html.before-auth-readiness.20261109-130128.bak
-  - index.html.before-cloud-only.20261109-125437.bak
-  - index.html.before-listener-error-fix.20261109-130229.bak
-  - index.html.pre-storage-controller.backup
+- Reglas actuales recuperadas desde Firebase Console.
+- Copia local creada en firestore.rules.
+- Configuración firebase.json creada y asociada a firestore.rules.
+- Emulador Firestore configurado en puerto 8080.
+- Firebase CLI utilizada temporalmente mediante npx.
+- Dependencias de desarrollo:
+  - @firebase/rules-unit-testing
+  - firebase
+- Script npm disponible: npm run test:rules.
+- Pruebas automatizadas ejecutadas correctamente en Firestore Emulator.
+- Resultado: 9 pruebas superadas, 0 fallidas.
 
-## Pendientes
+### Cobertura comprobada
 
-1. Vincular Email/Password al owner existente desde MODO CASA, conservando UID y membresía.
-2. Probar acceso owner exclusivamente con correo y contraseña.
-3. Retirar Google Sign-In solo tras validar la migración.
-4. Resolver MFA real para owner compatible con presupuesto cero.
-5. Probar escritura directa denegada para viewer.
-6. Verificar sincronización multidispositivo y exportación tras los cambios.
-7. Diseñar importación JSON segura con vista previa, validación y detección de duplicados.
+1. Owner: lectura y CRUD completo de eventos e hitos.
+2. Editor: lectura y CRUD completo de eventos e hitos.
+3. Viewer: lectura permitida y creación, modificación y eliminación denegadas.
+4. Owner: listado y gestión de miembros.
+5. Editor: gestión de miembros denegada y consulta limitada a su perfil.
+6. Viewer: gestión de miembros denegada y consulta limitada a su perfil.
+7. Usuario con correo no verificado: acceso denegado.
+8. Miembro inactivo: acceso denegado.
+9. Usuario sin membresía: acceso denegado.
 
-## Próxima sesión
+**IMPORTANTE:** las reglas están versionadas localmente, pero todavía NO se han publicado en Firebase. Las pruebas se han ejecutado contra el emulador, no contra producción.
 
-**Entorno previsto: MODO CASA.**
+## 5. Incidencia de permisos pendiente
 
-1. Comprobar rama, estado de Git y sincronización.
-2. Confirmar que están presentes los commits de código y documentación.
-3. Preparar la vinculación de la identidad owner existente.
-4. Verificar UID, membresía y rol después de vincular.
-5. Probar el acceso mediante contraseña antes de retirar Google.
+- El 16/11/2026 apareció un error permission-denied en el listener de eventos.
+- En aquella sesión también se observó un problema durante el flujo de acceso con Google.
+- Posteriormente, el acceso mediante correo y contraseña funcionó y cargó los datos.
+- No se ha identificado todavía la causa definitiva del error de Firestore.
+- No modificar ni relajar las reglas de producción sin diagnóstico.
 
-## BUILD METHOD aplicado
+## 6. Configuración y archivos del proyecto
 
-- Identificar el contexto de desarrollo y adaptar herramientas y procedimientos.
-- Distinguir el entorno de desarrollo del entorno de ejecución del producto.
-- GitHub es la fuente central de continuidad.
-- Inicio de jornada: comprobar rama, estado y siguiente tarea.
-- Rigor proporcional al riesgo; evitar auditorías repetitivas.
+- firestore.rules: reglas de seguridad.
+- firebase.json: configuración de Firebase y emulador.
+- firestore/tests/firestore.rules.test.mjs: pruebas automatizadas.
+- package.json y package-lock.json: dependencias y ejecución reproducible.
+- .gitignore: excluye dependencias, logs y archivos auxiliares.
+- node_modules/ no debe subirse al repositorio.
+- Backups y archivos auxiliares existentes deben conservarse sin incorporarlos al commit.
+
+## 7. Pendientes priorizados
+
+### P0 — Seguridad y estabilidad
+1. Revisar el error permission-denied de Firestore.
+2. Revisar gestión de listeners y estados de sesión.
+3. Comprobar que el cierre de sesión limpia correctamente los datos y estados.
+4. Revisar las reglas antes de cualquier publicación en producción.
+5. Mantener las pruebas automatizadas y ampliar su cobertura cuando sea necesario.
+
+### P1 — Identidad y acceso
+6. Probar Google como método alternativo desde MODO CASA.
+7. Revisar opciones de MFA real y gratuita para owner.
+8. Validar recuperación de sesión y cambio de usuario.
+
+### P1 — Producto
+9. Verificar sincronización multidispositivo.
+10. Verificar exportación de datos.
+11. Diseñar importación JSON segura con vista previa, validación y detección de duplicados.
+
+## 8. BUILD METHOD
+
+- Identificar el contexto de desarrollo antes de comenzar.
+- MODO CASA: equipo personal, Warp y herramientas locales.
+- MODO TRABAJO: equipo corporativo restringido, GitHub Codespaces y Firebase Console.
+- Distinguir entorno de desarrollo y entorno de ejecución del producto.
+- GitHub es la fuente única de verdad.
+- Inicio de jornada: fetch, comprobar rama y sincronizar con GitHub.
 - Cierre: validar, documentar, commit, push y verificar sincronización.
+- No hacer commit hasta completar las pruebas esenciales.
+- No modificar main ni desplegar sin autorización expresa.
+- Trabajar con rigor proporcional al riesgo y evitar auditorías repetitivas.
+
+## 9. Próxima sesión
+
+**Entorno previsto: MODO TRABAJO.**
+
+1. Finalizar revisión de la gestión de sesiones y listeners.
+2. Investigar el error permission-denied.
+3. Revisar la limpieza de datos al cerrar sesión.
+4. Validar la configuración y las pruebas automatizadas.
+5. Cerrar documentación, commit y push en security/google-signin-p0.
+
+Las pruebas de Google OAuth quedan reservadas para MODO CASA.

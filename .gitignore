@@ -1,0 +1,13 @@
+# Dependencias
+node_modules/
+
+# Firebase Emulator
+firestore-debug.log
+ui-debug.log
+firebase-debug.log
+
+# Archivos locales auxiliares
+*.bak
+*.backup
+*.patch
+*.recovered
