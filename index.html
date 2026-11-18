@@ -1358,13 +1358,27 @@ ownerPasswordSetupForm.addEventListener('submit', async (event) => {
             btn.className = `hidden xl:inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-medium ${color}`;
         }
 
-  function setupFirestoreListeners() {
+function setupFirestoreListeners() {
     if (!db || !currentUser || !currentRole) return;
+
+    // Identificar la sesión que crea estos listeners.
+    const listenerSessionId = membershipCheckId;
+    const listenerUid = currentUser.uid;
+
+    const isCurrentSession = () => (
+        listenerSessionId === membershipCheckId &&
+        currentUser?.uid === listenerUid &&
+        auth?.currentUser?.uid === listenerUid &&
+        currentRole !== null
+    );
 
     // Evitar listeners duplicados.
     stopDataListeners();
 
     function handleListenerError(error, source) {
+        // Ignorar errores de listeners pertenecientes a sesiones antiguas.
+        if (!isCurrentSession()) return;
+
         console.error(
             `Error en listener de ${source}:`,
             error
@@ -1373,7 +1387,6 @@ ownerPasswordSetupForm.addEventListener('submit', async (event) => {
         if (error.code === 'permission-denied') {
             stopDataListeners();
 
-            // La identidad Firebase sigue autenticada; solo se pierde la autorización.
             currentRole = null;
 
             window.eventsList = [];
@@ -1393,7 +1406,6 @@ ownerPasswordSetupForm.addEventListener('submit', async (event) => {
             return;
         }
 
-        // Invalidar la exportación si cualquiera de los listeners falla.
         if (source === 'eventos') {
             firestoreEventsReady = false;
             window.eventsList = [];
@@ -1415,6 +1427,8 @@ ownerPasswordSetupForm.addEventListener('submit', async (event) => {
     unsubscribeEventsListener = onSnapshot(
         collection(db, 'events'),
         (snapshot) => {
+            if (!isCurrentSession()) return;
+
             window.eventsList = [];
 
             snapshot.forEach(docSnap => {
@@ -1434,6 +1448,8 @@ ownerPasswordSetupForm.addEventListener('submit', async (event) => {
     unsubscribeMilestonesListener = onSnapshot(
         collection(db, 'milestones'),
         (snapshot) => {
+            if (!isCurrentSession()) return;
+
             window.milestonesList = [];
 
             snapshot.forEach(docSnap => {
@@ -1449,6 +1465,7 @@ ownerPasswordSetupForm.addEventListener('submit', async (event) => {
         (error) => handleListenerError(error, 'hitos')
     );
 }
+
 
         window.exportJSONData = function() {
             if (
